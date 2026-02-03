@@ -15,7 +15,6 @@
             <nav class="hidden md:flex items-center gap-8">
                 <a href="{{ url('/') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Home</a>
                 <a href="{{ url('/booking') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Rooms & Booking</a>
-                <a href="{{ url('/services') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Services</a>
                 <a href="{{ url('/about') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">About</a>
                 <a href="{{ url('/contact') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Contact</a>
             </nav>

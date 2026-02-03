@@ -20,19 +20,19 @@ Route::get('/', function () {
 
 // Public pages
 Route::get('/about', function () {
-    return view('about');
+    return view('welcome.about');
 })->name('about');
 
 Route::get('/contact', function () {
-    return view('contact');
+    return view('welcome.contact');
 })->name('contact');
 
 Route::get('/pricing', function () {
-    return view('pricing');
+    return view('welcome.pricing');
 })->name('pricing');
 
 Route::get('/features', function () {
-    return view('features');
+    return view('welcome.features');
 })->name('features');
 
 // Guest Booking Routes (public - no authentication required)
