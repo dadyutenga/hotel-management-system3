@@ -1,99 +1,140 @@
 <?php
+// app/Http/Controllers/ReservationController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Room;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
-class ReservationController extends Controller {
-    public function index() {
-        $reservations = Reservation::with(['room', 'creator'])->latest()->paginate(20);
+class ReservationController extends Controller
+{
+    public function index()
+    {
+        $reservations = Reservation::with(['room.roomType', 'creator'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
         return view('reservations.index', compact('reservations'));
     }
 
-    public function create() {
-        return view('reservations.create');
+    public function create()
+    {
+        // Get all available rooms
+        $availableRooms = Room::where('status', 'available')
+            ->where('is_active', true)
+            ->with(['roomType', 'floor.building'])
+            ->orderBy('room_number')
+            ->get();
+
+        return view('reservations.create', compact('availableRooms'));
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
-            'guest_name' => 'required|max:255',
-            'guest_phone' => 'required|max:255',
+            'guest_name' => 'required|string|max:255',
+            'guest_phone' => 'required|string|max:20',
             'guest_email' => 'nullable|email|max:255',
-            'check_in_date' => 'required|date',
+            'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
-            'room_id' => 'nullable|exists:rooms,id',
             'total_amount' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled,no_show',
+            'room_id' => 'nullable|exists:rooms,id',
+            'status' => 'required|in:pending,confirmed',
         ]);
 
+        // Generate unique reservation number
+        $validated['reservation_number'] = 'RES-' . strtoupper(uniqid());
         $validated['created_by'] = auth()->id();
-        Reservation::create($validated);
-        
-        return redirect()->route('reservations.index')->with('success', 'Reservation created successfully.');
+
+        $reservation = Reservation::create($validated);
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reservation created successfully.');
     }
 
-    public function edit(Reservation $reservation) {
-        $checkIn = $reservation->check_in_date->format('Y-m-d');
-        $checkOut = $reservation->check_out_date->format('Y-m-d');
-        
-        $availableRooms = Room::where('is_active', true)
-            ->whereDoesntHave('reservations', function ($query) use ($checkIn, $checkOut, $reservation) {
-                $query->where('id', '!=', $reservation->id)
-                    ->where('status', '!=', 'cancelled')
-                    ->where(function ($q) use ($checkIn, $checkOut) {
-                        $q->whereBetween('check_in_date', [$checkIn, $checkOut])
-                          ->orWhereBetween('check_out_date', [$checkIn, $checkOut])
-                          ->orWhere(function ($q2) use ($checkIn, $checkOut) {
-                              $q2->where('check_in_date', '<=', $checkIn)
-                                 ->where('check_out_date', '>=', $checkOut);
-                          });
-                    });
+    public function edit(Reservation $reservation)
+    {
+        // Get available rooms plus the currently assigned room
+        $availableRooms = Room::where(function($query) use ($reservation) {
+                $query->where('status', 'available')
+                      ->where('is_active', true);
+                
+                // Include the currently assigned room even if it's not available
+                if ($reservation->room_id) {
+                    $query->orWhere('id', $reservation->room_id);
+                }
             })
+            ->with(['roomType', 'floor.building'])
+            ->orderBy('room_number')
             ->get();
-            
+
         return view('reservations.edit', compact('reservation', 'availableRooms'));
     }
 
-    public function update(Request $request, Reservation $reservation) {
+    public function update(Request $request, Reservation $reservation)
+    {
         $validated = $request->validate([
-            'guest_name' => 'required|max:255',
-            'guest_phone' => 'required|max:255',
+            'guest_name' => 'required|string|max:255',
+            'guest_phone' => 'required|string|max:20',
             'guest_email' => 'nullable|email|max:255',
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
-            'room_id' => 'nullable|exists:rooms,id',
             'total_amount' => 'required|numeric|min:0',
+            'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled,no_show',
         ]);
 
         $reservation->update($validated);
-        return redirect()->route('reservations.index')->with('success', 'Reservation updated successfully.');
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reservation updated successfully.');
     }
 
-    public function destroy(Reservation $reservation) {
+    public function destroy(Reservation $reservation)
+    {
         $reservation->delete();
-        return redirect()->route('reservations.index')->with('success', 'Reservation deleted successfully.');
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reservation deleted successfully.');
     }
 
-    public function checkIn(Reservation $reservation) {
+    public function checkIn(Reservation $reservation)
+    {
+        if ($reservation->status !== 'confirmed') {
+            return back()->with('error', 'Only confirmed reservations can be checked in.');
+        }
+
+        if (!$reservation->room_id) {
+            return back()->with('error', 'Please assign a room before checking in.');
+        }
+
         $reservation->update(['status' => 'checked_in']);
-        $reservation->room?->update(['status' => 'occupied']);
+
         return back()->with('success', 'Guest checked in successfully.');
     }
 
-    public function checkOut(Reservation $reservation) {
+    public function checkOut(Reservation $reservation)
+    {
+        if ($reservation->status !== 'checked_in') {
+            return back()->with('error', 'Only checked-in reservations can be checked out.');
+        }
+
         $reservation->update(['status' => 'checked_out']);
-        $reservation->room?->update(['status' => 'dirty']);
+
         return back()->with('success', 'Guest checked out successfully.');
     }
 
-    public function cancel(Reservation $reservation) {
+    public function cancel(Reservation $reservation)
+    {
+        if (!in_array($reservation->status, ['pending', 'confirmed'])) {
+            return back()->with('error', 'Only pending or confirmed reservations can be cancelled.');
+        }
+
         $reservation->update(['status' => 'cancelled']);
-        $reservation->room?->update(['status' => 'available']);
+
         return back()->with('success', 'Reservation cancelled successfully.');
     }
 }
