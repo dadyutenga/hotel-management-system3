@@ -38,7 +38,7 @@ Route::get('/features', function () {
 // Guest Booking Routes (public - no authentication required)
 Route::get('/booking', function () {
     $roomTypes = \App\Models\RoomType::all();
-    return view('booking', compact('roomTypes'));
+    return view('public.booking', compact('roomTypes'));
 })->name('booking');
 
 Route::get('/booking/search', function () {
@@ -66,7 +66,7 @@ Route::get('/booking/search', function () {
         })
         ->get();
     
-    return view('booking', compact('roomTypes', 'availableRooms', 'checkIn', 'checkOut', 'guests'));
+    return view('public.booking', compact('roomTypes', 'availableRooms', 'checkIn', 'checkOut', 'guests'));
 })->name('booking.search');
 
 Route::get('/booking/room/{room}', function (\App\Models\Room $room) {
@@ -80,7 +80,7 @@ Route::get('/booking/room/{room}', function (\App\Models\Room $room) {
     $nights = (strtotime($checkOut) - strtotime($checkIn)) / (60 * 60 * 24);
     $totalPrice = $nights * ($room->roomType->price_per_night ?? 150);
     
-    return view('booking', compact('roomTypes', 'selectedRoom', 'checkIn', 'checkOut', 'guests', 'totalPrice'));
+    return view('public.booking', compact('roomTypes', 'selectedRoom', 'checkIn', 'checkOut', 'guests', 'totalPrice'));
 })->name('booking.room');
 
 Route::post('/booking', function () {
@@ -119,7 +119,7 @@ Route::post('/booking', function () {
 
 Route::get('/booking/confirmation/{reservation}', function (\App\Models\Reservation $reservation) {
     $reservation->load(['room.roomType', 'room.floor']);
-    return view('booking-confirmation', compact('reservation'));
+    return view('public.booking-confirmation', compact('reservation'));
 })->name('booking.confirmation');
 
 // Guest Routes
