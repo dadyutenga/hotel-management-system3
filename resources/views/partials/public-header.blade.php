@@ -14,7 +14,7 @@
             <!-- Desktop Navigation -->
             <nav class="hidden md:flex items-center gap-8">
                 <a href="{{ url('/') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Home</a>
-                <a href="{{ url('/rooms') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Rooms</a>
+                <a href="{{ url('/booking') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Rooms & Booking</a>
                 <a href="{{ url('/services') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Services</a>
                 <a href="{{ url('/about') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">About</a>
                 <a href="{{ url('/contact') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Contact</a>
@@ -23,14 +23,14 @@
             <!-- Auth Buttons -->
             <div class="flex items-center gap-4">
                 @auth
-                    <a href="{{ route('dashboard') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">My Account</a>
+                    <a href="{{ route('dashboard') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Dashboard</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Logout</button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Sign In</a>
-                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm">
+                    <a href="{{ route('login') }}" class="hidden sm:inline text-sm font-medium text-gray-700 hover:text-primary transition-colors">Staff Login</a>
+                    <a href="{{ url('/booking') }}" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-lg bg-accent text-white hover:bg-secondary transition-colors shadow-sm">
                         Book Now
                     </a>
                 @endauth
@@ -49,10 +49,12 @@
     <div x-data="{ open: false }" x-on:toggle-mobile-menu.window="open = !open" x-show="open" x-cloak class="md:hidden border-t border-gray-100">
         <nav class="container mx-auto px-6 py-4 space-y-3">
             <a href="{{ url('/') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Home</a>
-            <a href="{{ url('/rooms') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Rooms</a>
+            <a href="{{ url('/booking') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Rooms & Booking</a>
             <a href="{{ url('/services') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Services</a>
             <a href="{{ url('/about') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">About</a>
             <a href="{{ url('/contact') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Contact</a>
+            <hr class="border-gray-200">
+            <a href="{{ route('login') }}" class="block text-sm font-medium text-gray-500 hover:text-primary">Staff Login</a>
         </nav>
     </div>
 </header>

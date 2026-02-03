@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guest Registration - MRK Hotel & Resort</title>
+    <title>Staff Registration - MRK Hotel & Resort</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Create your MRK Hotel guest account to book rooms and access exclusive services.">
+    <meta name="description" content="Staff account registration for MRK Hotel management system.">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -50,12 +50,12 @@
                 
                 <!-- Content -->
                 <div class="max-w-md">
-                    <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">Join Us</p>
+                    <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">Staff Portal</p>
                     <h1 class="text-4xl font-serif font-bold text-white mb-6 leading-tight">
-                        Create Your Guest Account
+                        Staff Account Registration
                     </h1>
                     <p class="text-lg text-gray-300 leading-relaxed mb-8">
-                        Register to enjoy seamless booking, exclusive member rates, and personalized services at MRK Hotel & Resort.
+                        Create your staff account to access the hotel management system and start managing operations.
                     </p>
                     
                     <!-- Benefits List -->
@@ -66,7 +66,7 @@
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
-                            <span>Faster checkout process</span>
+                            <span>Manage reservations</span>
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
                             <div class="bg-accent/20 rounded-full p-1.5">
@@ -74,7 +74,7 @@
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
-                            <span>Exclusive member discounts</span>
+                            <span>Room management tools</span>
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
                             <div class="bg-accent/20 rounded-full p-1.5">
@@ -82,7 +82,7 @@
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
-                            <span>Manage bookings online</span>
+                            <span>Check-in/Check-out operations</span>
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
                             <div class="bg-accent/20 rounded-full p-1.5">
@@ -90,7 +90,7 @@
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
-                            <span>Earn loyalty rewards</span>
+                            <span>Reports & analytics</span>
                         </li>
                     </ul>
                 </div>
@@ -117,8 +117,8 @@
                 </div>
                 
                 <div class="text-center mb-8">
-                    <h2 class="text-3xl font-serif font-bold text-dark mb-2">Guest Registration</h2>
-                    <p class="text-gray-600">Create your account to start booking</p>
+                    <h2 class="text-3xl font-serif font-bold text-dark mb-2">Staff Registration</h2>
+                    <p class="text-gray-600">Create your staff account to access the system</p>
                 </div>
 
                 <form method="POST" action="{{ route('register') }}" class="space-y-5">
@@ -175,7 +175,7 @@
 
                     <button type="submit" 
                             class="w-full px-6 py-3 text-base font-semibold rounded-lg bg-primary hover:bg-primary-light text-white transition-colors">
-                        Create Guest Account
+                        Create Staff Account
                     </button>
                 </form>
 
@@ -185,18 +185,26 @@
                             <div class="w-full border-t border-gray-200"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="px-4 bg-white text-gray-500">Already a guest?</span>
+                            <span class="px-4 bg-white text-gray-500">Already have an account?</span>
                         </div>
                     </div>
                     <div class="mt-6 text-center">
                         <a href="{{ route('login') }}" class="inline-flex items-center justify-center w-full px-6 py-3 text-base font-semibold rounded-lg border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary transition-all">
-                            Sign In to Your Account
+                            Sign In to Staff Portal
                         </a>
                     </div>
                 </div>
 
+                <!-- Guest Booking Notice -->
+                <div class="mt-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
+                    <p class="text-sm text-gray-700 text-center">
+                        <span class="font-medium">Looking to book a room?</span><br>
+                        <a href="{{ url('/booking') }}" class="text-primary hover:underline font-medium">Visit our Guest Booking page</a> - no account needed.
+                    </p>
+                </div>
+
                 <p class="mt-6 text-center text-xs text-gray-500">
-                    By creating an account, you agree to receive emails about booking confirmations, special offers, and hotel updates.
+                    Staff registration is for hotel employees only.
                 </p>
             </div>
         </div>

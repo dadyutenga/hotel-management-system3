@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - MRK Hotel & Resort</title>
+    <title>Staff Portal - MRK Hotel & Resort</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Sign in to your MRK Hotel account to manage bookings and access guest services.">
+    <meta name="description" content="Staff login portal for MRK Hotel management system.">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -50,31 +50,31 @@
                 
                 <!-- Content -->
                 <div class="max-w-md">
-                    <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">Welcome Back</p>
+                    <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">Staff Portal</p>
                     <h1 class="text-4xl font-serif font-bold text-white mb-6 leading-tight">
-                        Access Your Guest Portal
+                        Hotel Management System
                     </h1>
                     <p class="text-lg text-gray-300 leading-relaxed mb-8">
-                        Sign in to manage your reservations, view booking history, and access exclusive guest services at MRK Hotel & Resort.
+                        Access the management dashboard to handle reservations, manage rooms, and oversee hotel operations.
                     </p>
                     <div class="flex items-center gap-4 flex-wrap">
                         <div class="flex items-center gap-2 text-gray-300">
                             <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            <span class="text-sm">Manage Bookings</span>
+                            <span class="text-sm">Reservations</span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-300">
                             <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            <span class="text-sm">View History</span>
+                            <span class="text-sm">Room Management</span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-300">
                             <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            <span class="text-sm">Special Offers</span>
+                            <span class="text-sm">Reports</span>
                         </div>
                     </div>
                 </div>
@@ -101,8 +101,8 @@
                 </div>
                 
                 <div class="text-center mb-10">
-                    <h2 class="text-3xl font-serif font-bold text-dark mb-2">Guest Sign In</h2>
-                    <p class="text-gray-600">Enter your credentials to access your account</p>
+                    <h2 class="text-3xl font-serif font-bold text-dark mb-2">Staff Sign In</h2>
+                    <p class="text-gray-600">Enter your credentials to access the management system</p>
                 </div>
 
                 @if(session('success'))
@@ -165,26 +165,11 @@
                     </button>
                 </form>
 
-                <div class="mt-8">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-200"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-4 bg-white text-gray-500">New Guest?</span>
-                        </div>
-                    </div>
-                    <div class="mt-6 text-center">
-                        <a href="{{ route('register') }}" class="inline-flex items-center justify-center w-full px-6 py-3 text-base font-semibold rounded-lg border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary transition-all">
-                            Create Guest Account
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Staff Login Notice -->
-                <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p class="text-sm text-gray-600 text-center">
-                        <span class="font-medium">Hotel Staff?</span> Use your staff credentials to access the management portal.
+                <!-- Guest Booking Notice -->
+                <div class="mt-8 p-4 bg-accent/10 rounded-lg border border-accent/20">
+                    <p class="text-sm text-gray-700 text-center">
+                        <span class="font-medium">Looking to book a room?</span><br>
+                        <a href="{{ url('/booking') }}" class="text-primary hover:underline font-medium">Visit our Guest Booking page</a> to check availability and make a reservation.
                     </p>
                 </div>
 

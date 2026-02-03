@@ -74,7 +74,7 @@
                             </select>
                         </div>
                         <div class="flex items-end">
-                            <a href="{{ route('login') }}" class="w-full inline-flex items-center justify-center px-6 py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-colors">
+                            <a href="{{ url('/booking') }}" class="w-full inline-flex items-center justify-center px-6 py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-colors">
                                 Check Availability
                             </a>
                         </div>
@@ -95,7 +95,7 @@
     <section class="py-6 bg-primary">
         <div class="container mx-auto px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-4">
-                <a href="{{ route('login') }}" class="flex items-center gap-4 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors group">
+                <a href="{{ url('/booking') }}" class="flex items-center gap-4 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors group">
                     <div class="bg-accent/20 p-3 rounded-lg">
                         <svg class="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -106,7 +106,7 @@
                         <p class="text-sm text-gray-300">Book your stay online</p>
                     </div>
                 </a>
-                <a href="{{ url('/rooms') }}" class="flex items-center gap-4 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors group">
+                <a href="{{ url('/booking') }}" class="flex items-center gap-4 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors group">
                     <div class="bg-accent/20 p-3 rounded-lg">
                         <svg class="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -230,7 +230,7 @@
                         <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">Queen Bed</span>
                         <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">City View</span>
                     </div>
-                    <a href="{{ route('login') }}" class="text-primary font-semibold hover:text-primary-light">
+                    <a href="{{ url('/booking') }}" class="text-primary font-semibold hover:text-primary-light">
                         Book Now →
                     </a>
                 </div>
@@ -252,7 +252,7 @@
                         <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">King Bed</span>
                         <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">Pool View</span>
                     </div>
-                    <a href="{{ route('login') }}" class="text-primary font-semibold hover:text-primary-light">
+                    <a href="{{ url('/booking') }}" class="text-primary font-semibold hover:text-primary-light">
                         Book Now →
                     </a>
                 </div>
@@ -274,7 +274,7 @@
                         <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">King Bed</span>
                         <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">Ocean View</span>
                     </div>
-                    <a href="{{ route('login') }}" class="text-primary font-semibold hover:text-primary-light">
+                    <a href="{{ url('/booking') }}" class="text-primary font-semibold hover:text-primary-light">
                         Book Now →
                     </a>
                 </div>
@@ -486,14 +486,14 @@
                     <div class="flex items-start gap-4">
                         <div class="bg-white/10 p-3 rounded-lg">
                             <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-serif text-2xl font-bold mb-2">Guest Registration</h3>
-                            <p class="text-white/80 mb-4">Create an account to manage your bookings, view reservation history, and access exclusive offers.</p>
-                            <a href="{{ route('register') }}" class="inline-flex items-center bg-white text-secondary px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                                Register Now
+                            <h3 class="font-serif text-2xl font-bold mb-2">Guest Booking</h3>
+                            <p class="text-white/80 mb-4">Book your stay directly online. Check room availability, view rates, and make your reservation in minutes.</p>
+                            <a href="{{ url('/booking') }}" class="inline-flex items-center bg-white text-secondary px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                                Book Your Stay
                                 <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>

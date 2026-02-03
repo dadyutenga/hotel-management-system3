@@ -35,6 +35,93 @@ Route::get('/features', function () {
     return view('features');
 })->name('features');
 
+// Guest Booking Routes (public - no authentication required)
+Route::get('/booking', function () {
+    $roomTypes = \App\Models\RoomType::all();
+    return view('booking', compact('roomTypes'));
+})->name('booking');
+
+Route::get('/booking/search', function () {
+    $roomTypes = \App\Models\RoomType::all();
+    $checkIn = request('check_in');
+    $checkOut = request('check_out');
+    $guests = request('guests');
+    $roomTypeId = request('room_type');
+    
+    // Get available rooms for the selected dates
+    $availableRooms = \App\Models\Room::with(['roomType', 'floor'])
+        ->where('status', 'available')
+        ->when($roomTypeId, function($query) use ($roomTypeId) {
+            $query->where('room_type_id', $roomTypeId);
+        })
+        ->whereDoesntHave('reservations', function($query) use ($checkIn, $checkOut) {
+            $query->where(function($q) use ($checkIn, $checkOut) {
+                $q->whereBetween('check_in_date', [$checkIn, $checkOut])
+                  ->orWhereBetween('check_out_date', [$checkIn, $checkOut])
+                  ->orWhere(function($q2) use ($checkIn, $checkOut) {
+                      $q2->where('check_in_date', '<=', $checkIn)
+                         ->where('check_out_date', '>=', $checkOut);
+                  });
+            })->whereNotIn('status', ['cancelled', 'checked_out']);
+        })
+        ->get();
+    
+    return view('booking', compact('roomTypes', 'availableRooms', 'checkIn', 'checkOut', 'guests'));
+})->name('booking.search');
+
+Route::get('/booking/room/{room}', function (\App\Models\Room $room) {
+    $roomTypes = \App\Models\RoomType::all();
+    $selectedRoom = $room->load(['roomType', 'floor']);
+    $checkIn = request('check_in');
+    $checkOut = request('check_out');
+    $guests = request('guests');
+    
+    // Calculate total price
+    $nights = (strtotime($checkOut) - strtotime($checkIn)) / (60 * 60 * 24);
+    $totalPrice = $nights * ($room->roomType->price_per_night ?? 150);
+    
+    return view('booking', compact('roomTypes', 'selectedRoom', 'checkIn', 'checkOut', 'guests', 'totalPrice'));
+})->name('booking.room');
+
+Route::post('/booking', function () {
+    $validated = request()->validate([
+        'room_id' => 'required|exists:rooms,id',
+        'check_in' => 'required|date',
+        'check_out' => 'required|date|after:check_in',
+        'guests' => 'required|integer|min:1',
+        'guest_name' => 'required|string|max:255',
+        'guest_email' => 'required|email|max:255',
+        'guest_phone' => 'required|string|max:50',
+        'guest_country' => 'nullable|string|max:100',
+        'special_requests' => 'nullable|string|max:1000',
+    ]);
+    
+    $room = \App\Models\Room::with('roomType')->findOrFail($validated['room_id']);
+    $nights = (strtotime($validated['check_out']) - strtotime($validated['check_in'])) / (60 * 60 * 24);
+    $totalPrice = $nights * ($room->roomType->price_per_night ?? 150);
+    
+    // Create the reservation
+    $reservation = \App\Models\Reservation::create([
+        'room_id' => $validated['room_id'],
+        'guest_name' => $validated['guest_name'],
+        'guest_email' => $validated['guest_email'],
+        'guest_phone' => $validated['guest_phone'],
+        'check_in_date' => $validated['check_in'],
+        'check_out_date' => $validated['check_out'],
+        'guests_count' => $validated['guests'],
+        'total_price' => $totalPrice,
+        'special_requests' => $validated['special_requests'] ?? null,
+        'status' => 'pending',
+    ]);
+    
+    return redirect()->route('booking.confirmation', $reservation->id);
+})->name('booking.store');
+
+Route::get('/booking/confirmation/{reservation}', function (\App\Models\Reservation $reservation) {
+    $reservation->load(['room.roomType', 'room.floor']);
+    return view('booking-confirmation', compact('reservation'));
+})->name('booking.confirmation');
+
 // Guest Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
