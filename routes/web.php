@@ -18,6 +18,23 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Public pages
+Route::get('/about', function () {
+    return view('about');
+})->name('about');
+
+Route::get('/contact', function () {
+    return view('contact');
+})->name('contact');
+
+Route::get('/pricing', function () {
+    return view('pricing');
+})->name('pricing');
+
+Route::get('/features', function () {
+    return view('features');
+})->name('features');
+
 // Guest Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
