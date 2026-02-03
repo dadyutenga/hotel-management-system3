@@ -6,7 +6,7 @@
             <a href="{{ url('/') }}" class="flex items-center gap-3">
                 <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto" onerror="this.style.display='none'">
                 <div>
-                    <span class="text-xl font-serif font-bold text-primary block leading-tight">MRK Hotel</span>
+                    <span class="text-xl font-bold text-primary block leading-tight">MRK Hotel</span>
                     <span class="text-xs text-gray-500 tracking-wider uppercase">& Resort</span>
                 </div>
             </a>
@@ -29,7 +29,7 @@
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="hidden sm:inline text-sm font-medium text-gray-700 hover:text-primary transition-colors">Staff Login</a>
-                    <a href="{{ url('/booking') }}" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-lg bg-accent text-white hover:bg-secondary transition-colors shadow-sm">
+                    <a href="{{ url('/booking') }}" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white hover:shadow-lg transition-all">
                         Book Now
                     </a>
                 @endauth
@@ -49,7 +49,6 @@
         <nav class="container mx-auto px-6 py-4 space-y-3">
             <a href="{{ url('/') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Home</a>
             <a href="{{ url('/booking') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Rooms & Booking</a>
-            <a href="{{ url('/services') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Services</a>
             <a href="{{ url('/about') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">About</a>
             <a href="{{ url('/contact') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Contact</a>
             <hr class="border-gray-200">

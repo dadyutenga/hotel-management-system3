@@ -6,21 +6,18 @@
     <title>Contact Us - MRK Hotel & Resort</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
     <meta name="description" content="Get in touch with MRK Hotel & Resort. Our concierge team is ready to assist with reservations, inquiries, and special requests.">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#1a365d',
-                        'primary-light': '#2c5282',
-                        secondary: '#744210',
-                        accent: '#c69c6d',
+                        primary: '#005eb8',
+                        secondary: '#000000',
                         dark: '#1a202c',
                     },
                     fontFamily: {
-                        serif: ['Playfair Display', 'Georgia', 'serif'],
                         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
                     },
                 },
@@ -43,8 +40,8 @@
         </div>
         <div class="container mx-auto px-6 lg:px-8 relative z-10">
             <div class="max-w-3xl">
-                <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">Contact Us</p>
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight mb-6">
+                <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white text-sm font-semibold rounded-full mb-6 backdrop-blur-sm">Contact Us</span>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
                     We're Here to<br/>Assist You
                 </h1>
                 <p class="text-lg md:text-xl text-gray-200 leading-relaxed">
@@ -63,12 +60,12 @@
                 <div class="space-y-6">
                     <!-- Phone -->
                     <div class="bg-gray-50 rounded-2xl p-8">
-                        <div class="bg-primary h-14 w-14 rounded-xl flex items-center justify-center mb-5">
+                        <div class="bg-gradient-to-br from-primary to-blue-600 h-14 w-14 rounded-xl flex items-center justify-center mb-5 shadow-lg">
                             <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-serif font-bold text-dark mb-2">Reservations</h3>
+                        <h3 class="text-xl font-bold text-secondary mb-2">Reservations</h3>
                         <p class="text-gray-600 mb-4">Available 24/7 for bookings</p>
                         <a href="tel:+255123456789" class="text-primary font-semibold hover:text-primary-light transition-colors">+255 123 456 789</a>
                         <br>
@@ -77,12 +74,12 @@
 
                     <!-- Email -->
                     <div class="bg-gray-50 rounded-2xl p-8">
-                        <div class="bg-primary h-14 w-14 rounded-xl flex items-center justify-center mb-5">
+                        <div class="bg-gradient-to-br from-primary to-blue-600 h-14 w-14 rounded-xl flex items-center justify-center mb-5 shadow-lg">
                             <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-serif font-bold text-dark mb-2">Email Us</h3>
+                        <h3 class="text-xl font-bold text-secondary mb-2">Email Us</h3>
                         <p class="text-gray-600 mb-4">We respond within 2 hours</p>
                         <a href="mailto:reservations@mrkhotel.com" class="text-primary font-semibold hover:text-primary-light transition-colors">reservations@mrkhotel.com</a>
                         <br>
@@ -91,13 +88,13 @@
 
                     <!-- Location -->
                     <div class="bg-gray-50 rounded-2xl p-8">
-                        <div class="bg-primary h-14 w-14 rounded-xl flex items-center justify-center mb-5">
+                        <div class="bg-gradient-to-br from-primary to-blue-600 h-14 w-14 rounded-xl flex items-center justify-center mb-5 shadow-lg">
                             <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-serif font-bold text-dark mb-2">Our Location</h3>
+                        <h3 class="text-xl font-bold text-secondary mb-2">Our Location</h3>
                         <p class="text-gray-600 mb-4">Beachfront property</p>
                         <p class="text-gray-700">123 Ocean Drive<br>
                         Masaki Peninsula<br>
@@ -106,23 +103,23 @@
 
                     <!-- Business Hours -->
                     <div class="bg-gray-50 rounded-2xl p-8">
-                        <div class="bg-primary h-14 w-14 rounded-xl flex items-center justify-center mb-5">
+                        <div class="bg-gradient-to-br from-primary to-blue-600 h-14 w-14 rounded-xl flex items-center justify-center mb-5 shadow-lg">
                             <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-serif font-bold text-dark mb-2">Front Desk Hours</h3>
+                        <h3 class="text-xl font-bold text-secondary mb-2">Front Desk Hours</h3>
                         <p class="text-gray-600 mb-4">We're always here for you</p>
                         <p class="text-gray-700">Check-in: 2:00 PM<br>
                         Check-out: 11:00 AM<br>
-                        <span class="text-accent font-medium">Front Desk: 24 Hours</span></p>
+                        <span class="text-primary font-medium">Front Desk: 24 Hours</span></p>
                     </div>
                 </div>
 
                 <!-- Contact Form -->
                 <div class="lg:col-span-2">
                     <div class="bg-white rounded-2xl p-10 shadow-xl border border-gray-100">
-                        <h2 class="text-2xl font-serif font-bold text-dark mb-2">Send Us a Message</h2>
+                        <h2 class="text-2xl font-bold text-secondary mb-2">Send Us a Message</h2>
                         <p class="text-gray-600 mb-8">Have a special request or inquiry? Fill out the form below and our team will respond promptly.</p>
                         
                         <form action="#" method="POST" class="space-y-6">
@@ -209,7 +206,7 @@
                             </div>
 
                             <button type="submit" 
-                                    class="w-full px-8 py-4 text-base font-semibold rounded-lg bg-primary hover:bg-primary-light text-white transition-colors">
+                                    class="w-full px-8 py-4 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg hover:shadow-xl transition-shadow">
                                 Send Message
                             </button>
                         </form>
@@ -223,8 +220,8 @@
     <section class="py-20 bg-gray-50">
         <div class="container mx-auto px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-12">
-                <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">Find Us</p>
-                <h2 class="text-3xl md:text-4xl font-serif font-bold text-dark mb-6">
+                <span class="inline-block px-4 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4">Find Us</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-secondary mb-6">
                     Our Prime Location
                 </h2>
                 <p class="text-lg text-gray-600 leading-relaxed">
@@ -245,15 +242,15 @@
             </div>
             <div class="grid md:grid-cols-3 gap-8 mt-8">
                 <div class="text-center">
-                    <div class="text-accent font-bold text-2xl mb-2">15 min</div>
+                    <div class="text-primary font-bold text-2xl mb-2">15 min</div>
                     <p class="text-gray-600">From Julius Nyerere Airport</p>
                 </div>
                 <div class="text-center">
-                    <div class="text-accent font-bold text-2xl mb-2">5 min</div>
+                    <div class="text-primary font-bold text-2xl mb-2">5 min</div>
                     <p class="text-gray-600">From City Center</p>
                 </div>
                 <div class="text-center">
-                    <div class="text-accent font-bold text-2xl mb-2">Walking Distance</div>
+                    <div class="text-primary font-bold text-2xl mb-2">Walking Distance</div>
                     <p class="text-gray-600">To Beach & Shopping</p>
                 </div>
             </div>
@@ -264,15 +261,15 @@
     <section class="py-20 bg-white">
         <div class="container mx-auto px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <p class="text-accent font-medium tracking-widest uppercase text-sm mb-4">FAQ</p>
-                <h2 class="text-3xl md:text-4xl font-serif font-bold text-dark mb-6">
+                <span class="inline-block px-4 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4">FAQ</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-secondary mb-6">
                     Frequently Asked Questions
                 </h2>
             </div>
             <div class="max-w-3xl mx-auto space-y-4" x-data="{ open: null }">
                 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
                     <button @click="open = open === 1 ? null : 1" class="w-full px-6 py-5 text-left flex items-center justify-between">
-                        <span class="font-semibold text-dark">What are the check-in and check-out times?</span>
+                        <span class="font-semibold text-secondary">What are the check-in and check-out times?</span>
                         <svg class="h-5 w-5 text-primary transition-transform" :class="{ 'rotate-180': open === 1 }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -283,7 +280,7 @@
                 </div>
                 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
                     <button @click="open = open === 2 ? null : 2" class="w-full px-6 py-5 text-left flex items-center justify-between">
-                        <span class="font-semibold text-dark">Do you offer airport transfers?</span>
+                        <span class="font-semibold text-secondary">Do you offer airport transfers?</span>
                         <svg class="h-5 w-5 text-primary transition-transform" :class="{ 'rotate-180': open === 2 }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -294,7 +291,7 @@
                 </div>
                 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
                     <button @click="open = open === 3 ? null : 3" class="w-full px-6 py-5 text-left flex items-center justify-between">
-                        <span class="font-semibold text-dark">Is breakfast included in the room rate?</span>
+                        <span class="font-semibold text-secondary">Is breakfast included in the room rate?</span>
                         <svg class="h-5 w-5 text-primary transition-transform" :class="{ 'rotate-180': open === 3 }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -305,7 +302,7 @@
                 </div>
                 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
                     <button @click="open = open === 4 ? null : 4" class="w-full px-6 py-5 text-left flex items-center justify-between">
-                        <span class="font-semibold text-dark">What amenities are available at the hotel?</span>
+                        <span class="font-semibold text-secondary">What amenities are available at the hotel?</span>
                         <svg class="h-5 w-5 text-primary transition-transform" :class="{ 'rotate-180': open === 4 }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -316,7 +313,7 @@
                 </div>
                 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
                     <button @click="open = open === 5 ? null : 5" class="w-full px-6 py-5 text-left flex items-center justify-between">
-                        <span class="font-semibold text-dark">What is your cancellation policy?</span>
+                        <span class="font-semibold text-secondary">What is your cancellation policy?</span>
                         <svg class="h-5 w-5 text-primary transition-transform" :class="{ 'rotate-180': open === 5 }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -330,23 +327,23 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-20 bg-primary">
+    <section class="py-20 bg-gradient-to-br from-primary via-blue-600 to-primary">
         <div class="container mx-auto px-6 lg:px-8 text-center">
             <div class="max-w-4xl mx-auto">
-                <h2 class="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-white mb-6">
+                <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-6">
                     Ready to Experience MRK Hospitality?
                 </h2>
-                <p class="text-xl text-gray-300 mb-10 leading-relaxed">
+                <p class="text-xl text-white/90 mb-10 leading-relaxed">
                     Book your stay today and discover why our guests return again and again.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ url('/rooms') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-lg bg-accent hover:bg-accent/90 text-white transition-colors">
+                    <a href="{{ url('/booking') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl bg-white text-primary shadow-lg hover:shadow-xl transition-shadow">
                         Book a Room
                         <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                     </a>
-                    <a href="tel:+255123456789" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-primary transition-colors">
+                    <a href="tel:+255123456789" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl border-2 border-white text-white hover:bg-white/10 transition-colors">
                         Call Us Now
                     </a>
                 </div>

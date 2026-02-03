@@ -7,7 +7,7 @@
                 <a href="{{ url('/') }}" class="flex items-center gap-3 mb-6">
                     <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto brightness-0 invert" onerror="this.style.display='none'">
                     <div>
-                        <span class="text-xl font-serif font-bold text-white block leading-tight">MRK Hotel</span>
+                        <span class="text-xl font-bold text-white block leading-tight">MRK Hotel</span>
                         <span class="text-xs text-gray-400 tracking-wider uppercase">& Resort</span>
                     </div>
                 </a>
@@ -31,7 +31,7 @@
             <div>
                 <h4 class="text-white font-semibold mb-6">Quick Links</h4>
                 <ul class="space-y-3">
-                    <li><a href="{{ url('/rooms') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Room Booking</a></li>
+                    <li><a href="{{ url('/booking') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Room Booking</a></li>
                     <li><a href="{{ url('/services') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Hotel Services</a></li>
                     <li><a href="{{ url('/dining') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Restaurant & Bar</a></li>
                     <li><a href="{{ url('/events') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Events & Conferences</a></li>
@@ -54,20 +54,20 @@
                 <h4 class="text-white font-semibold mb-6">Contact Information</h4>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 text-primary mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <span class="text-gray-400 text-sm">Samora Avenue<br>Dar es Salaam, Tanzania</span>
                     </li>
                     <li class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                         <span class="text-gray-400 text-sm">+255 123 456 789</span>
                     </li>
                     <li class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         <span class="text-gray-400 text-sm">reservations@mrkhotel.com</span>
