@@ -6,10 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
@@ -43,10 +41,5 @@ class User extends Authenticatable implements FilamentUser
     public function isFrontDesk(): bool
     {
         return $this->role && $this->role->name === 'front_desk';
-    }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->is_active;
     }
 }
