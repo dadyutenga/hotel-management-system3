@@ -35,20 +35,20 @@
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Success Message -->
             <div class="text-center mb-12">
-                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-100 to-green-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                     <svg class="w-10 h-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
                 <h1 class="text-4xl font-extrabold text-secondary mb-4">Reservation Confirmed!</h1>
-                <p class="text-xl text-gray-600">Thank you for choosing MRK Hotel & Resort</p>
+                <p class="text-xl text-gray-500">Thank you for choosing MRK Hotel & Resort</p>
             </div>
 
             <!-- Confirmation Card -->
-            <div class="bg-white rounded-xl shadow-xl overflow-hidden mb-8">
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
                 <!-- Header -->
                 <div class="bg-gradient-to-r from-primary to-blue-600 p-6 text-center">
-                    <p class="text-white/80 font-medium tracking-widest uppercase text-sm mb-1">Confirmation Number</p>
+                    <p class="text-white/80 font-semibold tracking-widest uppercase text-sm mb-1">Confirmation Number</p>
                     <h2 class="text-3xl font-bold text-white tracking-wider">MRK-{{ str_pad($reservation->id, 6, '0', STR_PAD_LEFT) }}</h2>
                 </div>
 
@@ -57,58 +57,58 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <!-- Guest Information -->
                         <div>
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Guest Information</h3>
+                            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Guest Information</h3>
                             <div class="space-y-3">
                                 <div>
                                     <span class="text-gray-500 text-sm">Name</span>
-                                    <p class="font-medium text-dark">{{ $reservation->guest_name }}</p>
+                                    <p class="font-semibold text-secondary">{{ $reservation->guest_name }}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-500 text-sm">Email</span>
-                                    <p class="font-medium text-dark">{{ $reservation->guest_email }}</p>
+                                    <p class="font-semibold text-secondary">{{ $reservation->guest_email }}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-500 text-sm">Phone</span>
-                                    <p class="font-medium text-dark">{{ $reservation->guest_phone }}</p>
+                                    <p class="font-semibold text-secondary">{{ $reservation->guest_phone }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Stay Details -->
                         <div>
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Stay Details</h3>
+                            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Stay Details</h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
                                     <div>
                                         <span class="text-gray-500 text-sm">Check-in</span>
-                                        <p class="font-medium text-dark">{{ \Carbon\Carbon::parse($reservation->check_in_date)->format('D, M d, Y') }}</p>
+                                        <p class="font-semibold text-secondary">{{ \Carbon\Carbon::parse($reservation->check_in_date)->format('D, M d, Y') }}</p>
                                         <p class="text-sm text-gray-500">After 3:00 PM</p>
                                     </div>
                                     <div class="text-right">
                                         <span class="text-gray-500 text-sm">Check-out</span>
-                                        <p class="font-medium text-dark">{{ \Carbon\Carbon::parse($reservation->check_out_date)->format('D, M d, Y') }}</p>
+                                        <p class="font-semibold text-secondary">{{ \Carbon\Carbon::parse($reservation->check_out_date)->format('D, M d, Y') }}</p>
                                         <p class="text-sm text-gray-500">Before 11:00 AM</p>
                                     </div>
                                 </div>
                                 <div>
                                     <span class="text-gray-500 text-sm">Guests</span>
-                                    <p class="font-medium text-dark">{{ $reservation->guests_count }} {{ $reservation->guests_count > 1 ? 'Guests' : 'Guest' }}</p>
+                                    <p class="font-semibold text-secondary">{{ $reservation->guests_count }} {{ $reservation->guests_count > 1 ? 'Guests' : 'Guest' }}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Room Information -->
-                    <div class="border-t border-gray-200 pt-6 mb-6">
-                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Room Details</h3>
+                    <div class="border-t border-gray-100 pt-6 mb-6">
+                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Room Details</h3>
                         <div class="flex items-start gap-6">
-                            <div class="w-32 h-24 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                            <div class="w-32 h-24 bg-gray-200 rounded-xl overflow-hidden flex-shrink-0">
                                 <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=300&h=200&fit=crop" 
                                      alt="{{ $reservation->room->roomType->name ?? 'Room' }}" class="w-full h-full object-cover">
                             </div>
                             <div>
-                                <h4 class="text-lg font-semibold text-dark">{{ $reservation->room->roomType->name ?? 'Room' }}</h4>
-                                <p class="text-gray-600">Room {{ $reservation->room->room_number }} &bull; Floor {{ $reservation->room->floor->number ?? 'N/A' }}</p>
+                                <h4 class="text-lg font-bold text-secondary">{{ $reservation->room->roomType->name ?? 'Room' }}</h4>
+                                <p class="text-gray-500">Room {{ $reservation->room->room_number }} &bull; Floor {{ $reservation->room->floor->number ?? 'N/A' }}</p>
                                 @if($reservation->special_requests)
                                     <p class="text-sm text-gray-500 mt-2">
                                         <span class="font-medium">Special Requests:</span> {{ $reservation->special_requests }}
@@ -119,22 +119,22 @@
                     </div>
 
                     <!-- Price Summary -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Payment Summary</h3>
+                    <div class="border-t border-gray-100 pt-6">
+                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Payment Summary</h3>
                         @php
                             $nights = (strtotime($reservation->check_out_date) - strtotime($reservation->check_in_date)) / (60 * 60 * 24);
                             $pricePerNight = $reservation->room->roomType->price_per_night ?? 150;
                         @endphp
                         <div class="space-y-2">
-                            <div class="flex justify-between text-gray-600">
+                            <div class="flex justify-between text-gray-500">
                                 <span>${{ number_format($pricePerNight, 2) }} x {{ $nights }} {{ $nights > 1 ? 'nights' : 'night' }}</span>
                                 <span>${{ number_format($pricePerNight * $nights, 2) }}</span>
                             </div>
-                            <div class="flex justify-between text-gray-600">
+                            <div class="flex justify-between text-gray-500">
                                 <span>Taxes & Fees</span>
                                 <span>Included</span>
                             </div>
-                            <div class="flex justify-between text-lg font-bold text-dark pt-2 border-t border-gray-200 mt-2">
+                            <div class="flex justify-between text-lg font-bold text-secondary pt-2 border-t border-gray-100 mt-2">
                                 <span>Total</span>
                                 <span class="text-primary">${{ number_format($reservation->total_price, 2) }}</span>
                             </div>
@@ -144,7 +144,7 @@
                 </div>
 
                 <!-- Status Badge -->
-                <div class="bg-primary/10 px-8 py-4 border-t border-gray-200">
+                <div class="bg-gradient-to-br from-primary/5 to-blue-50 px-8 py-4 border-t border-gray-100">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
@@ -166,35 +166,35 @@
             </div>
 
             <!-- Important Information -->
-            <div class="mt-12 bg-white rounded-xl shadow-lg p-8">
-                <h3 class="text-xl font-bold text-secondary mb-6">Important Information</h3>
+            <div class="mt-12 bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <h3 class="text-xl font-extrabold text-secondary mb-6">Important Information</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <h4 class="font-semibold text-dark mb-2">Check-in Policy</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
+                        <h4 class="font-bold text-secondary mb-2">Check-in Policy</h4>
+                        <ul class="text-sm text-gray-500 space-y-1">
                             <li>• Check-in time: 3:00 PM</li>
                             <li>• Valid ID required at check-in</li>
                             <li>• Credit card for incidentals</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 class="font-semibold text-dark mb-2">Check-out Policy</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
+                        <h4 class="font-bold text-secondary mb-2">Check-out Policy</h4>
+                        <ul class="text-sm text-gray-500 space-y-1">
                             <li>• Check-out time: 11:00 AM</li>
                             <li>• Late check-out available upon request</li>
                             <li>• Express check-out available</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 class="font-semibold text-dark mb-2">Cancellation Policy</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
+                        <h4 class="font-bold text-secondary mb-2">Cancellation Policy</h4>
+                        <ul class="text-sm text-gray-500 space-y-1">
                             <li>• Free cancellation up to 24 hours before check-in</li>
                             <li>• No-show will be charged one night</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 class="font-semibold text-dark mb-2">Need Help?</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
+                        <h4 class="font-bold text-secondary mb-2">Need Help?</h4>
+                        <ul class="text-sm text-gray-500 space-y-1">
                             <li>• Call: +1 (555) 123-4567</li>
                             <li>• Email: reservations@mrkhotel.com</li>
                         </ul>

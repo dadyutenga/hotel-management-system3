@@ -50,10 +50,10 @@
     <section class="py-16 -mt-12 relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Booking Search Card -->
-            <div class="bg-white rounded-xl shadow-2xl p-8 mb-16" x-data="{ step: 1 }">
+            <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 mb-16" x-data="{ step: 1 }">
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-extrabold text-secondary mb-2">Check Availability & Book</h2>
-                    <p class="text-gray-600">Fill in your details to find available rooms</p>
+                    <p class="text-gray-500">Fill in your details to find available rooms</p>
                 </div>
 
                 <form action="{{ route('booking.search') }}" method="GET" class="space-y-8">
@@ -78,21 +78,21 @@
                     <!-- Date Selection -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
-                            <label for="check_in" class="block text-sm font-medium text-gray-700 mb-2">Check-in Date</label>
+                            <label for="check_in" class="block text-sm font-semibold text-secondary mb-2">Check-in Date</label>
                             <input type="date" id="check_in" name="check_in" required
                                    min="{{ date('Y-m-d') }}"
-                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                         </div>
                         <div>
-                            <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2">Check-out Date</label>
+                            <label for="check_out" class="block text-sm font-semibold text-secondary mb-2">Check-out Date</label>
                             <input type="date" id="check_out" name="check_out" required
                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                         </div>
                         <div>
-                            <label for="guests" class="block text-sm font-medium text-gray-700 mb-2">Number of Guests</label>
+                            <label for="guests" class="block text-sm font-semibold text-secondary mb-2">Number of Guests</label>
                             <select id="guests" name="guests" required
-                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                                 <option value="1">1 Guest</option>
                                 <option value="2" selected>2 Guests</option>
                                 <option value="3">3 Guests</option>
@@ -101,9 +101,9 @@
                             </select>
                         </div>
                         <div>
-                            <label for="room_type" class="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
+                            <label for="room_type" class="block text-sm font-semibold text-secondary mb-2">Room Type</label>
                             <select id="room_type" name="room_type"
-                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                                 <option value="">All Room Types</option>
                                 @if(isset($roomTypes))
                                     @foreach($roomTypes as $type)
@@ -137,7 +137,7 @@
                     <h2 class="text-3xl font-extrabold text-secondary text-center mb-8">Available Rooms</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         @foreach($availableRooms as $room)
-                            <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all">
                                 <div class="aspect-video bg-gray-200">
                                     <img src="{{ $room->image ?? 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&h=400&fit=crop' }}" 
                                          alt="{{ $room->roomType->name ?? 'Room' }}" class="w-full h-full object-cover">
@@ -159,11 +159,11 @@
                     </div>
                 </div>
             @elseif(isset($availableRooms))
-                <div class="text-center py-12 bg-white rounded-xl shadow-lg mb-16">
+                <div class="text-center py-12 bg-white rounded-2xl shadow-lg border border-gray-100 mb-16">
                     <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Rooms Available</h3>
+                    <h3 class="text-xl font-bold text-secondary mb-2">No Rooms Available</h3>
                     <p class="text-gray-500">Sorry, no rooms are available for your selected dates. Please try different dates.</p>
                 </div>
             @endif
@@ -176,7 +176,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <!-- Standard Room -->
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all">
                         <div class="aspect-[4/3] overflow-hidden">
                             <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&h=450&fit=crop" 
                                  alt="Standard Room" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
@@ -212,7 +212,7 @@
                     </div>
 
                     <!-- Deluxe Room -->
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all">
                         <div class="aspect-[4/3] overflow-hidden">
                             <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=450&fit=crop" 
                                  alt="Deluxe Room" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
@@ -248,7 +248,7 @@
                     </div>
 
                     <!-- Suite -->
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all">
                         <div class="aspect-[4/3] overflow-hidden">
                             <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=450&fit=crop" 
                                  alt="Suite" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
@@ -284,7 +284,7 @@
                     </div>
 
                     <!-- Executive Suite -->
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all">
                         <div class="aspect-[4/3] overflow-hidden">
                             <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=450&fit=crop" 
                                  alt="Executive Suite" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
@@ -323,24 +323,24 @@
 
             <!-- Guest Information Form (shown when room is selected) -->
             @if(isset($selectedRoom))
-                <div class="bg-white rounded-xl shadow-2xl p-8 mb-16">
+                <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 mb-16">
                     <h2 class="text-2xl font-extrabold text-secondary text-center mb-8">Complete Your Reservation</h2>
                     
                     <!-- Booking Summary -->
-                    <div class="bg-gray-50 rounded-lg p-6 mb-8">
-                        <h3 class="font-semibold text-dark mb-4">Booking Summary</h3>
+                    <div class="bg-gradient-to-br from-primary/5 to-blue-50 rounded-xl border border-primary/20 p-6 mb-8">
+                        <h3 class="font-bold text-secondary mb-4">Booking Summary</h3>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
                                 <span class="text-gray-500">Room</span>
-                                <p class="font-medium text-dark">{{ $selectedRoom->roomType->name }}</p>
+                                <p class="font-semibold text-secondary">{{ $selectedRoom->roomType->name }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-500">Check-in</span>
-                                <p class="font-medium text-dark">{{ request('check_in') }}</p>
+                                <p class="font-semibold text-secondary">{{ request('check_in') }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-500">Check-out</span>
-                                <p class="font-medium text-dark">{{ request('check_out') }}</p>
+                                <p class="font-semibold text-secondary">{{ request('check_out') }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-500">Total</span>
@@ -358,41 +358,41 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="guest_name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                <label for="guest_name" class="block text-sm font-semibold text-secondary mb-2">Full Name *</label>
                                 <input type="text" id="guest_name" name="guest_name" required
-                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                                        placeholder="John Doe">
                             </div>
                             <div>
-                                <label for="guest_email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                                <label for="guest_email" class="block text-sm font-semibold text-secondary mb-2">Email Address *</label>
                                 <input type="email" id="guest_email" name="guest_email" required
-                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                                        placeholder="john@example.com">
                             </div>
                             <div>
-                                <label for="guest_phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                                <label for="guest_phone" class="block text-sm font-semibold text-secondary mb-2">Phone Number *</label>
                                 <input type="tel" id="guest_phone" name="guest_phone" required
-                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                                        placeholder="+1 (555) 000-0000">
                             </div>
                             <div>
-                                <label for="guest_country" class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                                <label for="guest_country" class="block text-sm font-semibold text-secondary mb-2">Country</label>
                                 <input type="text" id="guest_country" name="guest_country"
-                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                                        placeholder="United States">
                             </div>
                         </div>
 
                         <div>
-                            <label for="special_requests" class="block text-sm font-medium text-gray-700 mb-2">Special Requests</label>
+                            <label for="special_requests" class="block text-sm font-semibold text-secondary mb-2">Special Requests</label>
                             <textarea id="special_requests" name="special_requests" rows="3"
-                                      class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                                       placeholder="Any special requests or preferences..."></textarea>
                         </div>
 
                         <div class="flex items-start gap-3">
                             <input type="checkbox" id="terms" name="terms" required
-                                   class="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                   class="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-200 rounded">
                             <label for="terms" class="text-sm text-gray-600">
                                 I agree to the <a href="{{ url('/terms') }}" class="text-primary hover:underline">Terms & Conditions</a> 
                                 and <a href="{{ url('/privacy') }}" class="text-primary hover:underline">Cancellation Policy</a>
