@@ -18,7 +18,7 @@ class FloorController extends Controller {
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'building_id' => 'required|exists:buildings,id',
+            'building_id' => 'required|uuid|exists:buildings,id',
             'name' => 'required|max:255',
             'floor_number' => 'required|integer',
             'is_active' => 'boolean',
@@ -35,7 +35,7 @@ class FloorController extends Controller {
 
     public function update(Request $request, Floor $floor) {
         $validated = $request->validate([
-            'building_id' => 'required|exists:buildings,id',
+            'building_id' => 'required|uuid|exists:buildings,id',
             'name' => 'required|max:255',
             'floor_number' => 'required|integer',
             'is_active' => 'boolean',

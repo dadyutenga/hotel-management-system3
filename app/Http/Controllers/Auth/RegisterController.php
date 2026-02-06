@@ -22,7 +22,7 @@ class RegisterController extends Controller {
         ]);
 
         // Get front_desk role as default for new registrations
-        $defaultRole = Role::where('name', 'front_desk')->first();
+        $defaultRole = Role::where('name', Role::FRONT_DESK)->first();
 
         $user = User::create([
             'name' => $request->name,

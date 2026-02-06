@@ -85,7 +85,7 @@ Route::get('/booking/room/{room}', function (\App\Models\Room $room) {
 
 Route::post('/booking', function () {
     $validated = request()->validate([
-        'room_id' => 'required|exists:rooms,id',
+        'room_id' => 'required|uuid|exists:rooms,id',
         'check_in' => 'required|date',
         'check_out' => 'required|date|after:check_in',
         'guests' => 'required|integer|min:1',

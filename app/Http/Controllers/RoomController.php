@@ -20,8 +20,8 @@ class RoomController extends Controller {
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'floor_id' => 'required|exists:floors,id',
-            'room_type_id' => 'required|exists:room_types,id',
+            'floor_id' => 'required|uuid|exists:floors,id',
+            'room_type_id' => 'required|uuid|exists:room_types,id',
             'room_number' => 'required|max:255',
             'status' => 'required|in:available,reserved,occupied,dirty,out_of_order',
             'is_active' => 'boolean',
@@ -39,8 +39,8 @@ class RoomController extends Controller {
 
     public function update(Request $request, Room $room) {
         $validated = $request->validate([
-            'floor_id' => 'required|exists:floors,id',
-            'room_type_id' => 'required|exists:room_types,id',
+            'floor_id' => 'required|uuid|exists:floors,id',
+            'room_type_id' => 'required|uuid|exists:room_types,id',
             'room_number' => 'required|max:255',
             'status' => 'required|in:available,reserved,occupied,dirty,out_of_order',
             'is_active' => 'boolean',

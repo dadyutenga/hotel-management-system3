@@ -40,7 +40,7 @@ class ReservationController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
             'total_amount' => 'required|numeric|min:0',
-            'room_id' => 'nullable|exists:rooms,id',
+            'room_id' => 'nullable|uuid|exists:rooms,id',
             'status' => 'required|in:pending,confirmed',
         ]);
 
@@ -83,7 +83,7 @@ class ReservationController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
             'total_amount' => 'required|numeric|min:0',
-            'room_id' => 'nullable|exists:rooms,id',
+            'room_id' => 'nullable|uuid|exists:rooms,id',
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled,no_show',
         ]);
 

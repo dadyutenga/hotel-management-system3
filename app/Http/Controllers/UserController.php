@@ -22,7 +22,7 @@ class UserController extends Controller {
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users|max:255',
             'password' => 'required|min:8|confirmed',
-            'role_id' => 'required|exists:roles,id',
+            'role_id' => 'required|uuid|exists:roles,id',
             'is_active' => 'boolean',
         ]);
 
@@ -42,7 +42,7 @@ class UserController extends Controller {
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id.'|max:255',
             'password' => 'nullable|min:8|confirmed',
-            'role_id' => 'required|exists:roles,id',
+            'role_id' => 'required|uuid|exists:roles,id',
             'is_active' => 'boolean',
         ]);
 
