@@ -149,6 +149,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('buildings', BuildingController::class);
         Route::resource('floors', FloorController::class);
         Route::resource('room-types', RoomTypeController::class);
+        Route::delete('room-types/{room_type}/media/{media}', [RoomTypeController::class, 'removeMedia'])->name('room-types.media.destroy');
         Route::resource('users', UserController::class);
     });
 

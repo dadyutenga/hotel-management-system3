@@ -14,7 +14,7 @@
         </div>
 
         <!-- Form -->
-        <form method="POST" action="{{ route('room-types.store') }}" class="p-6">
+        <form method="POST" action="{{ route('room-types.store') }}" enctype="multipart/form-data" class="p-6">
             @csrf
 
             <div class="space-y-6">
@@ -134,6 +134,63 @@
                             {{ $message }}
                         </p>
                     @enderror
+                </div>
+
+                <div class="border-t border-gray-100"></div>
+
+                <!-- Images Section -->
+                <div>
+                    <h3 class="text-lg font-bold text-secondary mb-4 flex items-center gap-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        Room Type Images
+                    </h3>
+
+                    <!-- Main Image -->
+                    <div class="mb-6">
+                        <label for="image" class="block text-sm font-semibold text-secondary mb-2">
+                            Main Image <span class="text-gray-400 text-xs font-normal">(Optional, max 2MB, JPG/PNG/WebP)</span>
+                        </label>
+                        <input 
+                            type="file" 
+                            name="image" 
+                            id="image"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 @error('image') border-red-500 @enderror">
+                        @error('image')
+                            <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    <!-- Gallery Images -->
+                    <div>
+                        <label for="gallery" class="block text-sm font-semibold text-secondary mb-2">
+                            Gallery Images <span class="text-gray-400 text-xs font-normal">(Optional, max 2MB each, JPG/PNG/WebP, multiple allowed)</span>
+                        </label>
+                        <input 
+                            type="file" 
+                            name="gallery[]" 
+                            id="gallery"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            multiple
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 @error('gallery.*') border-red-500 @enderror">
+                        @error('gallery.*')
+                            <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
