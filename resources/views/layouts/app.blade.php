@@ -58,6 +58,8 @@
                 @include('shared.sidebar.admin')
             @elseif(auth()->user()->isSupervisor())
                 @include('shared.sidebar.supervisor')
+            @elseif(auth()->user()->isHouseHelp())
+                @include('shared.sidebar.house-help')
             @else
                 @include('shared.sidebar.front-desk')
             @endif

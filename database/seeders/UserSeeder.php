@@ -1,4 +1,6 @@
 <?php
+// database/seeders/UserSeeder.php
+
 namespace Database\Seeders;
 
 use App\Models\User;
@@ -11,6 +13,7 @@ class UserSeeder extends Seeder {
         $adminRole = Role::where('name', Role::ADMIN)->first();
         $frontDeskRole = Role::where('name', Role::FRONT_DESK)->first();
         $supervisorRole = Role::where('name', Role::SUPERVISOR)->first();
+        $houseHelpRole = Role::where('name', Role::HOUSE_HELP)->first();
 
         User::create([
             'name' => 'System Administrator',
@@ -33,6 +36,14 @@ class UserSeeder extends Seeder {
             'email' => 'supervisor@hotel.com',
             'password' => Hash::make('password'),
             'role_id' => $supervisorRole->id,
+            'is_active' => true,
+        ]);
+
+        User::create([
+            'name' => 'House Help Staff',
+            'email' => 'househelp@hotel.com',
+            'password' => Hash::make('password'),
+            'role_id' => $houseHelpRole->id,
             'is_active' => true,
         ]);
     }

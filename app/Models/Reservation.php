@@ -1,9 +1,12 @@
 <?php
+// app/Models/Reservation.php
+
 namespace App\Models;
 
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Reservation extends Model {
     use HasUuid;
@@ -42,6 +45,10 @@ class Reservation extends Model {
         return $this->belongsTo(Booking::class);
     }
 
+    public function laundryTasks(): HasMany {
+        return $this->hasMany(LaundryTask::class);
+    }
+
     /**
      * Get the guest name - from guest relationship or legacy field
      */
@@ -73,5 +80,25 @@ class Reservation extends Model {
             return $this->guest->email;
         }
         return $this->guest_email;
+    }
+
+    /**
+     * Calculate total laundry charges for non-amenity services
+     */
+    public function getTotalLaundryChargesAttribute(): float
+    {
+        return $this->laundryTasks()
+            ->where('is_amenity', false)
+            ->sum('cost');
+    }
+
+    /**
+     * Get pending laundry tasks count
+     */
+    public function getPendingLaundryTasksCountAttribute(): int
+    {
+        return $this->laundryTasks()
+            ->whereIn('status', ['pending', 'in_progress', 'completed'])
+            ->count();
     }
 }

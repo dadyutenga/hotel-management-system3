@@ -1,4 +1,6 @@
 <?php
+// routes/web.php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -13,8 +15,8 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GuestController;
-
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\LaundryTaskController;
 
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
@@ -81,14 +83,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
     });
 
-    Route::middleware(['auth'])->group(function () {
-    // ... existing routes ...
-    
-    // Add profile routes
+    // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    });
 
     // All authenticated users
     Route::resource('reservations', ReservationController::class);
@@ -116,4 +114,25 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('guests', GuestController::class);
     Route::get('guests-search', [GuestController::class, 'search'])->name('guests.search');
     Route::delete('guests/{guest}/media/{media}', [GuestController::class, 'removeMedia'])->name('guests.media.destroy');
+
+    // Laundry Management Routes
+    // Combined: Admin, Supervisor, and House Help
+    Route::middleware(['role:admin,supervisor,house_help'])->group(function () {
+        // All roles can view laundry index
+        Route::get('laundry', [LaundryTaskController::class, 'index'])->name('laundry.index');
+        
+        // All roles can mark tasks as returned (controller will handle permission logic)
+        Route::post('laundry/{laundryTask}/mark-returned', [LaundryTaskController::class, 'markAsReturned'])->name('laundry.mark-returned');
+    });
+
+    // Admin & Supervisor only - Full CRUD
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('laundry/create', [LaundryTaskController::class, 'create'])->name('laundry.create');
+        Route::post('laundry', [LaundryTaskController::class, 'store'])->name('laundry.store');
+        Route::get('laundry/{laundryTask}/edit', [LaundryTaskController::class, 'edit'])->name('laundry.edit');
+        Route::put('laundry/{laundryTask}', [LaundryTaskController::class, 'update'])->name('laundry.update');
+        Route::delete('laundry/{laundryTask}', [LaundryTaskController::class, 'destroy'])->name('laundry.destroy');
+        Route::post('laundry/{laundryTask}/mark-in-progress', [LaundryTaskController::class, 'markAsInProgress'])->name('laundry.mark-in-progress');
+        Route::post('laundry/{laundryTask}/mark-completed', [LaundryTaskController::class, 'markAsCompleted'])->name('laundry.mark-completed');
+    });
 });

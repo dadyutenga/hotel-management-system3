@@ -152,6 +152,49 @@
     </div>
 </div>
 
+{{-- Add to resources/views/dashboards/admin.blade.php after Room & Revenue Stats --}}
+
+<!-- Laundry Overview -->
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-extrabold text-secondary flex items-center gap-2">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Laundry Services Overview
+        </h3>
+        <a href="{{ route('laundry.index') }}" class="text-sm text-primary hover:text-blue-700 font-semibold">View All →</a>
+    </div>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @php
+            $laundryStats = [
+                'total' => \App\Models\LaundryTask::count(),
+                'pending' => \App\Models\LaundryTask::where('status', 'pending')->count(),
+                'in_progress' => \App\Models\LaundryTask::where('status', 'in_progress')->count(),
+                'completed' => \App\Models\LaundryTask::where('status', 'completed')->count(),
+            ];
+        @endphp
+        
+        <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+            <div class="text-2xl font-extrabold text-purple-600">{{ $laundryStats['total'] }}</div>
+            <div class="text-sm text-gray-600 font-medium">Total Tasks</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl border border-yellow-200">
+            <div class="text-2xl font-extrabold text-yellow-600">{{ $laundryStats['pending'] }}</div>
+            <div class="text-sm text-gray-600 font-medium">Pending</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+            <div class="text-2xl font-extrabold text-blue-600">{{ $laundryStats['in_progress'] }}</div>
+            <div class="text-sm text-gray-600 font-medium">In Progress</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+            <div class="text-2xl font-extrabold text-green-600">{{ $laundryStats['completed'] }}</div>
+            <div class="text-sm text-gray-600 font-medium">Completed</div>
+        </div>
+    </div>
+</div>
+
 <!-- Today's Activity -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">

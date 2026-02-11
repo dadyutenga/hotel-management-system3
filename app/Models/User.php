@@ -1,4 +1,5 @@
 <?php
+// app/Models/User.php
 
 namespace App\Models;
 
@@ -7,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -42,5 +44,20 @@ class User extends Authenticatable
     public function isFrontDesk(): bool
     {
         return $this->role && $this->role->name === Role::FRONT_DESK;
+    }
+
+    public function isHouseHelp(): bool
+    {
+        return $this->role && $this->role->name === Role::HOUSE_HELP;
+    }
+
+    public function laundryTasks(): HasMany
+    {
+        return $this->hasMany(LaundryTask::class, 'assigned_to');
+    }
+
+    public function createdLaundryTasks(): HasMany
+    {
+        return $this->hasMany(LaundryTask::class, 'created_by');
     }
 }

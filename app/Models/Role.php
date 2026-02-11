@@ -1,4 +1,6 @@
 <?php
+// app/Models/Role.php
+
 namespace App\Models;
 
 use App\Traits\HasUuid;
@@ -13,11 +15,13 @@ class Role extends Model {
     public const ADMIN = 'admin';
     public const FRONT_DESK = 'front_desk';
     public const SUPERVISOR = 'supervisor';
+    public const HOUSE_HELP = 'house_help';
 
     public static array $roles = [
         self::ADMIN => 'Administrator',
         self::FRONT_DESK => 'Front Desk',
         self::SUPERVISOR => 'Supervisor',
+        self::HOUSE_HELP => 'House Help',
     ];
 
     public static function seedRoles(): void {

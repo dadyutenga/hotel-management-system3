@@ -11,7 +11,11 @@ return new class extends Migration
         Schema::create('media', function (Blueprint $table) {
             $table->id();
 
-            $table->morphs('model');
+            // Replace: $table->morphs('model');
+            // With these two lines instead:
+            $table->uuid('model_id');        // Changed from bigint to uuid
+            $table->string('model_type');
+            
             $table->uuid()->nullable()->unique();
             $table->string('collection_name');
             $table->string('name');
@@ -27,6 +31,14 @@ return new class extends Migration
             $table->unsignedInteger('order_column')->nullable()->index();
 
             $table->nullableTimestamps();
+            
+            // Add index for better performance on polymorphic queries
+            $table->index(['model_id', 'model_type']);
         });
+    }
+    
+    public function down(): void
+    {
+        Schema::dropIfExists('media');
     }
 };
