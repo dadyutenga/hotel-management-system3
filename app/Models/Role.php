@@ -16,12 +16,16 @@ class Role extends Model {
     public const FRONT_DESK = 'front_desk';
     public const SUPERVISOR = 'supervisor';
     public const HOUSE_HELP = 'house_help';
+    public const MANAGER = 'manager';
+    public const STORE_KEEPER = 'store_keeper';
 
     public static array $roles = [
         self::ADMIN => 'Administrator',
         self::FRONT_DESK => 'Front Desk',
         self::SUPERVISOR => 'Supervisor',
         self::HOUSE_HELP => 'House Help',
+        self::MANAGER => 'Manager',
+        self::STORE_KEEPER => 'Store Keeper',
     ];
 
     public static function seedRoles(): void {

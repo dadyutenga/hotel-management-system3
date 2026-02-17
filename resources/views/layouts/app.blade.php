@@ -56,10 +56,14 @@
             <!-- Navigation -->
             @if(auth()->user()->isAdmin())
                 @include('shared.sidebar.admin')
+            @elseif(auth()->user()->isManager())
+                @include('shared.sidebar.manager')
             @elseif(auth()->user()->isSupervisor())
                 @include('shared.sidebar.supervisor')
             @elseif(auth()->user()->isHouseHelp())
                 @include('shared.sidebar.house-help')
+            @elseif(auth()->user()->isStoreKeeper())
+                @include('shared.sidebar.store-keeper')
             @else
                 @include('shared.sidebar.front-desk')
             @endif

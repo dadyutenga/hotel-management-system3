@@ -17,10 +17,14 @@ class DashboardController extends Controller {
         // Route to role-specific dashboard
         if ($user->isAdmin()) {
             return $this->adminDashboard();
+        } elseif ($user->isManager()) {
+            return $this->managerDashboard();
         } elseif ($user->isSupervisor()) {
             return $this->supervisorDashboard();
         } elseif ($user->isHouseHelp()) {
             return $this->houseHelpDashboard();
+        } elseif ($user->isStoreKeeper()) {
+            return $this->storeKeeperDashboard();
         } else {
             return $this->frontDeskDashboard();
         }
@@ -241,6 +245,116 @@ class DashboardController extends Controller {
             'upcomingArrivals',
             'myRecentReservations',
             'availableRoomsByType'
+        ));
+    }
+
+    private function managerDashboard() {
+        $stats = [
+            'total_buildings' => Building::count(),
+            'total_rooms' => Room::count(),
+            'active_rooms' => Room::where('is_active', true)->count(),
+            'total_users' => User::where('is_active', true)->count(),
+            'occupied_rooms' => Room::where('status', 'occupied')->count(),
+            'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
+            'reserved_rooms' => Room::where('status', 'reserved')->count(),
+            'dirty_rooms' => Room::where('status', 'dirty')->count(),
+            'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
+            'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
+            'today_checkouts' => Reservation::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
+            'total_reservations' => Reservation::count(),
+            'pending_reservations' => Reservation::where('status', 'pending')->count(),
+        ];
+
+        // Occupancy rate
+        $stats['occupancy_rate'] = $stats['total_rooms'] > 0
+            ? round(($stats['occupied_rooms'] / $stats['total_rooms']) * 100, 1)
+            : 0;
+
+        // Revenue stats
+        $stats['today_revenue'] = Reservation::whereDate('check_in_date', today())
+            ->where('status', 'checked_in')->sum('total_amount');
+        $stats['week_revenue'] = Reservation::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['month_revenue'] = Reservation::whereMonth('check_in_date', now()->month)
+            ->whereYear('check_in_date', now()->year)
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['total_revenue'] = Reservation::whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+
+        $roomStatusCounts = Room::where('is_active', true)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $reservationStatusCounts = Reservation::select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Recent reservations
+        $recentReservations = Reservation::with(['room', 'creator'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Building stats
+        $buildingStats = Building::withCount(['floors', 'rooms'])->get();
+
+        // Staff overview
+        $staffByRole = User::with('role')
+            ->where('is_active', true)
+            ->get()
+            ->groupBy(fn($user) => $user->role->display_name ?? 'Unknown')
+            ->map->count();
+
+        return view('dashboards.manager', compact(
+            'stats',
+            'roomStatusCounts',
+            'reservationStatusCounts',
+            'recentReservations',
+            'buildingStats',
+            'staffByRole'
+        ));
+    }
+
+    private function storeKeeperDashboard() {
+        $stats = [
+            'total_rooms' => Room::count(),
+            'occupied_rooms' => Room::where('status', 'occupied')->count(),
+            'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
+            'dirty_rooms' => Room::where('status', 'dirty')->count(),
+            'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
+        ];
+
+        // Laundry stats
+        $stats['pending_laundry'] = LaundryTask::where('status', 'pending')->count();
+        $stats['inprogress_laundry'] = LaundryTask::where('status', 'in_progress')->count();
+        $stats['completed_laundry'] = LaundryTask::where('status', 'completed')->count();
+        $stats['returned_laundry'] = LaundryTask::where('status', 'returned')->count();
+        $stats['today_laundry'] = LaundryTask::whereDate('created_at', today())->count();
+
+        // Laundry tasks by status
+        $laundryStatusCounts = LaundryTask::select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Recent laundry tasks
+        $recentLaundryTasks = LaundryTask::with(['assignedTo', 'reservation.room', 'creator'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Rooms needing attention
+        $roomsNeedingAttention = Room::with(['floor.building', 'roomType'])
+            ->whereIn('status', ['dirty', 'out_of_order'])
+            ->get();
+
+        return view('dashboards.store-keeper', compact(
+            'stats',
+            'laundryStatusCounts',
+            'recentLaundryTasks',
+            'roomsNeedingAttention'
         ));
     }
 }

@@ -51,6 +51,16 @@ class User extends Authenticatable
         return $this->role && $this->role->name === Role::HOUSE_HELP;
     }
 
+    public function isManager(): bool
+    {
+        return $this->role && $this->role->name === Role::MANAGER;
+    }
+
+    public function isStoreKeeper(): bool
+    {
+        return $this->role && $this->role->name === Role::STORE_KEEPER;
+    }
+
     public function laundryTasks(): HasMany
     {
         return $this->hasMany(LaundryTask::class, 'assigned_to');
