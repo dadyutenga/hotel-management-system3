@@ -100,6 +100,11 @@ class Booking extends Model
         return $this->hasMany(BookingCharge::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function unpaidCharges(): HasMany
     {
         return $this->hasMany(BookingCharge::class)->where('status', 'unpaid');

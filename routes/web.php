@@ -20,6 +20,8 @@ use App\Http\Controllers\LaundryTaskController;
 use App\Http\Controllers\LaundryItemController;
 use App\Http\Controllers\LaundryOrderController;
 use App\Http\Controllers\BookingChargeController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SnippePaymentController;
 
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
@@ -49,6 +51,14 @@ Route::get('/booking/search', [BookingController::class, 'searchAvailability'])-
 Route::get('/booking/room/{room}', [BookingController::class, 'showRoom'])->name('booking.room');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 Route::get('/booking/confirmation/{reservation}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
+
+// ═══ PAYMENT WEBHOOKS (no auth — called by payment provider servers) ═══
+Route::post('/payments/webhook/snippe', [SnippePaymentController::class, 'webhook'])
+    ->name('payments.webhook.snippe')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// Payment callback (redirect back from card/QR payments)
+Route::get('/payments/callback', [PaymentController::class, 'callback'])->name('payments.callback');
 
 // Guest Routes
 Route::middleware('guest')->group(function () {
@@ -168,5 +178,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('bookings/{booking}/charges', [BookingChargeController::class, 'index'])->name('booking-charges.index');
         Route::post('booking-charges/{bookingCharge}/mark-paid', [BookingChargeController::class, 'markPaid'])->name('booking-charges.mark-paid');
         Route::post('bookings/{booking}/charges/mark-all-paid', [BookingChargeController::class, 'markAllPaid'])->name('booking-charges.mark-all-paid');
+    });
+
+    // ═══ PAYMENTS ═══
+    Route::middleware(['role:admin,supervisor,front_desk,manager'])->group(function () {
+        Route::get('bookings/{booking}/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('bookings/{booking}/payments/create', [PaymentController::class, 'create'])->name('payments.create');
+        Route::post('bookings/{booking}/payments', [PaymentController::class, 'store'])->name('payments.store');
+        Route::get('payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+        Route::get('payments/{payment}/status', [PaymentController::class, 'status'])->name('payments.status');
+        Route::get('payments/{payment}/check-status', [PaymentController::class, 'checkStatus'])->name('payments.check-status');
+        Route::post('payments/{payment}/trigger-push', [PaymentController::class, 'triggerPush'])->name('payments.trigger-push');
+        Route::post('payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
     });
 });

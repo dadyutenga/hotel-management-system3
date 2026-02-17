@@ -1,0 +1,335 @@
+<?php
+
+namespace App\Services\Payment;
+
+use App\Contracts\PaymentProvider;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+/**
+ * Snippe Payment Provider Adapter.
+ *
+ * Supports: Mobile Money (USSD push), Card (redirect), Dynamic QR.
+ * Base URL: https://api.snippe.sh
+ * Docs: https://docs.snippe.sh
+ */
+class SnippeProvider implements PaymentProvider
+{
+    protected string $baseUrl;
+    protected string $apiKey;
+    protected ?string $webhookSecret;
+    protected int $timeout;
+
+    public function __construct()
+    {
+        $this->baseUrl       = config('payment.providers.snippe.base_url', 'https://api.snippe.sh');
+        $this->apiKey        = config('payment.providers.snippe.api_key', '');
+        $this->webhookSecret = config('payment.providers.snippe.webhook_secret');
+        $this->timeout       = config('payment.providers.snippe.timeout', 30);
+    }
+
+    public function name(): string
+    {
+        return 'snippe';
+    }
+
+    public function supportedMethods(): array
+    {
+        return ['mobile', 'card', 'dynamic-qr'];
+    }
+
+    /**
+     * Initiate a payment via Snippe API.
+     *
+     * POST /v1/payments
+     */
+    public function initiatePayment(float $amount, string $currency, string $method, array $metadata = []): array
+    {
+        $idempotencyKey = $metadata['idempotency_key'] ?? Str::uuid()->toString();
+
+        // Build request payload
+        $payload = [
+            'payment_type' => $method, // mobile, card, dynamic-qr
+            'details' => [
+                'amount'   => (int) $amount, // Snippe expects integer (smallest unit)
+                'currency' => $currency,
+            ],
+            'webhook_url' => route('payments.webhook.snippe'),
+            'metadata' => [
+                'booking_id' => $metadata['booking_id'] ?? null,
+                'charge_id'  => $metadata['charge_id'] ?? null,
+                'payment_id' => $metadata['payment_id'] ?? null,
+            ],
+        ];
+
+        // Add phone number for mobile payments
+        if (!empty($metadata['phone_number'])) {
+            $payload['phone_number'] = $metadata['phone_number'];
+        }
+
+        // Add customer details
+        if (!empty($metadata['customer'])) {
+            $payload['customer'] = $metadata['customer'];
+        } else {
+            $payload['customer'] = [
+                'firstname' => $metadata['guest_first_name'] ?? 'Guest',
+                'lastname'  => $metadata['guest_last_name'] ?? '',
+                'email'     => $metadata['guest_email'] ?? '',
+            ];
+        }
+
+        // Card payments require redirect URLs
+        if (in_array($method, ['card', 'dynamic-qr'])) {
+            $payload['details']['redirect_url'] = $metadata['redirect_url']
+                ?? route('payments.callback', ['provider' => 'snippe', 'status' => 'success']);
+            $payload['details']['cancel_url'] = $metadata['cancel_url']
+                ?? route('payments.callback', ['provider' => 'snippe', 'status' => 'cancel']);
+        }
+
+        // Card payments require billing details
+        if ($method === 'card') {
+            $payload['customer'] = array_merge($payload['customer'], [
+                'address'  => $metadata['billing_address'] ?? '',
+                'city'     => $metadata['billing_city'] ?? '',
+                'state'    => $metadata['billing_state'] ?? '',
+                'postcode' => $metadata['billing_postcode'] ?? '',
+                'country'  => $metadata['billing_country'] ?? 'TZ',
+            ]);
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization'  => 'Bearer ' . $this->apiKey,
+                'Content-Type'   => 'application/json',
+                'Idempotency-Key' => $idempotencyKey,
+            ])
+            ->timeout($this->timeout)
+            ->retry(3, 1000, function ($exception) {
+                // Retry on 429 (rate limit) and 5xx server errors
+                return $exception instanceof \Illuminate\Http\Client\RequestException
+                    && in_array($exception->response?->status(), [429, 500, 502, 503]);
+            })
+            ->post("{$this->baseUrl}/v1/payments", $payload);
+
+            if ($response->successful()) {
+                $data = $response->json('data', []);
+
+                Log::info('Snippe payment initiated', [
+                    'reference' => $data['reference'] ?? null,
+                    'method'    => $method,
+                    'amount'    => $amount,
+                ]);
+
+                return [
+                    'success'          => true,
+                    'reference'        => $data['reference'] ?? null,
+                    'status'           => $data['status'] ?? 'pending',
+                    'payment_url'      => $data['payment_url'] ?? null,
+                    'payment_qr_code'  => $data['payment_qr_code'] ?? null,
+                    'payment_token'    => $data['payment_token'] ?? null,
+                    'expires_at'       => $data['expires_at'] ?? null,
+                    'idempotency_key'  => $idempotencyKey,
+                    'raw'              => $data,
+                ];
+            }
+
+            $error = $response->json();
+            Log::error('Snippe payment initiation failed', [
+                'status' => $response->status(),
+                'error'  => $error,
+            ]);
+
+            return [
+                'success'   => false,
+                'reference' => null,
+                'status'    => 'failed',
+                'error'     => $error['message'] ?? 'Payment initiation failed',
+                'raw'       => $error,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Snippe payment exception', [
+                'message' => $e->getMessage(),
+                'method'  => $method,
+            ]);
+
+            return [
+                'success'   => false,
+                'reference' => null,
+                'status'    => 'failed',
+                'error'     => $e->getMessage(),
+                'raw'       => [],
+            ];
+        }
+    }
+
+    /**
+     * Verify a payment status.
+     *
+     * GET /v1/payments/{reference}
+     */
+    public function verifyPayment(string $reference): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ])
+            ->timeout($this->timeout)
+            ->get("{$this->baseUrl}/v1/payments/{$reference}");
+
+            if ($response->successful()) {
+                $data = $response->json('data', []);
+                return [
+                    'success' => true,
+                    'status'  => $data['status'] ?? 'unknown',
+                    'raw'     => $data,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'status'  => 'unknown',
+                'raw'     => $response->json(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Snippe verify payment exception', ['message' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'status'  => 'unknown',
+                'error'   => $e->getMessage(),
+                'raw'     => [],
+            ];
+        }
+    }
+
+    /**
+     * Refund a payment.
+     *
+     * POST /v1/payments/{reference}/refund
+     */
+    public function refundPayment(string $reference, ?float $amount = null): array
+    {
+        try {
+            $payload = [];
+            if ($amount !== null) {
+                $payload['amount'] = (int) $amount;
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type'  => 'application/json',
+            ])
+            ->timeout($this->timeout)
+            ->post("{$this->baseUrl}/v1/payments/{$reference}/refund", $payload);
+
+            if ($response->successful()) {
+                $data = $response->json('data', []);
+                return [
+                    'success'          => true,
+                    'refund_reference' => $data['reference'] ?? $reference,
+                    'raw'              => $data,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error'   => $response->json('message', 'Refund failed'),
+                'raw'     => $response->json(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Snippe refund exception', ['message' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'error'   => $e->getMessage(),
+                'raw'     => [],
+            ];
+        }
+    }
+
+    /**
+     * Validate webhook by verifying X-Webhook-Signature HMAC-SHA256.
+     */
+    public function validateWebhook(array $payload, array $headers): bool
+    {
+        if (empty($this->webhookSecret)) {
+            // If no secret configured, skip validation (dev mode)
+            Log::warning('Snippe webhook secret not configured — skipping signature verification');
+            return true;
+        }
+
+        $signature = $headers['x-webhook-signature'] ?? $headers['X-Webhook-Signature'] ?? null;
+        if (!$signature) {
+            return false;
+        }
+
+        $computed = hash_hmac('sha256', json_encode($payload), $this->webhookSecret);
+        return hash_equals($computed, $signature);
+    }
+
+    /**
+     * Parse incoming Snippe webhook into normalized structure.
+     */
+    public function parseWebhook(array $payload): array
+    {
+        $data = $payload['data'] ?? [];
+        $type = $payload['type'] ?? '';
+
+        // Map Snippe event types to our status
+        $status = match ($type) {
+            'payment.completed' => 'successful',
+            'payment.failed'    => 'failed',
+            default             => 'pending',
+        };
+
+        return [
+            'event'     => $type,
+            'reference' => $data['reference'] ?? null,
+            'status'    => $status,
+            'amount'    => $data['amount']['value'] ?? 0,
+            'currency'  => $data['amount']['currency'] ?? 'TZS',
+            'metadata'  => $data['metadata'] ?? [],
+            'raw'       => $payload,
+        ];
+    }
+
+    /**
+     * Trigger push notification for a pending mobile payment.
+     *
+     * POST /v1/payments/{reference}/push
+     */
+    public function triggerPush(string $reference, ?string $phone = null): array
+    {
+        try {
+            $payload = [];
+            if ($phone) {
+                $payload['phone'] = $phone;
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type'  => 'application/json',
+            ])
+            ->timeout($this->timeout)
+            ->post("{$this->baseUrl}/v1/payments/{$reference}/push", $payload);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'raw'     => $response->json(),
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error'   => $response->json('message', 'Push failed'),
+                'raw'     => $response->json(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error'   => $e->getMessage(),
+                'raw'     => [],
+            ];
+        }
+    }
+}
