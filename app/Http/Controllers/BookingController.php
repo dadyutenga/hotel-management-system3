@@ -4,15 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Guest;
+use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
+/**
+ * BookingController — manages active guest stays + billing.
+ *
+ * Booking = active stay. Created at check-in (from Reservation or walk-in).
+ * All charges attach here. Ends at checkout.
+ *
+ * Public booking flow creates a Reservation (future intent), NOT a Booking.
+ */
 class BookingController extends Controller
 {
     // ═══════════════════════════════════════════════════════════════
-    //  PUBLIC BOOKING FLOW (No authentication required)
+    //  PUBLIC BOOKING FLOW — creates a Reservation (future intent)
     // ═══════════════════════════════════════════════════════════════
 
     /**
@@ -43,7 +52,7 @@ class BookingController extends Controller
         $guests = $request->guests;
         $roomTypeId = $request->room_type;
 
-        // Get available rooms for the selected dates using the new scope
+        // Get available rooms for the selected dates
         $availableRooms = Room::with(['roomType', 'floor'])
             ->availableForDates($checkIn, $checkOut)
             ->when($roomTypeId, function ($query) use ($roomTypeId) {
@@ -65,7 +74,7 @@ class BookingController extends Controller
         $checkOut = $request->check_out;
         $guests = $request->guests;
 
-        // Calculate total price
+        // Calculate estimated price
         $nights = Carbon::parse($checkIn)->diffInDays(Carbon::parse($checkOut));
         $totalPrice = $nights * ($room->roomType->base_rate ?? 150);
 
@@ -73,8 +82,8 @@ class BookingController extends Controller
     }
 
     /**
-     * Store a new public booking.
-     * Creates both a Booking and a linked Reservation via the observer.
+     * Store a public booking — creates a Reservation (future intent).
+     * NOT a Booking (Booking = active stay, created at check-in).
      */
     public function store(Request $request)
     {
@@ -99,49 +108,47 @@ class BookingController extends Controller
                 ->with('error', 'Sorry, this room is no longer available for the selected dates. Please choose another room.');
         }
 
-        // Calculate total amount
+        // Calculate estimated amount
         $nights = Carbon::parse($validated['check_in'])->diffInDays(Carbon::parse($validated['check_out']));
-        $totalAmount = $nights * ($room->roomType->base_rate ?? 150);
+        $estimatedAmount = $nights * ($room->roomType->base_rate ?? 150);
 
         // Try to find an existing guest by email
         $guest = Guest::where('email', $validated['guest_email'])->first();
 
-        // Create the booking (observer will auto-create the reservation)
-        $booking = Booking::create([
+        // Create a Reservation (future intent — NOT a Booking)
+        $reservation = Reservation::create([
             'guest_id' => $guest?->id,
             'guest_name' => $validated['guest_name'],
             'guest_email' => $validated['guest_email'],
             'guest_phone' => $validated['guest_phone'],
-            'guest_country' => $validated['guest_country'] ?? null,
             'room_id' => $room->id,
             'check_in_date' => $validated['check_in'],
             'check_out_date' => $validated['check_out'],
             'number_of_guests' => $validated['guests'],
-            'total_amount' => $totalAmount,
-            'special_requests' => $validated['special_requests'] ?? null,
+            'estimated_amount' => $estimatedAmount,
             'status' => 'pending',
-            'source' => 'online',
+            // created_by is null for public bookings (no auth user)
         ]);
 
-        return redirect()->route('booking.confirmation', $booking->id);
+        return redirect()->route('booking.confirmation', $reservation->id);
     }
 
     /**
-     * Show booking confirmation page.
+     * Show reservation confirmation page (after public booking).
      */
-    public function showConfirmation(Booking $booking)
+    public function showConfirmation(Reservation $reservation)
     {
-        $booking->load(['room.roomType', 'room.floor', 'reservation']);
+        $reservation->load(['room.roomType', 'room.floor']);
 
-        return view('public.booking-confirmation', compact('booking'));
+        return view('public.booking-confirmation', compact('reservation'));
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  FRONTDESK BOOKING MANAGEMENT (Authentication required)
+    //  FRONTDESK BOOKING MANAGEMENT — active stays
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * List all bookings for the frontdesk.
+     * List all bookings (active stays and past stays).
      */
     public function index(Request $request)
     {
@@ -182,9 +189,9 @@ class BookingController extends Controller
         // Stats for dashboard cards
         $stats = [
             'total' => Booking::count(),
-            'pending' => Booking::pending()->count(),
-            'confirmed' => Booking::confirmed()->count(),
-            'today_checkins' => Booking::today()->where('status', 'confirmed')->count(),
+            'checked_in' => Booking::where('status', 'checked_in')->count(),
+            'checked_out' => Booking::where('status', 'checked_out')->count(),
+            'today_checkins' => Booking::whereDate('check_in_date', today())->where('status', 'checked_in')->count(),
             'today_checkouts' => Booking::where('check_out_date', now()->toDateString())
                 ->where('status', 'checked_in')->count(),
         ];
@@ -193,7 +200,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Show create booking form for frontdesk.
+     * Show create booking form — for walk-in guests (immediate check-in).
      */
     public function create(Request $request)
     {
@@ -220,7 +227,8 @@ class BookingController extends Controller
     }
 
     /**
-     * Store a new frontdesk booking.
+     * Store a new walk-in booking — guest is checked in immediately.
+     * Booking starts with status = checked_in.
      */
     public function storeFrontdesk(Request $request)
     {
@@ -260,7 +268,6 @@ class BookingController extends Controller
             'total_amount' => 'required|numeric|min:0',
             'special_requests' => 'nullable|string|max:1000',
             'source' => 'nullable|in:frontdesk,phone,walkin',
-            'status' => 'nullable|in:pending,confirmed',
         ]);
 
         $room = Room::with('roomType')->findOrFail($validated['room_id']);
@@ -275,7 +282,7 @@ class BookingController extends Controller
         // Get guest data for legacy fields
         $guest = Guest::findOrFail($guestId);
 
-        // Create booking (observer will auto-create reservation)
+        // Create booking with checked_in status (walk-in = immediate check-in)
         $booking = Booking::create([
             'guest_id' => $guestId,
             'guest_name' => $guest->full_name,
@@ -288,13 +295,13 @@ class BookingController extends Controller
             'number_of_guests' => $validated['number_of_guests'],
             'total_amount' => $validated['total_amount'],
             'special_requests' => $validated['special_requests'] ?? null,
-            'status' => $validated['status'] ?? 'confirmed',
-            'source' => $validated['source'] ?? 'frontdesk',
+            'status' => 'checked_in', // Walk-in = immediately checked in
+            'source' => $validated['source'] ?? 'walkin',
             'created_by' => auth()->id(),
         ]);
 
         return redirect()->route('bookings.index')
-            ->with('success', 'Booking created successfully. Reservation #' . $booking->reservation?->reservation_number . ' has been generated.');
+            ->with('success', 'Walk-in guest checked in. Booking #' . $booking->booking_number . ' created.');
     }
 
     /**
@@ -302,18 +309,18 @@ class BookingController extends Controller
      */
     public function show(Booking $booking)
     {
-        $booking->load(['room.roomType', 'room.floor.building', 'guest', 'creator', 'reservation']);
+        $booking->load(['room.roomType', 'room.floor.building', 'guest', 'creator', 'reservation', 'laundryOrders', 'bookingCharges']);
 
         return view('bookings.show', compact('booking'));
     }
 
     /**
-     * Show edit form for a booking.
+     * Show edit form for a booking (only checked_in bookings).
      */
     public function edit(Booking $booking)
     {
         if (!$booking->canBeEdited()) {
-            return back()->with('error', 'This booking cannot be edited in its current status.');
+            return back()->with('error', 'Only active (checked-in) bookings can be edited.');
         }
 
         $booking->load(['room.roomType', 'guest']);
@@ -342,7 +349,7 @@ class BookingController extends Controller
     public function update(Request $request, Booking $booking)
     {
         if (!$booking->canBeEdited()) {
-            return back()->with('error', 'This booking cannot be edited in its current status.');
+            return back()->with('error', 'Only active (checked-in) bookings can be edited.');
         }
 
         $validated = $request->validate([
@@ -362,7 +369,7 @@ class BookingController extends Controller
                 ->with('error', 'The selected room is not available for these dates.');
         }
 
-        // Update guest info if guest changed
+        // Update data
         $updateData = [
             'room_id' => $validated['room_id'],
             'check_in_date' => $validated['check_in_date'],
@@ -383,21 +390,6 @@ class BookingController extends Controller
 
         $booking->update($updateData);
 
-        // Sync changes to linked reservation
-        if ($booking->reservation) {
-            $booking->reservation->update([
-                'room_id' => $booking->room_id,
-                'guest_id' => $booking->guest_id,
-                'guest_name' => $booking->guest_name,
-                'guest_email' => $booking->guest_email,
-                'guest_phone' => $booking->guest_phone,
-                'check_in_date' => $booking->check_in_date,
-                'check_out_date' => $booking->check_out_date,
-                'number_of_guests' => $booking->number_of_guests,
-                'total_amount' => $booking->total_amount,
-            ]);
-        }
-
         return redirect()->route('bookings.index')
             ->with('success', 'Booking updated successfully.');
     }
@@ -405,38 +397,6 @@ class BookingController extends Controller
     // ═══════════════════════════════════════════════════════════════
     //  STATUS MANAGEMENT ACTIONS
     // ═══════════════════════════════════════════════════════════════
-
-    /**
-     * Confirm a pending booking.
-     */
-    public function confirm(Booking $booking)
-    {
-        if (!$booking->canBeConfirmed()) {
-            return back()->with('error', 'Only pending bookings can be confirmed.');
-        }
-
-        $booking->update(['status' => 'confirmed']);
-
-        return back()->with('success', 'Booking confirmed successfully.');
-    }
-
-    /**
-     * Check in a confirmed booking.
-     */
-    public function checkIn(Booking $booking)
-    {
-        if (!$booking->canBeCheckedIn()) {
-            return back()->with('error', 'Only confirmed bookings can be checked in.');
-        }
-
-        if (!$booking->room_id) {
-            return back()->with('error', 'Please assign a room before checking in.');
-        }
-
-        $booking->update(['status' => 'checked_in']);
-
-        return back()->with('success', 'Guest checked in successfully.');
-    }
 
     /**
      * Check out a checked-in booking.
@@ -472,12 +432,12 @@ class BookingController extends Controller
     }
 
     /**
-     * Cancel a booking.
+     * Cancel an active booking.
      */
     public function cancel(Request $request, Booking $booking)
     {
         if (!$booking->canBeCancelled()) {
-            return back()->with('error', 'This booking cannot be cancelled in its current status.');
+            return back()->with('error', 'Only active (checked-in) bookings can be cancelled.');
         }
 
         $reason = $request->input('cancellation_reason', 'Cancelled by staff');
@@ -491,27 +451,12 @@ class BookingController extends Controller
     }
 
     /**
-     * Mark a booking as no-show.
-     */
-    public function noShow(Booking $booking)
-    {
-        if (!in_array($booking->status, ['pending', 'confirmed'])) {
-            return back()->with('error', 'Only pending or confirmed bookings can be marked as no-show.');
-        }
-
-        $booking->update(['status' => 'no_show']);
-
-        return back()->with('success', 'Booking marked as no-show.');
-    }
-
-    /**
-     * Destroy a booking (soft-delete or hard-delete).
+     * Destroy a booking (only checked-out or cancelled).
      */
     public function destroy(Booking $booking)
     {
-        // Only allow deletion of cancelled or no-show bookings
-        if (!in_array($booking->status, ['cancelled', 'no_show'])) {
-            return back()->with('error', 'Only cancelled or no-show bookings can be deleted.');
+        if (!in_array($booking->status, ['cancelled', 'checked_out'])) {
+            return back()->with('error', 'Only checked-out or cancelled bookings can be deleted.');
         }
 
         $booking->delete();
@@ -552,7 +497,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Get available rooms for dates via AJAX (used in frontdesk booking form).
+     * Get available rooms for dates via AJAX.
      */
     public function getAvailableRooms(Request $request)
     {

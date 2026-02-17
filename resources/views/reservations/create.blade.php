@@ -363,22 +363,22 @@
                             @enderror
                         </div>
 
-                        <!-- Total Amount -->
+                        <!-- Estimated Amount -->
                         <div>
-                            <label for="total_amount" class="block text-sm font-semibold text-secondary mb-2">
-                                Total Amount ($) <span class="text-red-500">*</span>
+                            <label for="estimated_amount" class="block text-sm font-semibold text-secondary mb-2">
+                                Estimated Amount ($) <span class="text-red-500">*</span>
                             </label>
                             <input 
                                 type="number" 
-                                name="total_amount" 
-                                id="total_amount"
-                                value="{{ old('total_amount', 0) }}" 
+                                name="estimated_amount" 
+                                id="estimated_amount"
+                                value="{{ old('estimated_amount', 0) }}" 
                                 step="0.01"
                                 min="0"
-                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('total_amount') border-red-500 @enderror"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('estimated_amount') border-red-500 @enderror"
                                 placeholder="0.00"
                                 required>
-                            @error('total_amount')
+                            @error('estimated_amount')
                                 <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>

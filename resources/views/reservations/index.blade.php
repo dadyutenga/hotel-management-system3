@@ -55,26 +55,12 @@
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $reservations->where('status', 'checked_in')->count() }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Checked In</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all cursor-pointer">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $reservations->where('status', 'checked_out')->count() }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Checked Out</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $reservations->where('status', 'converted')->count() }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Converted</div>
                 </div>
             </div>
         </div>
@@ -166,7 +152,7 @@
                             <div class="text-xs text-primary">{{ $reservation->check_in_date->diffInDays($reservation->check_out_date) }} nights</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold text-secondary">${{ number_format($reservation->total_amount, 2) }}</span>
+                            <span class="text-sm font-bold text-secondary">${{ number_format($reservation->estimated_amount, 2) }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @include('components.reservation-status-badge', ['status' => $reservation->status])
@@ -178,20 +164,20 @@
                                     Edit
                                 </a>
                                 
-                                @if($reservation->status === 'confirmed' && $reservation->check_in_date->isToday())
-                                    <form method="POST" action="{{ route('reservations.check-in', $reservation) }}" class="inline">
+                                @if($reservation->status === 'pending')
+                                    <form method="POST" action="{{ route('reservations.confirm', $reservation) }}" class="inline">
                                         @csrf
                                         <button type="submit" class="text-green-600 hover:text-green-700 font-semibold">
-                                            Check In
+                                            Confirm
                                         </button>
                                     </form>
                                 @endif
 
-                                @if($reservation->status === 'checked_in' && $reservation->check_out_date->isToday())
-                                    <form method="POST" action="{{ route('reservations.check-out', $reservation) }}" class="inline">
+                                @if($reservation->status === 'confirmed')
+                                    <form method="POST" action="{{ route('reservations.check-in', $reservation) }}" class="inline">
                                         @csrf
-                                        <button type="submit" class="text-red-600 hover:text-red-700 font-semibold">
-                                            Check Out
+                                        <button type="submit" class="text-blue-600 hover:text-blue-700 font-semibold">
+                                            Check In
                                         </button>
                                     </form>
                                 @endif

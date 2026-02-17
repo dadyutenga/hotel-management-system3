@@ -1,7 +1,7 @@
 {{-- resources/views/bookings/create.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Create Booking')
+@section('title', 'Walk-in Check-in')
 @section('page-title', 'Bookings')
 
 @section('content')
@@ -9,8 +9,8 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100">
         <!-- Header -->
         <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white rounded-t-2xl">
-            <h2 class="text-xl font-extrabold text-secondary">Create Booking</h2>
-            <p class="text-sm text-gray-500 mt-1">Book a room for a guest</p>
+            <h2 class="text-xl font-extrabold text-secondary">Walk-in Check-in</h2>
+            <p class="text-sm text-gray-500 mt-1">Check in a walk-in guest directly</p>
         </div>
 
         <!-- Form -->
@@ -228,12 +228,11 @@
                             </p>
                             @error('total_amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-secondary mb-2">Status</label>
-                            <select name="status" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
-                                <option value="confirmed" {{ old('status', 'confirmed') === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                                <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            </select>
+                        <div class="flex items-center">
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 w-full">
+                                <p class="text-sm font-semibold text-blue-800">Status: Checked In</p>
+                                <p class="text-xs text-blue-600 mt-1">Walk-in guests are checked in immediately</p>
+                            </div>
                         </div>
                     </div>
 
@@ -253,7 +252,7 @@
                     </a>
                     <button type="submit" 
                             class="px-8 py-3 bg-gradient-to-r from-primary to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
-                        Create Booking
+                        Check In Guest
                     </button>
                 </div>
             </div>

@@ -14,7 +14,7 @@
                     <h2 class="text-xl font-extrabold text-secondary">Edit Booking</h2>
                     <p class="text-sm text-gray-500 mt-1">{{ $booking->booking_number }}</p>
                 </div>
-                @include('components.reservation-status-badge', ['status' => $booking->status])
+                @include('components.booking-status-badge', ['status' => $booking->status])
             </div>
         </div>
 

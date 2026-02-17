@@ -216,7 +216,7 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <h3 class="text-lg font-extrabold text-secondary mb-6">Reservation Status Distribution</h3>
         <div class="space-y-3">
-            @foreach(['pending' => 'yellow', 'confirmed' => 'green', 'checked_in' => 'blue', 'checked_out' => 'gray', 'cancelled' => 'red'] as $status => $color)
+            @foreach(['pending' => 'yellow', 'confirmed' => 'green', 'converted' => 'blue', 'cancelled' => 'red', 'no_show' => 'gray'] as $status => $color)
                 <div class="flex items-center justify-between p-3 bg-{{ $color }}-50 rounded-xl">
                     <div class="flex items-center">
                         <div class="w-3 h-3 rounded-full bg-{{ $color }}-500 mr-3"></div>

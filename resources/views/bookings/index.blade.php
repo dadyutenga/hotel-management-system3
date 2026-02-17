@@ -39,28 +39,28 @@
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $stats['pending'] }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Pending</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $stats['checked_in'] }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Checked In</div>
                 </div>
             </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <div class="w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $stats['confirmed'] }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Confirmed</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $stats['checked_out'] }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Checked Out</div>
                 </div>
             </div>
         </div>
@@ -104,12 +104,9 @@
             <div>
                 <select name="status" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
                     <option value="">All Statuses</option>
-                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="confirmed" {{ request('status') === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                     <option value="checked_in" {{ request('status') === 'checked_in' ? 'selected' : '' }}>Checked In</option>
                     <option value="checked_out" {{ request('status') === 'checked_out' ? 'selected' : '' }}>Checked Out</option>
                     <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                    <option value="no_show" {{ request('status') === 'no_show' ? 'selected' : '' }}>No Show</option>
                 </select>
             </div>
             <div>
@@ -212,7 +209,7 @@
                             <span class="px-2 py-1 text-xs rounded {{ $sourceClasses }}">{{ ucfirst($booking->source) }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            @include('components.reservation-status-badge', ['status' => $booking->status])
+                            @include('components.booking-status-badge', ['status' => $booking->status])
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <div class="flex items-center gap-2">
@@ -229,24 +226,6 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </a>
-                                @endif
-
-                                @if($booking->canBeConfirmed())
-                                    <form method="POST" action="{{ route('bookings.confirm', $booking) }}" class="inline">
-                                        @csrf
-                                        <button type="submit" class="text-green-600 hover:text-green-700 font-semibold text-xs" title="Confirm">
-                                            Confirm
-                                        </button>
-                                    </form>
-                                @endif
-
-                                @if($booking->canBeCheckedIn())
-                                    <form method="POST" action="{{ route('bookings.check-in', $booking) }}" class="inline">
-                                        @csrf
-                                        <button type="submit" class="text-blue-600 hover:text-blue-700 font-semibold text-xs" title="Check In">
-                                            Check In
-                                        </button>
-                                    </form>
                                 @endif
 
                                 @if($booking->canBeCheckedOut())

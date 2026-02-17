@@ -59,7 +59,7 @@ class Room extends Model
             ->whereDoesntHave('reservations', function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in_date', '<', $checkOut)
                   ->where('check_out_date', '>', $checkIn)
-                  ->whereNotIn('status', ['cancelled', 'no_show', 'checked_out'])
+                  ->whereNotIn('status', ['cancelled', 'no_show', 'converted'])
                   ->whereNull('booking_id');
             });
     }

@@ -4,19 +4,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Booking;
 use App\Models\Reservation;
 use App\Models\Building;
 use App\Models\User;
-use App\Models\LaundryTask;
 use App\Models\LaundryOrder;
 use App\Models\BookingCharge;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * DashboardController — role-specific dashboards.
+ *
+ * Revenue / check-in / check-out stats are computed from Booking (active stays).
+ * Upcoming arrivals / pending counts are computed from Reservation (future holds).
+ */
 class DashboardController extends Controller {
     public function index() {
         $user = auth()->user();
         
-        // Route to role-specific dashboard
         if ($user->isAdmin()) {
             return $this->adminDashboard();
         } elseif ($user->isManager()) {
@@ -41,10 +46,13 @@ class DashboardController extends Controller {
             'occupied_rooms' => Room::where('status', 'occupied')->count(),
             'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
+            // Expected arrivals today (Reservation — future holds)
             'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
-            'today_checkouts' => Reservation::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
+            // Guests who need to check out today (Booking — active stays)
+            'today_checkouts' => Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
             'total_reservations' => Reservation::count(),
             'pending_reservations' => Reservation::where('status', 'pending')->count(),
+            'active_bookings' => Booking::where('status', 'checked_in')->count(),
         ];
 
         $roomStatusCounts = Room::where('is_active', true)
@@ -58,17 +66,17 @@ class DashboardController extends Controller {
             ->pluck('count', 'status')
             ->toArray();
 
-        // Revenue stats
-        $stats['today_revenue'] = Reservation::whereDate('check_in_date', today())
-            ->where('status', 'checked_in')->sum('total_amount');
-        $stats['week_revenue'] = Reservation::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+        // Revenue stats — computed from Booking (active stays + completed stays)
+        $stats['today_revenue'] = Booking::whereDate('created_at', today())
             ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
-        $stats['month_revenue'] = Reservation::whereMonth('check_in_date', now()->month)
+        $stats['week_revenue'] = Booking::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['month_revenue'] = Booking::whereMonth('check_in_date', now()->month)
             ->whereYear('check_in_date', now()->year)
             ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
-        $stats['total_revenue'] = Reservation::whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['total_revenue'] = Booking::whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
 
-        // Recent activities
+        // Recent reservations (future holds)
         $recentReservations = Reservation::with(['room', 'creator'])
             ->latest()
             ->limit(5)
@@ -79,7 +87,6 @@ class DashboardController extends Controller {
             ->limit(5)
             ->get();
 
-        // Building stats
         $buildingStats = Building::withCount(['floors', 'rooms'])->get();
 
         return view('dashboards.admin', compact(
@@ -100,12 +107,14 @@ class DashboardController extends Controller {
             'dirty_rooms' => Room::where('status', 'dirty')->count(),
             'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
+            // Expected arrivals (Reservation)
             'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
-            'today_checkouts' => Reservation::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
+            // Guests due to depart (Booking)
+            'today_checkouts' => Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
             'pending_reservations' => Reservation::where('status', 'pending')->count(),
         ];
 
-        // Laundry stats (new system)
+        // Laundry stats
         $stats['pending_laundry'] = LaundryOrder::where('status', 'pending')->count();
         $stats['inprogress_laundry'] = LaundryOrder::where('status', 'in_progress')->count();
         $stats['completed_laundry'] = LaundryOrder::where('status', 'completed')->count();
@@ -123,17 +132,21 @@ class DashboardController extends Controller {
             ->pluck('count', 'status')
             ->toArray();
 
-        // Today's activity
+        // Today's arrivals (Reservation — pending/confirmed arriving today)
         $todayActivity = Reservation::with('room')
-            ->where(function ($query) {
-                $query->whereDate('check_in_date', today())
-                      ->orWhereDate('check_out_date', today());
-            })
-            ->whereIn('status', ['confirmed', 'checked_in', 'pending'])
+            ->whereDate('check_in_date', today())
+            ->whereIn('status', ['confirmed', 'pending'])
             ->orderBy('check_in_date')
             ->get();
 
-        // Upcoming arrivals
+        // Today's departures (Booking — checked-in guests due to depart today)
+        $todayDepartures = Booking::with('room')
+            ->whereDate('check_out_date', today())
+            ->where('status', 'checked_in')
+            ->orderBy('check_out_date')
+            ->get();
+
+        // Upcoming arrivals (Reservation — future holds)
         $upcomingArrivals = Reservation::with('room')
             ->whereBetween('check_in_date', [today(), today()->addDays(7)])
             ->whereIn('status', ['pending', 'confirmed'])
@@ -141,23 +154,21 @@ class DashboardController extends Controller {
             ->limit(10)
             ->get();
 
-        // Rooms requiring attention
         $roomsNeedingAttention = Room::with(['floor.building', 'roomType'])
             ->whereIn('status', ['dirty', 'out_of_order'])
             ->get();
 
-        // Recent laundry orders (new system)
         $recentLaundryOrders = LaundryOrder::with(['guest', 'booking.room', 'creator'])
             ->latest()
             ->limit(5)
             ->get();
 
-        // Revenue stats
-        $stats['today_revenue'] = Reservation::whereDate('check_in_date', today())
-            ->where('status', 'checked_in')->sum('total_amount');
-        $stats['week_revenue'] = Reservation::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+        // Revenue stats — from Booking
+        $stats['today_revenue'] = Booking::whereDate('created_at', today())
             ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
-        $stats['month_revenue'] = Reservation::whereMonth('check_in_date', now()->month)
+        $stats['week_revenue'] = Booking::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['month_revenue'] = Booking::whereMonth('check_in_date', now()->month)
             ->whereYear('check_in_date', now()->year)
             ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
 
@@ -165,6 +176,7 @@ class DashboardController extends Controller {
             'stats',
             'roomStatusCounts',
             'todayActivity',
+            'todayDepartures',
             'upcomingArrivals',
             'roomsNeedingAttention',
             'recentLaundryOrders'
@@ -181,17 +193,14 @@ class DashboardController extends Controller {
             'total_orders' => LaundryOrder::count(),
         ];
 
-        // Room stats for house help
         $stats['dirty_rooms'] = Room::where('status', 'dirty')->count();
         $stats['out_of_order_rooms'] = Room::where('status', 'out_of_order')->count();
 
-        // Recent laundry orders
         $recentOrders = LaundryOrder::with(['guest', 'booking.room', 'creator'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        // Orders by status
         $ordersByStatus = LaundryOrder::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -205,22 +214,29 @@ class DashboardController extends Controller {
             'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
             'occupied_rooms' => Room::where('status', 'occupied')->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
+            // Expected arrivals (Reservation)
             'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
-            'today_checkouts' => Reservation::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
+            // Guests due to depart (Booking)
+            'today_checkouts' => Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
             'pending_reservations' => Reservation::where('status', 'pending')->count(),
+            'active_bookings' => Booking::where('status', 'checked_in')->count(),
         ];
 
-        // Today's activity
+        // Today's arrivals (Reservation)
         $todayActivity = Reservation::with('room')
-            ->where(function ($query) {
-                $query->whereDate('check_in_date', today())
-                      ->orWhereDate('check_out_date', today());
-            })
-            ->whereIn('status', ['confirmed', 'checked_in', 'pending'])
+            ->whereDate('check_in_date', today())
+            ->whereIn('status', ['confirmed', 'pending'])
             ->orderBy('check_in_date')
             ->get();
 
-        // Upcoming arrivals (next 3 days)
+        // Today's departures (Booking)
+        $todayDepartures = Booking::with('room')
+            ->whereDate('check_out_date', today())
+            ->where('status', 'checked_in')
+            ->orderBy('check_out_date')
+            ->get();
+
+        // Upcoming arrivals (Reservation — next 3 days)
         $upcomingArrivals = Reservation::with('room')
             ->whereBetween('check_in_date', [today(), today()->addDays(3)])
             ->whereIn('status', ['pending', 'confirmed'])
@@ -234,7 +250,6 @@ class DashboardController extends Controller {
             ->limit(5)
             ->get();
 
-        // Available rooms by type
         $availableRoomsByType = Room::with('roomType')
             ->where('status', 'available')
             ->where('is_active', true)
@@ -245,6 +260,7 @@ class DashboardController extends Controller {
         return view('dashboards.front-desk', compact(
             'stats',
             'todayActivity',
+            'todayDepartures',
             'upcomingArrivals',
             'myRecentReservations',
             'availableRoomsByType'
@@ -262,10 +278,13 @@ class DashboardController extends Controller {
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
             'dirty_rooms' => Room::where('status', 'dirty')->count(),
             'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
+            // Expected arrivals (Reservation)
             'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
-            'today_checkouts' => Reservation::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
+            // Guests due to depart (Booking)
+            'today_checkouts' => Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
             'total_reservations' => Reservation::count(),
             'pending_reservations' => Reservation::where('status', 'pending')->count(),
+            'active_bookings' => Booking::where('status', 'checked_in')->count(),
         ];
 
         // Occupancy rate
@@ -273,15 +292,15 @@ class DashboardController extends Controller {
             ? round(($stats['occupied_rooms'] / $stats['total_rooms']) * 100, 1)
             : 0;
 
-        // Revenue stats
-        $stats['today_revenue'] = Reservation::whereDate('check_in_date', today())
-            ->where('status', 'checked_in')->sum('total_amount');
-        $stats['week_revenue'] = Reservation::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+        // Revenue stats — from Booking
+        $stats['today_revenue'] = Booking::whereDate('created_at', today())
             ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
-        $stats['month_revenue'] = Reservation::whereMonth('check_in_date', now()->month)
+        $stats['week_revenue'] = Booking::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['month_revenue'] = Booking::whereMonth('check_in_date', now()->month)
             ->whereYear('check_in_date', now()->year)
             ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
-        $stats['total_revenue'] = Reservation::whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['total_revenue'] = Booking::whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
 
         $roomStatusCounts = Room::where('is_active', true)
             ->select('status', DB::raw('count(*) as count'))
@@ -300,10 +319,8 @@ class DashboardController extends Controller {
             ->limit(10)
             ->get();
 
-        // Building stats
         $buildingStats = Building::withCount(['floors', 'rooms'])->get();
 
-        // Staff overview
         $staffByRole = User::with('role')
             ->where('is_active', true)
             ->get()
@@ -329,26 +346,22 @@ class DashboardController extends Controller {
             'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
         ];
 
-        // Laundry stats (new system)
         $stats['pending_laundry'] = LaundryOrder::where('status', 'pending')->count();
         $stats['inprogress_laundry'] = LaundryOrder::where('status', 'in_progress')->count();
         $stats['completed_laundry'] = LaundryOrder::where('status', 'completed')->count();
         $stats['delivered_laundry'] = LaundryOrder::where('status', 'delivered')->count();
         $stats['today_laundry'] = LaundryOrder::whereDate('created_at', today())->count();
 
-        // Laundry orders by status
         $laundryStatusCounts = LaundryOrder::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        // Recent laundry orders
         $recentLaundryOrders = LaundryOrder::with(['guest', 'booking.room', 'creator'])
             ->latest()
             ->limit(10)
             ->get();
 
-        // Rooms needing attention
         $roomsNeedingAttention = Room::with(['floor.building', 'roomType'])
             ->whereIn('status', ['dirty', 'out_of_order'])
             ->get();

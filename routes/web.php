@@ -48,7 +48,7 @@ Route::get('/booking', [BookingController::class, 'showBookingPage'])->name('boo
 Route::get('/booking/search', [BookingController::class, 'searchAvailability'])->name('booking.search');
 Route::get('/booking/room/{room}', [BookingController::class, 'showRoom'])->name('booking.room');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
-Route::get('/booking/confirmation/{booking}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
+Route::get('/booking/confirmation/{reservation}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
 
 // Guest Routes
 Route::middleware('guest')->group(function () {
@@ -93,8 +93,9 @@ Route::middleware(['auth'])->group(function () {
 
     // All authenticated users
     Route::resource('reservations', ReservationController::class);
+    Route::post('reservations/{reservation}/confirm', [ReservationController::class, 'confirm'])->name('reservations.confirm');
     Route::post('reservations/{reservation}/check-in', [ReservationController::class, 'checkIn'])->name('reservations.check-in');
-    Route::post('reservations/{reservation}/check-out', [ReservationController::class, 'checkOut'])->name('reservations.check-out');
+    Route::post('reservations/{reservation}/no-show', [ReservationController::class, 'noShow'])->name('reservations.no-show');
     Route::post('reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
 
     // Booking Management Routes (frontdesk)
@@ -107,11 +108,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::put('bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
     Route::delete('bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
-    Route::post('bookings/{booking}/confirm', [BookingController::class, 'confirm'])->name('bookings.confirm');
-    Route::post('bookings/{booking}/check-in', [BookingController::class, 'checkIn'])->name('bookings.check-in');
     Route::post('bookings/{booking}/check-out', [BookingController::class, 'checkOut'])->name('bookings.check-out');
     Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
-    Route::post('bookings/{booking}/no-show', [BookingController::class, 'noShow'])->name('bookings.no-show');
 
     // Guest Management Routes
     Route::resource('guests', GuestController::class);

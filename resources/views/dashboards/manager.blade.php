@@ -262,16 +262,16 @@
                         <span class="text-sm text-gray-600">{{ $reservation->check_out_date ? \Carbon\Carbon::parse($reservation->check_out_date)->format('M d, Y') : 'N/A' }}</span>
                     </td>
                     <td class="py-3 pr-4">
-                        <span class="font-semibold text-secondary">{{ number_format($reservation->total_amount ?? 0) }}</span>
+                        <span class="font-semibold text-secondary">{{ number_format($reservation->estimated_amount ?? 0) }}</span>
                     </td>
                     <td class="py-3">
                         @php
                             $statusBadge = match($reservation->status) {
                                 'pending' => 'bg-yellow-100 text-yellow-800',
-                                'confirmed' => 'bg-blue-100 text-blue-800',
-                                'checked_in' => 'bg-green-100 text-green-800',
-                                'checked_out' => 'bg-gray-100 text-gray-800',
+                                'confirmed' => 'bg-green-100 text-green-800',
+                                'converted' => 'bg-blue-100 text-blue-800',
                                 'cancelled' => 'bg-red-100 text-red-800',
+                                'no_show' => 'bg-gray-100 text-gray-800',
                                 default => 'bg-gray-100 text-gray-800',
                             };
                         @endphp
@@ -297,10 +297,10 @@
         @php
             $resStatusColors = [
                 'pending' => ['bg' => 'bg-yellow-50', 'border' => 'border-yellow-200', 'text' => 'text-yellow-700', 'label' => 'Pending'],
-                'confirmed' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text' => 'text-blue-700', 'label' => 'Confirmed'],
-                'checked_in' => ['bg' => 'bg-green-50', 'border' => 'border-green-200', 'text' => 'text-green-700', 'label' => 'Checked In'],
-                'checked_out' => ['bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text' => 'text-gray-700', 'label' => 'Checked Out'],
+                'confirmed' => ['bg' => 'bg-green-50', 'border' => 'border-green-200', 'text' => 'text-green-700', 'label' => 'Confirmed'],
+                'converted' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text' => 'text-blue-700', 'label' => 'Converted'],
                 'cancelled' => ['bg' => 'bg-red-50', 'border' => 'border-red-200', 'text' => 'text-red-700', 'label' => 'Cancelled'],
+                'no_show' => ['bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text' => 'text-gray-700', 'label' => 'No Show'],
             ];
         @endphp
         @foreach($resStatusColors as $status => $colors)

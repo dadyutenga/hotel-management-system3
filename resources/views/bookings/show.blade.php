@@ -36,7 +36,7 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div class="flex items-center justify-between flex-wrap gap-4">
             <div class="flex items-center gap-4">
-                @include('components.reservation-status-badge', ['status' => $booking->status])
+                @include('components.booking-status-badge', ['status' => $booking->status])
                 @php
                     $sourceClasses = match($booking->source) {
                         'online' => 'bg-blue-100 text-blue-800',
@@ -52,24 +52,6 @@
                 @endif
             </div>
             <div class="flex items-center gap-2">
-                @if($booking->canBeConfirmed())
-                    <form method="POST" action="{{ route('bookings.confirm', $booking) }}" class="inline">
-                        @csrf
-                        <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all">
-                            Confirm Booking
-                        </button>
-                    </form>
-                @endif
-
-                @if($booking->canBeCheckedIn())
-                    <form method="POST" action="{{ route('bookings.check-in', $booking) }}" class="inline">
-                        @csrf
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-all">
-                            Check In
-                        </button>
-                    </form>
-                @endif
-
                 @if($booking->canBeCheckedOut())
                     <form method="POST" action="{{ route('bookings.check-out', $booking) }}" class="inline">
                         @csrf
@@ -85,16 +67,6 @@
                         @csrf
                         <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-all">
                             Cancel Booking
-                        </button>
-                    </form>
-                @endif
-
-                @if(in_array($booking->status, ['pending', 'confirmed']))
-                    <form method="POST" action="{{ route('bookings.no-show', $booking) }}" class="inline"
-                          onsubmit="return confirm('Mark this booking as no-show?')">
-                        @csrf
-                        <button type="submit" class="px-4 py-2 border border-gray-300 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-all">
-                            No Show
                         </button>
                     </form>
                 @endif
