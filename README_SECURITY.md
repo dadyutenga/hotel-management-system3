@@ -187,7 +187,7 @@ Four comprehensive reports have been generated:
 ### For Management
 
 1. **DO NOT deploy** to production until Critical issues fixed
-2. Allocate ~80 hours development time for complete remediation
+2. Allocate 64 hours development time for complete remediation (see VULNERABILITY_MATRIX.md)
 3. Consider external penetration testing after fixes
 4. Review compliance requirements with legal team
 

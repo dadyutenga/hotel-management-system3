@@ -155,7 +155,7 @@ This directory contains a comprehensive security audit of the Hotel Management S
 - Account lockout
 - Comprehensive testing
 
-**Total Estimated Effort:** 64-80 hours
+**Total Estimated Effort:** 64 hours (see VULNERABILITY_MATRIX.md for detailed breakdown)
 
 ---
 

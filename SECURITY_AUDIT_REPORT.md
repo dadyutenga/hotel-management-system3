@@ -1235,7 +1235,7 @@ This Laravel hotel management system has **multiple critical security vulnerabil
 
 **The system should NOT be deployed to production** until at least all CRITICAL and HIGH severity vulnerabilities are remediated.
 
-**Estimated Remediation Effort:** 80-120 hours for complete fix implementation
+**Estimated Remediation Effort:** 64 hours for complete fix implementation (see VULNERABILITY_MATRIX.md for breakdown)
 
 **Risk Rating:** **CRITICAL** - Immediate action required
 
