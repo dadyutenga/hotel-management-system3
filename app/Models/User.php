@@ -31,6 +31,22 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * Check if the user has a specific role.
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role && strtoupper($this->role->name) === strtoupper($role);
+    }
+
+    /**
+     * Check if the user has any of the given roles.
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        return $this->role && in_array(strtoupper($this->role->name), array_map('strtoupper', $roles));
+    }
+
     public function isAdmin(): bool
     {
         return $this->role && $this->role->name === Role::ADMIN;
@@ -51,14 +67,45 @@ class User extends Authenticatable
         return $this->role && $this->role->name === Role::HOUSE_HELP;
     }
 
+    public function isStoreManager(): bool
+    {
+        return $this->role && $this->role->name === Role::STORE_MANAGER;
+    }
+
+    // Keep backward compat — old code may call isManager()
     public function isManager(): bool
     {
-        return $this->role && $this->role->name === Role::MANAGER;
+        return $this->isStoreManager();
     }
 
     public function isStoreKeeper(): bool
     {
         return $this->role && $this->role->name === Role::STORE_KEEPER;
+    }
+
+    public function isBarManager(): bool
+    {
+        return $this->role && $this->role->name === Role::BAR_MANAGER;
+    }
+
+    public function isBarTender(): bool
+    {
+        return $this->role && $this->role->name === Role::BAR_TENDER;
+    }
+
+    public function isKitchenManager(): bool
+    {
+        return $this->role && $this->role->name === Role::KITCHEN_MANAGER;
+    }
+
+    public function isWaiter(): bool
+    {
+        return $this->role && $this->role->name === Role::WAITER;
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->role && $this->role->name === Role::CASHIER;
     }
 
     public function laundryTasks(): HasMany

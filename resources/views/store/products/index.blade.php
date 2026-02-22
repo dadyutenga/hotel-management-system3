@@ -1,0 +1,72 @@
+@extends('store.layout')
+
+@section('title', 'Products')
+
+@section('content')
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Products</h1>
+    @if(auth()->user()->hasRole('STORE_MANAGER'))
+    <a href="{{ route('store.products.create') }}"
+       class="bg-primary text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm font-medium">
+        + New Product
+    </a>
+    @endif
+</div>
+
+{{-- Search & filter --}}
+<form method="GET" class="flex gap-3 mb-6">
+    <input type="text" name="search" value="{{ request('search') }}"
+           placeholder="Search products..."
+           class="border border-gray-200 rounded-xl px-3 py-2 text-sm flex-1 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+    <select name="category" class="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+        <option value="">All Categories</option>
+        @foreach(['beverages','food','toiletries','cleaning','stationery','other'] as $cat)
+        <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
+        @endforeach
+    </select>
+    <button class="bg-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-300 font-medium">Filter</button>
+</form>
+
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="px-4 py-3 text-left text-gray-600 font-semibold">Name</th>
+                <th class="px-4 py-3 text-left text-gray-600 font-semibold">SKU</th>
+                <th class="px-4 py-3 text-left text-gray-600 font-semibold">Category</th>
+                <th class="px-4 py-3 text-left text-gray-600 font-semibold">Unit</th>
+                <th class="px-4 py-3 text-right text-gray-600 font-semibold">Cost Price</th>
+                <th class="px-4 py-3 text-right text-gray-600 font-semibold">Selling Price</th>
+                <th class="px-4 py-3 text-center text-gray-600 font-semibold">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            @forelse($products as $product)
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium text-gray-800">{{ $product->name }}</td>
+                <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ $product->sku }}</td>
+                <td class="px-4 py-3 text-gray-500">{{ $product->category ?? '—' }}</td>
+                <td class="px-4 py-3 text-gray-500">{{ $product->unit }}</td>
+                <td class="px-4 py-3 text-right text-gray-700">{{ number_format($product->cost_price, 2) }}</td>
+                <td class="px-4 py-3 text-right text-gray-700">{{ number_format($product->selling_price, 2) }}</td>
+                <td class="px-4 py-3 text-center">
+                    <a href="{{ route('store.products.show', $product) }}"
+                       class="text-primary hover:underline text-xs mr-2">View</a>
+                    @if(auth()->user()->hasRole('STORE_MANAGER'))
+                    <a href="{{ route('store.products.edit', $product) }}"
+                       class="text-yellow-600 hover:underline text-xs">Edit</a>
+                    @endif
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-400">No products found.</td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+    <div class="px-4 py-3 border-t">
+        {{ $products->withQueryString()->links() }}
+    </div>
+</div>
+@endsection

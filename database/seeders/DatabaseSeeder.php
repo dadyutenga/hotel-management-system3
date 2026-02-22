@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder {
             ReservationSeeder::class,
             BookingSeeder::class,
             LaundryItemSeeder::class,
+            StockLocationSeeder::class,
+            SystemSettingsSeeder::class,
         ]);
     }
 }

@@ -293,7 +293,7 @@
                 </div>
                 <div class="text-right">
                     <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary font-semibold">
-                        {{ $user->role->display_name }}
+                        {{ $user->role->description }}
                     </span>
                     <p class="text-xs text-gray-500 mt-1">{{ $user->created_at->diffForHumans() }}</p>
                 </div>

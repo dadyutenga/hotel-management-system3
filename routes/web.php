@@ -26,6 +26,12 @@ use App\Http\Controllers\ConferenceHallController;
 use App\Http\Controllers\ConferenceBookingController;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\ConferenceParticipantController;
+use App\Http\Controllers\Store\ProductController;
+use App\Http\Controllers\Store\StockController;
+use App\Http\Controllers\Store\AdjustmentController;
+use App\Http\Controllers\Store\InternalRequestController;
+use App\Http\Controllers\Store\StockTransferController;
+use App\Http\Controllers\Store\ReportController;
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
     return view('welcome');
@@ -154,7 +160,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Laundry Orders - View (all staff roles)
-    Route::middleware(['role:admin,supervisor,front_desk,house_help,manager,store_keeper'])->group(function () {
+    Route::middleware(['role:admin,supervisor,front_desk,house_help,store_manager,store_keeper'])->group(function () {
         Route::get('laundry', [LaundryOrderController::class, 'index'])->name('laundry.index');
         Route::get('laundry/{laundryOrder}', [LaundryOrderController::class, 'show'])->name('laundry.show');
         Route::get('laundry-orders/items', [LaundryOrderController::class, 'getItems'])->name('laundry.items.json');
@@ -177,14 +183,14 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Booking Charges
-    Route::middleware(['role:admin,supervisor,front_desk,manager'])->group(function () {
+    Route::middleware(['role:admin,supervisor,front_desk,store_manager'])->group(function () {
         Route::get('bookings/{booking}/charges', [BookingChargeController::class, 'index'])->name('booking-charges.index');
         Route::post('booking-charges/{bookingCharge}/mark-paid', [BookingChargeController::class, 'markPaid'])->name('booking-charges.mark-paid');
         Route::post('bookings/{booking}/charges/mark-all-paid', [BookingChargeController::class, 'markAllPaid'])->name('booking-charges.mark-all-paid');
     });
 
     // ═══ PAYMENTS ═══
-    Route::middleware(['role:admin,supervisor,front_desk,manager'])->group(function () {
+    Route::middleware(['role:admin,supervisor,front_desk,store_manager'])->group(function () {
         Route::get('bookings/{booking}/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('bookings/{booking}/payments/create', [PaymentController::class, 'create'])->name('payments.create');
         Route::post('bookings/{booking}/payments', [PaymentController::class, 'store'])->name('payments.store');
@@ -233,5 +239,81 @@ Route::middleware(['auth'])->group(function () {
         Route::get('conferences/{conference}/check-in', [ConferenceParticipantController::class, 'checkInDashboard'])->name('conferences.check-in');
         Route::post('conference-check-in/scan', [ConferenceParticipantController::class, 'checkInByScan'])->name('conference-check-in.scan');
         Route::post('conference-check-in/manual', [ConferenceParticipantController::class, 'checkInByCode'])->name('conference-check-in.manual');
+    });
+
+    // ═══ STORE MODULE ═══
+    Route::prefix('store')->name('store.')->group(function () {
+
+        // ── Products ──────────────────────────────────────────────────────
+        Route::get('products',                  [ProductController::class, 'index'])->name('products.index');
+        Route::get('products/create',           [ProductController::class, 'create'])->name('products.create')
+             ->middleware('role:store_manager');
+        Route::post('products',                 [ProductController::class, 'store'])->name('products.store')
+             ->middleware('role:store_manager');
+        Route::get('products/{product}',        [ProductController::class, 'show'])->name('products.show');
+        Route::get('products/{product}/edit',   [ProductController::class, 'edit'])->name('products.edit')
+             ->middleware('role:store_manager');
+        Route::put('products/{product}',        [ProductController::class, 'update'])->name('products.update')
+             ->middleware('role:store_manager');
+        Route::delete('products/{product}',     [ProductController::class, 'destroy'])->name('products.destroy')
+             ->middleware('role:store_manager');
+
+        // ── Stock ─────────────────────────────────────────────────────────
+        Route::get('stock/levels',              [StockController::class, 'levels'])->name('stock.levels')
+             ->middleware('role:store_manager,store_keeper');
+        Route::get('stock/restock',             [StockController::class, 'restockForm'])->name('stock.restock-form')
+             ->middleware('role:store_keeper,store_manager');
+        Route::post('stock/restock',            [StockController::class, 'restock'])->name('stock.restock')
+             ->middleware('role:store_keeper,store_manager');
+        Route::get('stock/damage',              [StockController::class, 'damageForm'])->name('stock.damage-form')
+             ->middleware('role:store_keeper,store_manager,bar_manager,kitchen_manager');
+        Route::post('stock/damage',             [StockController::class, 'damage'])->name('stock.damage')
+             ->middleware('role:store_keeper,store_manager,bar_manager,kitchen_manager');
+
+        // ── Adjustments ───────────────────────────────────────────────────
+        Route::get('adjustments',              [AdjustmentController::class, 'index'])->name('adjustments.index')
+             ->middleware('role:store_manager,supervisor');
+        Route::get('adjustments/create',       [AdjustmentController::class, 'create'])->name('adjustments.create')
+             ->middleware('role:store_manager,supervisor,bar_manager,kitchen_manager');
+        Route::post('adjustments',             [AdjustmentController::class, 'store'])->name('adjustments.store')
+             ->middleware('role:store_manager,supervisor,bar_manager,kitchen_manager');
+        Route::post('adjustments/{adjustment}/approve', [AdjustmentController::class, 'approve'])->name('adjustments.approve')
+             ->middleware('role:store_manager');
+        Route::post('adjustments/{adjustment}/reject',  [AdjustmentController::class, 'reject'])->name('adjustments.reject')
+             ->middleware('role:store_manager');
+
+        // ── Internal Requests ─────────────────────────────────────────────
+        Route::get('internal-requests',                [InternalRequestController::class, 'index'])->name('internal-requests.index');
+        Route::get('internal-requests/create',         [InternalRequestController::class, 'create'])->name('internal-requests.create')
+             ->middleware('role:house_help');
+        Route::post('internal-requests',               [InternalRequestController::class, 'store'])->name('internal-requests.store')
+             ->middleware('role:house_help');
+        Route::post('internal-requests/{internalUsageRequest}/approve', [InternalRequestController::class, 'approve'])->name('internal-requests.approve')
+             ->middleware('role:supervisor');
+        Route::post('internal-requests/{internalUsageRequest}/reject',  [InternalRequestController::class, 'reject'])->name('internal-requests.reject')
+             ->middleware('role:supervisor');
+        Route::post('internal-requests/{internalUsageRequest}/fulfill', [InternalRequestController::class, 'fulfill'])->name('internal-requests.fulfill')
+             ->middleware('role:store_keeper');
+        Route::post('internal-requests/{internalUsageRequest}/cancel',  [InternalRequestController::class, 'cancel'])->name('internal-requests.cancel');
+
+        // ── Stock Transfers ───────────────────────────────────────────────
+        Route::get('transfers',                [StockTransferController::class, 'index'])->name('transfers.index')
+             ->middleware('role:store_manager,store_keeper,bar_manager,kitchen_manager');
+        Route::get('transfers/create',         [StockTransferController::class, 'create'])->name('transfers.create')
+             ->middleware('role:bar_manager,kitchen_manager');
+        Route::post('transfers',               [StockTransferController::class, 'store'])->name('transfers.store')
+             ->middleware('role:bar_manager,kitchen_manager');
+        Route::post('transfers/{stockTransfer}/fulfill', [StockTransferController::class, 'fulfill'])->name('transfers.fulfill')
+             ->middleware('role:store_keeper,store_manager');
+        Route::post('transfers/{stockTransfer}/reject',  [StockTransferController::class, 'reject'])->name('transfers.reject')
+             ->middleware('role:store_manager');
+
+        // ── Reports ───────────────────────────────────────────────────────
+        Route::get('reports/stock-snapshot',   [ReportController::class, 'stockSnapshot'])->name('reports.stock-snapshot')
+             ->middleware('role:store_manager,store_keeper');
+        Route::get('reports/movements',        [ReportController::class, 'movements'])->name('reports.movements')
+             ->middleware('role:store_manager,store_keeper');
+        Route::get('reports/damage',           [ReportController::class, 'damage'])->name('reports.damage')
+             ->middleware('role:store_manager,supervisor');
     });
 });

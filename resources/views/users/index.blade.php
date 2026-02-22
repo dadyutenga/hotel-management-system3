@@ -116,7 +116,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
-                            {{ $user->role->display_name }}
+                            {{ $user->role->description }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">

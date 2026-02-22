@@ -48,7 +48,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-semibold text-secondary truncate">{{ auth()->user()->name }}</div>
-                        <div class="text-xs text-primary font-medium">{{ auth()->user()->role->display_name }}</div>
+                        <div class="text-xs text-primary font-medium">{{ auth()->user()->role->description }}</div>
                     </div>
                 </div>
             </div>
@@ -56,14 +56,24 @@
             <!-- Navigation -->
             @if(auth()->user()->isAdmin())
                 @include('shared.sidebar.admin')
-            @elseif(auth()->user()->isManager())
-                @include('shared.sidebar.manager')
+            @elseif(auth()->user()->isStoreManager())
+                @include('shared.sidebar.store-manager')
             @elseif(auth()->user()->isSupervisor())
                 @include('shared.sidebar.supervisor')
             @elseif(auth()->user()->isHouseHelp())
                 @include('shared.sidebar.house-help')
             @elseif(auth()->user()->isStoreKeeper())
                 @include('shared.sidebar.store-keeper')
+            @elseif(auth()->user()->isBarManager())
+                @include('shared.sidebar.bar-manager')
+            @elseif(auth()->user()->isBarTender())
+                @include('shared.sidebar.bar-tender')
+            @elseif(auth()->user()->isKitchenManager())
+                @include('shared.sidebar.kitchen-manager')
+            @elseif(auth()->user()->isWaiter())
+                @include('shared.sidebar.waiter')
+            @elseif(auth()->user()->isCashier())
+                @include('shared.sidebar.cashier')
             @else
                 @include('shared.sidebar.front-desk')
             @endif
