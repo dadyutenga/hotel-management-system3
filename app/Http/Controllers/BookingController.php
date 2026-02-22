@@ -9,6 +9,7 @@ use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * BookingController — manages active guest stays + billing.
@@ -101,34 +102,41 @@ class BookingController extends Controller
 
         $room = Room::with('roomType')->findOrFail($validated['room_id']);
 
-        // Double-check room availability
-        if (!Booking::isRoomAvailable($room->id, $validated['check_in'], $validated['check_out'])) {
+        // Use transaction with lock to prevent race conditions (double-booking)
+        try {
+            $reservation = DB::transaction(function () use ($validated, $room) {
+                // Double-check room availability with pessimistic lock
+                if (!Booking::isRoomAvailable($room->id, $validated['check_in'], $validated['check_out'], null, true)) {
+                    throw new \RuntimeException('Sorry, this room is no longer available for the selected dates. Please choose another room.');
+                }
+
+                // Calculate estimated amount
+                $nights = Carbon::parse($validated['check_in'])->diffInDays(Carbon::parse($validated['check_out']));
+                $estimatedAmount = $nights * ($room->roomType->base_rate ?? 150);
+
+                // Try to find an existing guest by email
+                $guest = Guest::where('email', $validated['guest_email'])->first();
+
+                // Create a Reservation (future intent — NOT a Booking)
+                return Reservation::create([
+                    'guest_id' => $guest?->id,
+                    'guest_name' => $validated['guest_name'],
+                    'guest_email' => $validated['guest_email'],
+                    'guest_phone' => $validated['guest_phone'],
+                    'room_id' => $room->id,
+                    'check_in_date' => $validated['check_in'],
+                    'check_out_date' => $validated['check_out'],
+                    'number_of_guests' => $validated['guests'],
+                    'estimated_amount' => $estimatedAmount,
+                    'status' => 'pending',
+                    // created_by is null for public bookings (no auth user)
+                ]);
+            });
+        } catch (\RuntimeException $e) {
             return back()
                 ->withInput()
-                ->with('error', 'Sorry, this room is no longer available for the selected dates. Please choose another room.');
+                ->with('error', $e->getMessage());
         }
-
-        // Calculate estimated amount
-        $nights = Carbon::parse($validated['check_in'])->diffInDays(Carbon::parse($validated['check_out']));
-        $estimatedAmount = $nights * ($room->roomType->base_rate ?? 150);
-
-        // Try to find an existing guest by email
-        $guest = Guest::where('email', $validated['guest_email'])->first();
-
-        // Create a Reservation (future intent — NOT a Booking)
-        $reservation = Reservation::create([
-            'guest_id' => $guest?->id,
-            'guest_name' => $validated['guest_name'],
-            'guest_email' => $validated['guest_email'],
-            'guest_phone' => $validated['guest_phone'],
-            'room_id' => $room->id,
-            'check_in_date' => $validated['check_in'],
-            'check_out_date' => $validated['check_out'],
-            'number_of_guests' => $validated['guests'],
-            'estimated_amount' => $estimatedAmount,
-            'status' => 'pending',
-            // created_by is null for public bookings (no auth user)
-        ]);
 
         return redirect()->route('booking.confirmation', $reservation->id);
     }
@@ -175,7 +183,7 @@ class BookingController extends Controller
 
         // Search by guest name, email, or booking number
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('guest_name', 'like', "%{$search}%")
                   ->orWhere('guest_email', 'like', "%{$search}%")
@@ -184,7 +192,7 @@ class BookingController extends Controller
             });
         }
 
-        $bookings = $query->paginate(20);
+        $bookings = $query->paginate(min($request->input('per_page', 20), 100));
 
         // Stats for dashboard cards
         $stats = [
@@ -272,33 +280,40 @@ class BookingController extends Controller
 
         $room = Room::with('roomType')->findOrFail($validated['room_id']);
 
-        // Check room availability
-        if (!Booking::isRoomAvailable($room->id, $validated['check_in_date'], $validated['check_out_date'])) {
+        // Use transaction with lock to prevent double-booking race conditions
+        try {
+            $booking = DB::transaction(function () use ($validated, $room, $guestId) {
+                // Check room availability with pessimistic lock
+                if (!Booking::isRoomAvailable($room->id, $validated['check_in_date'], $validated['check_out_date'], null, true)) {
+                    throw new \RuntimeException('This room is not available for the selected dates.');
+                }
+
+                // Get guest data for legacy fields
+                $guest = Guest::findOrFail($guestId);
+
+                // Create booking with checked_in status (walk-in = immediate check-in)
+                return Booking::create([
+                    'guest_id' => $guestId,
+                    'guest_name' => $guest->full_name,
+                    'guest_email' => $guest->email,
+                    'guest_phone' => $guest->phone_number,
+                    'guest_country' => $guest->nationality,
+                    'room_id' => $room->id,
+                    'check_in_date' => $validated['check_in_date'],
+                    'check_out_date' => $validated['check_out_date'],
+                    'number_of_guests' => $validated['number_of_guests'],
+                    'total_amount' => $validated['total_amount'],
+                    'special_requests' => $validated['special_requests'] ?? null,
+                    'status' => 'checked_in', // Walk-in = immediately checked in
+                    'source' => $validated['source'] ?? 'walkin',
+                    'created_by' => auth()->id(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
             return back()
                 ->withInput()
-                ->with('error', 'This room is not available for the selected dates.');
+                ->with('error', $e->getMessage());
         }
-
-        // Get guest data for legacy fields
-        $guest = Guest::findOrFail($guestId);
-
-        // Create booking with checked_in status (walk-in = immediate check-in)
-        $booking = Booking::create([
-            'guest_id' => $guestId,
-            'guest_name' => $guest->full_name,
-            'guest_email' => $guest->email,
-            'guest_phone' => $guest->phone_number,
-            'guest_country' => $guest->nationality,
-            'room_id' => $room->id,
-            'check_in_date' => $validated['check_in_date'],
-            'check_out_date' => $validated['check_out_date'],
-            'number_of_guests' => $validated['number_of_guests'],
-            'total_amount' => $validated['total_amount'],
-            'special_requests' => $validated['special_requests'] ?? null,
-            'status' => 'checked_in', // Walk-in = immediately checked in
-            'source' => $validated['source'] ?? 'walkin',
-            'created_by' => auth()->id(),
-        ]);
 
         return redirect()->route('bookings.index')
             ->with('success', 'Walk-in guest checked in. Booking #' . $booking->booking_number . ' created.');

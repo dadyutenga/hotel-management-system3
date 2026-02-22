@@ -17,7 +17,7 @@ class GuestController extends Controller
 
         // Search functionality
         if ($request->has('search') && $request->search) {
-            $search = $request->search;
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name', 'like', "%{$search}%")
@@ -29,7 +29,7 @@ class GuestController extends Controller
 
         $guests = $query->withCount('reservations')
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(min($request->input('per_page', 20), 100));
 
         return view('guests.index', compact('guests'));
     }
@@ -214,7 +214,7 @@ class GuestController extends Controller
      */
     public function search(Request $request)
     {
-        $search = $request->get('q', '');
+        $search = str_replace(['%', '_'], ['\%', '\_'], $request->get('q', ''));
         
         $guests = Guest::where(function ($query) use ($search) {
             $query->where('first_name', 'like', "%{$search}%")

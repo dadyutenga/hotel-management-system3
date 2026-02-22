@@ -21,7 +21,7 @@ class ReservationController extends Controller
     {
         $reservations = Reservation::with(['room.roomType', 'creator', 'guest'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(min(request()->input('per_page', 20), 100));
 
         return view('reservations.index', compact('reservations'));
     }

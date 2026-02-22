@@ -58,11 +58,11 @@ Route::get('/features', function () {
     return view('welcome.features');
 })->name('features');
 
-// Guest Booking Routes (public - no authentication required)
+// Guest Booking Routes (public - no authentication required, rate-limited)
 Route::get('/booking', [BookingController::class, 'showBookingPage'])->name('booking');
-Route::get('/booking/search', [BookingController::class, 'searchAvailability'])->name('booking.search');
+Route::get('/booking/search', [BookingController::class, 'searchAvailability'])->name('booking.search')->middleware('throttle:30,1');
 Route::get('/booking/room/{room}', [BookingController::class, 'showRoom'])->name('booking.room');
-Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::post('/booking', [BookingController::class, 'store'])->name('booking.store')->middleware('throttle:10,60');
 Route::get('/booking/confirmation/{reservation}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
 
 // ═══ PAYMENT WEBHOOKS (no auth — called by payment provider servers) ═══
@@ -73,19 +73,19 @@ Route::post('/payments/webhook/snippe', [SnippePaymentController::class, 'webhoo
 // Payment callback (redirect back from card/QR payments)
 Route::get('/payments/callback', [PaymentController::class, 'callback'])->name('payments.callback');
 
-// Guest Routes
+// Guest Routes — rate-limited to prevent brute-force attacks
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
     
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:3,60');
     
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:3,60');
     
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update')->middleware('throttle:5,1');
 });
 
 // Authenticated Routes
@@ -114,30 +114,32 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // All authenticated users
-    Route::resource('reservations', ReservationController::class);
-    Route::post('reservations/{reservation}/confirm', [ReservationController::class, 'confirm'])->name('reservations.confirm');
-    Route::post('reservations/{reservation}/check-in', [ReservationController::class, 'checkIn'])->name('reservations.check-in');
-    Route::post('reservations/{reservation}/no-show', [ReservationController::class, 'noShow'])->name('reservations.no-show');
-    Route::post('reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
+    // Reservations, Bookings, Guests — restricted to authorized roles
+    Route::middleware(['role:admin,supervisor,front_desk,manager'])->group(function () {
+        Route::resource('reservations', ReservationController::class);
+        Route::post('reservations/{reservation}/confirm', [ReservationController::class, 'confirm'])->name('reservations.confirm');
+        Route::post('reservations/{reservation}/check-in', [ReservationController::class, 'checkIn'])->name('reservations.check-in');
+        Route::post('reservations/{reservation}/no-show', [ReservationController::class, 'noShow'])->name('reservations.no-show');
+        Route::post('reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
 
-    // Booking Management Routes (frontdesk)
-    Route::get('bookings/api/check-availability', [BookingController::class, 'checkAvailability'])->name('bookings.check-availability');
-    Route::get('bookings/api/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('bookings.available-rooms');
-    Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
-    Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
-    Route::post('bookings', [BookingController::class, 'storeFrontdesk'])->name('bookings.store');
-    Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
-    Route::get('bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
-    Route::put('bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
-    Route::delete('bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
-    Route::post('bookings/{booking}/check-out', [BookingController::class, 'checkOut'])->name('bookings.check-out');
-    Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+        // Booking Management Routes
+        Route::get('bookings/api/check-availability', [BookingController::class, 'checkAvailability'])->name('bookings.check-availability');
+        Route::get('bookings/api/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('bookings.available-rooms');
+        Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
+        Route::post('bookings', [BookingController::class, 'storeFrontdesk'])->name('bookings.store');
+        Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
+        Route::get('bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
+        Route::put('bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
+        Route::delete('bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+        Route::post('bookings/{booking}/check-out', [BookingController::class, 'checkOut'])->name('bookings.check-out');
+        Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
 
-    // Guest Management Routes
-    Route::resource('guests', GuestController::class);
-    Route::get('guests-search', [GuestController::class, 'search'])->name('guests.search');
-    Route::delete('guests/{guest}/media/{media}', [GuestController::class, 'removeMedia'])->name('guests.media.destroy');
+        // Guest Management Routes
+        Route::resource('guests', GuestController::class);
+        Route::get('guests-search', [GuestController::class, 'search'])->name('guests.search');
+        Route::delete('guests/{guest}/media/{media}', [GuestController::class, 'removeMedia'])->name('guests.media.destroy');
+    });
 
     // Laundry Management Routes (Legacy - keeping for backward compatibility)
     // Combined: Admin, Supervisor, and House Help

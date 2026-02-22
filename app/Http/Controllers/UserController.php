@@ -21,13 +21,26 @@ class UserController extends Controller {
         $validated = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users|max:255',
-            'password' => 'required|min:8|confirmed',
+            'password' => [
+                'required',
+                'confirmed',
+                \Illuminate\Validation\Rules\Password::min(10)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'role_id' => 'required|uuid|exists:roles,id',
             'is_active' => 'boolean',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        User::create($validated);
+        
+        $user = new User();
+        $user->fill($validated);
+        $user->role_id = $validated['role_id'];  // Explicitly set (not mass-assignable)
+        $user->is_active = $validated['is_active'] ?? true;  // Explicitly set
+        $user->save();
         
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
@@ -41,7 +54,15 @@ class UserController extends Controller {
         $validated = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id.'|max:255',
-            'password' => 'nullable|min:8|confirmed',
+            'password' => [
+                'nullable',
+                'confirmed',
+                \Illuminate\Validation\Rules\Password::min(10)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'role_id' => 'required|uuid|exists:roles,id',
             'is_active' => 'boolean',
         ]);
@@ -52,7 +73,16 @@ class UserController extends Controller {
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        // Separate guarded fields from mass-assignable fields
+        $roleId = $validated['role_id'];
+        $isActive = $validated['is_active'] ?? $user->is_active;
+        unset($validated['role_id'], $validated['is_active']);
+
+        $user->fill($validated);
+        $user->role_id = $roleId;  // Explicitly set
+        $user->is_active = $isActive;  // Explicitly set
+        $user->save();
+
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
 

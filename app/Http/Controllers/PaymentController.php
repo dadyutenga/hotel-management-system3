@@ -214,9 +214,21 @@ class PaymentController extends Controller
 
     /**
      * Refund a payment.
+     * Only admin and supervisor roles can process refunds.
      */
     public function refund(Request $request, Payment $payment)
     {
+        // Authorization: only admin or supervisor can process refunds
+        $user = auth()->user();
+        if (!$user->isAdmin() && !$user->isSupervisor()) {
+            Log::warning('Unauthorized refund attempt', [
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
+                'amount' => $request->amount,
+            ]);
+            abort(403, 'Only administrators and supervisors can process refunds.');
+        }
+
         $request->validate([
             'amount' => 'nullable|numeric|min:1|max:' . $payment->amount,
         ]);

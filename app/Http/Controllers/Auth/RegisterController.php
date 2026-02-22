@@ -24,16 +24,17 @@ class RegisterController extends Controller {
         // Get front_desk role as default for new registrations
         $defaultRole = Role::where('name', Role::FRONT_DESK)->first();
 
-        $user = User::create([
+        $user = new User();
+        $user->fill([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $defaultRole->id,
-            'is_active' => true,
         ]);
+        $user->role_id = $defaultRole->id;  // Explicitly set (not mass-assignable)
+        $user->is_active = false;  // Require admin approval before account activation
+        $user->save();
 
-        Auth::login($user);
-
-        return redirect()->route('dashboard');
+        // Do NOT auto-login — redirect to login with pending approval message
+        return redirect()->route('login')->with('info', 'Your account has been created and is pending admin approval.');
     }
 }

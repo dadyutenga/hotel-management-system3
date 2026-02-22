@@ -252,9 +252,9 @@ class SnippeProvider implements PaymentProvider
     public function validateWebhook(array $payload, array $headers): bool
     {
         if (empty($this->webhookSecret)) {
-            // If no secret configured, skip validation (dev mode)
-            Log::warning('Snippe webhook secret not configured — skipping signature verification');
-            return true;
+            // SECURITY: Reject all webhooks when secret is not configured
+            Log::critical('Snippe webhook secret not configured — rejecting webhook for security');
+            return false;
         }
 
         $signature = $headers['x-webhook-signature'] ?? $headers['X-Webhook-Signature'] ?? null;

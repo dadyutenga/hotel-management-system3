@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Booking = active guest stay + billing.
@@ -216,28 +217,37 @@ class Booking extends Model
      * Check if a room is available for the given date range.
      * Checks both bookings and reservations tables.
      */
-    public static function isRoomAvailable(string $roomId, string $checkIn, string $checkOut, ?string $excludeBookingId = null): bool
+    public static function isRoomAvailable(string $roomId, string $checkIn, string $checkOut, ?string $excludeBookingId = null, bool $lock = false): bool
     {
         // Check against existing bookings
-        $bookingConflict = static::where('room_id', $roomId)
+        $bookingQuery = static::where('room_id', $roomId)
             ->whereNotIn('status', ['cancelled', 'checked_out'])
             ->where('check_in_date', '<', $checkOut)
             ->where('check_out_date', '>', $checkIn)
-            ->when($excludeBookingId, fn($q) => $q->where('id', '!=', $excludeBookingId))
-            ->exists();
+            ->when($excludeBookingId, fn($q) => $q->where('id', '!=', $excludeBookingId));
+
+        // Apply pessimistic lock when inside a transaction to prevent race conditions
+        if ($lock) {
+            $bookingQuery->lockForUpdate();
+        }
+
+        $bookingConflict = $bookingQuery->exists();
 
         if ($bookingConflict) {
             return false;
         }
 
         // Also check against active reservations (not yet converted to bookings)
-        $reservationConflict = Reservation::where('room_id', $roomId)
+        $reservationQuery = Reservation::where('room_id', $roomId)
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('check_in_date', '<', $checkOut)
-            ->where('check_out_date', '>', $checkIn)
-            ->exists();
+            ->where('check_out_date', '>', $checkIn);
 
-        return !$reservationConflict;
+        if ($lock) {
+            $reservationQuery->lockForUpdate();
+        }
+
+        return !$reservationQuery->exists();
     }
 
     /**
@@ -245,29 +255,36 @@ class Booking extends Model
      */
     public static function createFromReservation(Reservation $reservation, ?int $createdBy = null): self
     {
-        $booking = static::create([
-            'guest_id' => $reservation->guest_id,
-            'guest_name' => $reservation->guest_display_name,
-            'guest_email' => $reservation->guest_display_email ?? '',
-            'guest_phone' => $reservation->guest_display_phone ?? '',
-            'guest_country' => $reservation->guest?->nationality ?? null,
-            'room_id' => $reservation->room_id,
-            'reservation_id' => $reservation->id,
-            'check_in_date' => $reservation->check_in_date,
-            'check_out_date' => $reservation->check_out_date,
-            'number_of_guests' => $reservation->number_of_guests,
-            'total_amount' => $reservation->estimated_amount,
-            'status' => 'checked_in',
-            'source' => 'frontdesk',
-            'created_by' => $createdBy,
-        ]);
+        return DB::transaction(function () use ($reservation, $createdBy) {
+            // Re-check availability with lock to prevent race conditions
+            if (!static::isRoomAvailable($reservation->room_id, $reservation->check_in_date, $reservation->check_out_date, null, true)) {
+                throw new \RuntimeException('Room is no longer available for the selected dates.');
+            }
 
-        // Mark the reservation as converted
-        $reservation->update([
-            'status' => 'converted',
-            'booking_id' => $booking->id,
-        ]);
+            $booking = static::create([
+                'guest_id' => $reservation->guest_id,
+                'guest_name' => $reservation->guest_display_name,
+                'guest_email' => $reservation->guest_display_email ?? '',
+                'guest_phone' => $reservation->guest_display_phone ?? '',
+                'guest_country' => $reservation->guest?->nationality ?? null,
+                'room_id' => $reservation->room_id,
+                'reservation_id' => $reservation->id,
+                'check_in_date' => $reservation->check_in_date,
+                'check_out_date' => $reservation->check_out_date,
+                'number_of_guests' => $reservation->number_of_guests,
+                'total_amount' => $reservation->estimated_amount,
+                'status' => 'checked_in',
+                'source' => 'frontdesk',
+                'created_by' => $createdBy,
+            ]);
 
-        return $booking;
+            // Mark the reservation as converted
+            $reservation->update([
+                'status' => 'converted',
+                'booking_id' => $booking->id,
+            ]);
+
+            return $booking;
+        });
     }
 }
