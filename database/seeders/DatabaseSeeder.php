@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder {
             LaundryItemSeeder::class,
             StockLocationSeeder::class,
             SystemSettingsSeeder::class,
+            MenuCategorySeeder::class,
         ]);
     }
 }

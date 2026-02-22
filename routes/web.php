@@ -32,6 +32,10 @@ use App\Http\Controllers\Store\AdjustmentController;
 use App\Http\Controllers\Store\InternalRequestController;
 use App\Http\Controllers\Store\StockTransferController;
 use App\Http\Controllers\Store\ReportController;
+use App\Http\Controllers\Restaurant\MenuItemController;
+use App\Http\Controllers\Restaurant\TableController;
+use App\Http\Controllers\Restaurant\OrderController;
+use App\Http\Controllers\Restaurant\ReportController as RestaurantReportController;
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
     return view('welcome');
@@ -315,5 +319,48 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:store_manager,store_keeper');
         Route::get('reports/damage',           [ReportController::class, 'damage'])->name('reports.damage')
              ->middleware('role:store_manager,supervisor');
+    });
+
+    // ═══ BAR & RESTAURANT MODULE ═══
+    Route::prefix('restaurant')->name('restaurant.')->group(function () {
+
+        // ── Menu (CRUD: restaurant_manager only; index: any authenticated) ──
+        Route::get('menu',                   [MenuItemController::class, 'index'])->name('menu.index');
+        Route::get('menu/create',            [MenuItemController::class, 'create'])->name('menu.create')
+             ->middleware('role:restaurant_manager,admin');
+        Route::post('menu',                  [MenuItemController::class, 'store'])->name('menu.store')
+             ->middleware('role:restaurant_manager,admin');
+        Route::get('menu/{menuItem}/edit',   [MenuItemController::class, 'edit'])->name('menu.edit')
+             ->middleware('role:restaurant_manager,admin');
+        Route::put('menu/{menuItem}',        [MenuItemController::class, 'update'])->name('menu.update')
+             ->middleware('role:restaurant_manager,admin');
+        Route::delete('menu/{menuItem}',     [MenuItemController::class, 'destroy'])->name('menu.destroy')
+             ->middleware('role:restaurant_manager,admin');
+
+        // ── Tables ────────────────────────────────────────────────────────
+        Route::get('tables',                 [TableController::class, 'index'])->name('tables.index');
+        Route::post('tables',                [TableController::class, 'store'])->name('tables.store')
+             ->middleware('role:restaurant_manager,admin');
+        Route::post('tables/{table}/status', [TableController::class, 'updateStatus'])->name('tables.updateStatus');
+
+        // ── Orders ────────────────────────────────────────────────────────
+        Route::get('orders',                       [OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/create',                [OrderController::class, 'create'])->name('orders.create');
+        Route::post('orders',                      [OrderController::class, 'store'])->name('orders.store');
+        Route::get('orders/{order}',               [OrderController::class, 'show'])->name('orders.show');
+        Route::post('orders/{order}/send',         [OrderController::class, 'send'])->name('orders.send');
+        Route::post('orders/{order}/ready',        [OrderController::class, 'ready'])->name('orders.ready');
+        Route::post('orders/{order}/serve',        [OrderController::class, 'serve'])->name('orders.serve');
+        Route::post('orders/{order}/settle',       [OrderController::class, 'settle'])->name('orders.settle')
+             ->middleware('role:restaurant_manager,cashier,admin');
+        Route::post('orders/{order}/cancel',       [OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('orders/{order}/items',        [OrderController::class, 'addItem'])->name('orders.addItem');
+        Route::delete('orders/{order}/items/{orderItem}', [OrderController::class, 'removeItem'])->name('orders.removeItem');
+
+        // ── Reports (restaurant_manager / admin only) ─────────────────────
+        Route::get('reports/daily-sales',    [RestaurantReportController::class, 'dailySales'])->name('reports.dailySales')
+             ->middleware('role:restaurant_manager,admin');
+        Route::get('reports/popular-items',  [RestaurantReportController::class, 'popularItems'])->name('reports.popularItems')
+             ->middleware('role:restaurant_manager,admin');
     });
 });

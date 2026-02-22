@@ -12,11 +12,13 @@ class BookingCharge extends Model
 
     protected $fillable = [
         'booking_id',
+        'order_id',
         'charge_type',
         'reference_id',
         'description',
         'amount',
         'status',
+        'created_by',
     ];
 
     protected $casts = [
@@ -27,6 +29,16 @@ class BookingCharge extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     // Get the source record (polymorphic-like via charge_type + reference_id)
@@ -72,6 +84,7 @@ class BookingCharge extends Model
     {
         return match ($this->charge_type) {
             'laundry' => 'Laundry Service',
+            'restaurant' => 'Restaurant / Bar',
             'room_service' => 'Room Service',
             'damage' => 'Damage',
             'minibar' => 'Mini Bar',
