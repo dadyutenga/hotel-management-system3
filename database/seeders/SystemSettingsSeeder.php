@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SystemSettingsSeeder extends Seeder
 {
@@ -20,10 +21,31 @@ class SystemSettingsSeeder extends Seeder
                 'value'       => 'true',
                 'description' => 'Toggle low stock notifications on/off',
             ],
+            [
+                'key'         => 'tzs_exchange_rate',
+                'value'       => '2500',
+                'description' => 'Current TZS per 1 USD — update daily',
+            ],
         ];
 
+        $now = now();
+
         foreach ($settings as $s) {
-            DB::table('system_settings')->updateOrInsert(['key' => $s['key']], $s);
+            $exists = DB::table('system_settings')->where('key', $s['key'])->exists();
+
+            if ($exists) {
+                DB::table('system_settings')->where('key', $s['key'])->update([
+                    'value'       => $s['value'],
+                    'description' => $s['description'],
+                    'updated_at'  => $now,
+                ]);
+            } else {
+                DB::table('system_settings')->insert(array_merge($s, [
+                    'id'         => Str::uuid()->toString(),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]));
+            }
         }
     }
 }

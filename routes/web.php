@@ -36,6 +36,10 @@ use App\Http\Controllers\Restaurant\MenuItemController;
 use App\Http\Controllers\Restaurant\TableController;
 use App\Http\Controllers\Restaurant\OrderController;
 use App\Http\Controllers\Restaurant\ReportController as RestaurantReportController;
+use App\Http\Controllers\Finance\CheckoutController as FinanceCheckoutController;
+use App\Http\Controllers\Finance\FinancePaymentController;
+use App\Http\Controllers\Finance\ReceiptController;
+use App\Http\Controllers\Finance\FinancialDashboardController;
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
     return view('welcome');
@@ -364,5 +368,31 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:restaurant_manager,admin');
         Route::get('reports/popular-items',  [RestaurantReportController::class, 'popularItems'])->name('reports.popularItems')
              ->middleware('role:restaurant_manager,admin');
+    });
+
+    // ═══ FINANCE MODULE ═══
+    Route::prefix('finance')->name('finance.')->group(function () {
+
+        // ── Dashboard ─────────────────────────────────────────────────────────────
+        Route::get('dashboard', [FinancialDashboardController::class, 'index'])->name('dashboard')
+             ->middleware('role:store_manager,cashier,front_desk,admin');
+
+        // ── Checkout ──────────────────────────────────────────────────────────────
+        Route::get('checkout/{booking}',              [FinanceCheckoutController::class, 'show'])->name('checkout.show')
+             ->middleware('role:front_desk,cashier,admin');
+        Route::post('checkout/{checkout}/process',    [FinanceCheckoutController::class, 'process'])->name('checkout.process')
+             ->middleware('role:cashier,front_desk,admin');
+        Route::post('checkout/{checkout}/add-charge', [FinanceCheckoutController::class, 'addCharge'])->name('checkout.add-charge')
+             ->middleware('role:front_desk,cashier,admin');
+
+        // ── Walk-in Payments ──────────────────────────────────────────────────────
+        Route::get('payments',         [FinancePaymentController::class, 'index'])->name('payments.index')
+             ->middleware('role:cashier,store_manager,admin');
+        Route::post('payments/walkin', [FinancePaymentController::class, 'storeWalkin'])->name('payments.walkin')
+             ->middleware('role:cashier,bar_tender,restaurant_manager,admin');
+
+        // ── Receipts ──────────────────────────────────────────────────────────────
+        Route::get('receipts/guest/{checkout}', [ReceiptController::class, 'guest'])->name('receipt.guest');
+        Route::get('receipts/walkin',           [ReceiptController::class, 'walkin'])->name('receipt.walkin');
     });
 });
