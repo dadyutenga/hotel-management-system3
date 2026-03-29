@@ -116,7 +116,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
-                            {{ $user->role->description }}
+                            {{ ucwords(str_replace('_', ' ', $user->role->name)) }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">

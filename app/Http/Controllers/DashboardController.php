@@ -30,6 +30,8 @@ class DashboardController extends Controller {
         
         if ($user->isAdmin()) {
             return $this->adminDashboard();
+        } elseif ($user->isGeneralManager()) {
+            return $this->managerDashboard();
         } elseif ($user->isStoreManager()) {
             return $this->storeManagerDashboard();
         } elseif ($user->isSupervisor()) {
@@ -108,6 +110,87 @@ class DashboardController extends Controller {
             'recentReservations',
             'recentUsers',
             'buildingStats'
+        ));
+    }
+
+    private function managerDashboard() {
+        $stats = [
+            'total_buildings' => Building::count(),
+            'total_rooms' => Room::count(),
+            'active_rooms' => Room::where('is_active', true)->count(),
+            'total_users' => User::where('is_active', true)->count(),
+            'occupied_rooms' => Room::where('status', 'occupied')->count(),
+            'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
+            'reserved_rooms' => Room::where('status', 'reserved')->count(),
+            'dirty_rooms' => Room::where('status', 'dirty')->count(),
+            // Expected arrivals today (Reservation)
+            'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
+            // Guests who need to check out today (Booking)
+            'today_checkouts' => Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
+            'total_reservations' => Reservation::count(),
+            'pending_reservations' => Reservation::where('status', 'pending')->count(),
+            'active_bookings' => Booking::where('status', 'checked_in')->count(),
+        ];
+
+        // Occupancy rate
+        $stats['occupancy_rate'] = $stats['total_rooms'] > 0
+            ? round(($stats['occupied_rooms'] / $stats['total_rooms']) * 100, 1)
+            : 0;
+
+        // Revenue stats — computed from Booking
+        $stats['today_revenue'] = Booking::whereDate('created_at', today())
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['week_revenue'] = Booking::whereBetween('check_in_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['month_revenue'] = Booking::whereMonth('check_in_date', now()->month)
+            ->whereYear('check_in_date', now()->year)
+            ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+        $stats['total_revenue'] = Booking::whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount');
+
+        // Pending approvals count (procurement, internal usage requests, etc.)
+        $stats['pending_approvals'] = InternalUsageRequest::where('status', 'pending')->count();
+
+        $roomStatusCounts = Room::where('is_active', true)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $reservationStatusCounts = Reservation::select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Recent reservations
+        $recentReservations = Reservation::with(['room', 'creator'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        $buildingStats = Building::withCount(['floors', 'rooms'])->get();
+
+        // Staff by role
+        $staffByRole = User::with('role')
+            ->where('is_active', true)
+            ->get()
+            ->groupBy(fn($user) => ucwords(str_replace('_', ' ', $user->role->name ?? 'Unknown')))
+            ->map->count();
+
+        // Pending internal usage requests for approval
+        $pendingApprovals = InternalUsageRequest::with(['requester', 'location'])
+            ->where('status', 'pending')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        return view('dashboards.manager', compact(
+            'stats',
+            'roomStatusCounts',
+            'reservationStatusCounts',
+            'recentReservations',
+            'buildingStats',
+            'staffByRole',
+            'pendingApprovals'
         ));
     }
 

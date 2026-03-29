@@ -158,7 +158,7 @@
                             <option value="">Select a role</option>
                             @foreach($roles as $role)
                             <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
-                                {{ $role->description }}
+                                {{ ucwords(str_replace('_', ' ', $role->name)) }} - {{ $role->description }}
                             </option>
                             @endforeach
                         </select>
@@ -193,7 +193,7 @@
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <span class="text-gray-500">Current Role:</span>
-                            <span class="text-secondary font-semibold ml-2">{{ $user->role->description }}</span>
+                            <span class="text-secondary font-semibold ml-2">{{ ucwords(str_replace('_', ' ', $user->role->name)) }}</span>
                         </div>
                         <div>
                             <span class="text-gray-500">Member Since:</span>

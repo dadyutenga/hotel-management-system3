@@ -47,6 +47,8 @@
             <!-- Navigation -->
             @if(auth()->user()->isAdmin())
                 @include('shared.sidebar.admin')
+            @elseif(auth()->user()->isGeneralManager())
+                @include('shared.sidebar.manager')
             @elseif(auth()->user()->isStoreManager())
                 @include('shared.sidebar.store-manager')
             @elseif(auth()->user()->isSupervisor())

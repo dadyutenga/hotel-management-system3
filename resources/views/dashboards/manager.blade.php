@@ -1,7 +1,7 @@
 {{-- resources/views/dashboards/manager.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Manager Dashboard - MRK Hotel')
+@section('title', 'Manager Dashboard')
 @section('page-title', 'Manager Dashboard')
 
 @section('content')
@@ -24,12 +24,12 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Total Buildings</p>
-                <p class="text-3xl font-extrabold text-secondary mt-1">{{ $stats['total_buildings'] }}</p>
+                <p class="text-sm font-medium text-gray-500">Pending Approvals</p>
+                <p class="text-3xl font-extrabold text-red-600 mt-1">{{ $stats['pending_approvals'] ?? 0 }}</p>
             </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl flex items-center justify-center">
-                <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            <div class="w-14 h-14 bg-gradient-to-br from-red-50 to-red-100 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
             </div>
         </div>
@@ -79,6 +79,60 @@
         </div>
     </div>
 </div>
+
+<!-- Pending Approvals Section -->
+@if(isset($pendingApprovals) && $pendingApprovals->count() > 0)
+<div class="bg-white rounded-2xl shadow-lg border border-red-200 p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-extrabold text-red-600 flex items-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            Pending Approvals
+        </h3>
+        <a href="{{ route('procurement.dashboard') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1">
+            View All
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-xs font-semibold text-red-600 uppercase tracking-wider border-b border-red-100">
+                    <th class="pb-3 pr-4">Request #</th>
+                    <th class="pb-3 pr-4">Requester</th>
+                    <th class="pb-3 pr-4">Location</th>
+                    <th class="pb-3 pr-4">Date</th>
+                    <th class="pb-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                @foreach($pendingApprovals as $request)
+                <tr class="hover:bg-red-50/50 transition-colors">
+                    <td class="py-3 pr-4">
+                        <span class="font-semibold text-secondary">{{ $request->request_number ?? 'N/A' }}</span>
+                    </td>
+                    <td class="py-3 pr-4">
+                        <span class="text-sm text-gray-600">{{ $request->requester->name ?? 'N/A' }}</span>
+                    </td>
+                    <td class="py-3 pr-4">
+                        <span class="text-sm text-gray-600">{{ $request->location->name ?? 'N/A' }}</span>
+                    </td>
+                    <td class="py-3 pr-4">
+                        <span class="text-sm text-gray-600">{{ $request->created_at->format('M d, Y') }}</span>
+                    </td>
+                    <td class="py-3">
+                        <a href="{{ route('procurement.internal-usage.show', $request) }}" class="text-indigo-600 hover:text-indigo-700 font-semibold text-sm">Review</a>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 
 <!-- Room Status & Revenue -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -148,7 +202,7 @@
         <!-- Today's Quick Stats -->
         <div class="mt-6 grid grid-cols-3 gap-4">
             <div class="text-center p-4 bg-gray-50 rounded-xl">
-                <p class="text-2xl font-extrabold text-primary">{{ $stats['today_checkins'] }}</p>
+                <p class="text-2xl font-extrabold text-indigo-600">{{ $stats['today_checkins'] }}</p>
                 <p class="text-xs text-gray-500 font-medium mt-1">Today's Check-ins</p>
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-xl">

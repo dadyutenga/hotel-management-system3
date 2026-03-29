@@ -1,7 +1,7 @@
 {{-- resources/views/dashboards/supervisor.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Supervisor Dashboard - MRK Hotel')
+@section('title', 'Supervisor Dashboard')
 @section('page-title', 'Supervisor Dashboard')
 
 @section('content')
@@ -209,7 +209,7 @@
             </svg>
             Laundry Services
         </h3>
-        <a href="{{ route('laundry.index') }}" class="text-sm text-primary hover:text-blue-700 font-semibold flex items-center gap-1">
+        <a href="{{ route('laundry.orders.index') }}" class="text-sm text-primary hover:text-blue-700 font-semibold flex items-center gap-1">
             Manage All Tasks
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -296,7 +296,7 @@
                             <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $order->status)) }}</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm">
-                            <a href="{{ route('laundry.show', $order) }}" class="text-primary hover:text-blue-700 font-semibold">View</a>
+                            <a href="{{ route('laundry.orders.show', $order) }}" class="text-primary hover:text-blue-700 font-semibold">View</a>
                         </td>
                     </tr>
                     @empty
@@ -310,7 +310,7 @@
     </div>
 
     <div class="mt-6 flex justify-end">
-        <a href="{{ route('laundry.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+        <a href="{{ route('laundry.orders.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
