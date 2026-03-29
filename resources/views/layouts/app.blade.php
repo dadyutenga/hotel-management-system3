@@ -29,16 +29,7 @@
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
         <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col shadow-sm">
-            <!-- Logo -->
-            <div class="h-16 flex items-center px-6 border-b border-gray-100 bg-gradient-to-r from-primary to-blue-600">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                    <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-8 w-auto brightness-0 invert" onerror="this.style.display='none'">
-                    <div>
-                        <span class="text-lg font-extrabold text-white block leading-tight">MRK Hotel</span>
-                        <span class="text-[10px] text-blue-100 tracking-wider uppercase font-medium">Management</span>
-                    </div>
-                </a>
-            </div>
+
 
             <!-- User Profile -->
             <div class="p-4 border-b border-gray-100 bg-gradient-to-br from-blue-50 via-white to-blue-50">
