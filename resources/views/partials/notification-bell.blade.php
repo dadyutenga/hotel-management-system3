@@ -1,22 +1,28 @@
 {{-- Notification Bell — include in all module navbars --}}
-<div class="relative" x-data="{ open: false }">
+{{-- Real-time updates via WebSocket (Laravel Reverb) with fallback to optimized polling --}}
+<div class="relative" x-data="notificationBell()" x-init="init()">
     <button @click="open = !open" class="relative text-gray-600 hover:text-blue-600 focus:outline-none">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
         </svg>
-        <span id="notif-badge"
+        <span x-show="unreadCount > 0" 
+              x-text="unreadCount > 99 ? '99+' : unreadCount"
               class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full
-                     w-4 h-4 flex items-center justify-center hidden"
+                     w-4 h-4 flex items-center justify-center"
               style="font-size: 10px; line-height: 1;">
-            0
         </span>
     </button>
 
     <div x-show="open" @click.away="open = false" x-transition
          class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50 max-h-96 overflow-y-auto">
-        <div class="px-4 py-3 border-b bg-gray-50">
+        <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
             <span class="text-sm font-semibold text-gray-700">Notifications</span>
+            <span x-show="!wsConnected" class="text-xs text-yellow-600" title="Using polling fallback">
+                <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+            </span>
         </div>
         @if(auth()->user()->latestNotifications && auth()->user()->latestNotifications->count() > 0)
             @foreach(auth()->user()->latestNotifications as $notif)
@@ -45,22 +51,111 @@
 </div>
 
 <script>
-    function fetchNotifCount() {
-        fetch('{{ route("notifications.count") }}')
-            .then(r => r.json())
-            .then(data => {
-                const badge = document.getElementById('notif-badge');
-                if (badge) {
-                    if (data.count > 0) {
-                        badge.textContent = data.count;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
+function notificationBell() {
+    return {
+        open: false,
+        unreadCount: {{ auth()->user()->unreadNotificationCount() ?? 0 }},
+        wsConnected: false,
+        pollingInterval: null,
+        visibilityHandler: null,
+
+        init() {
+            // Try to connect to WebSocket first
+            this.setupWebSocket();
+            
+            // Setup visibility change handler for optimized polling
+            this.setupVisibilityHandler();
+            
+            // Initial fetch
+            this.fetchCount();
+        },
+
+        setupWebSocket() {
+            // Check if Echo is available (Laravel Echo with Reverb)
+            if (typeof window.Echo !== 'undefined') {
+                try {
+                    const userId = {{ auth()->id() }};
+                    
+                    window.Echo.private(`notifications.${userId}`)
+                        .listen('.notification.created', (e) => {
+                            this.unreadCount = e.unread_count;
+                            
+                            // Show browser notification if permission granted
+                            if (e.notification && Notification.permission === 'granted') {
+                                new Notification(e.notification.title, {
+                                    body: e.notification.body,
+                                    icon: '/favicon.ico'
+                                });
+                            }
+                        });
+                    
+                    this.wsConnected = true;
+                    console.log('Notification WebSocket connected');
+                    
+                    // Stop polling if WebSocket is connected
+                    this.stopPolling();
+                } catch (error) {
+                    console.warn('WebSocket connection failed, falling back to polling:', error);
+                    this.startPolling();
+                }
+            } else {
+                // Echo not available, use polling
+                console.log('Laravel Echo not available, using polling fallback');
+                this.startPolling();
+            }
+        },
+
+        setupVisibilityHandler() {
+            this.visibilityHandler = () => {
+                if (document.hidden) {
+                    // Tab is hidden, stop polling to save resources
+                    this.stopPolling();
+                } else {
+                    // Tab is visible again
+                    this.fetchCount(); // Fetch immediately
+                    if (!this.wsConnected) {
+                        this.startPolling(); // Resume polling if not using WebSocket
                     }
                 }
-            })
-            .catch(() => {});
-    }
-    fetchNotifCount();
-    setInterval(fetchNotifCount, 30000);
+            };
+            
+            document.addEventListener('visibilitychange', this.visibilityHandler);
+        },
+
+        startPolling() {
+            // Only start if not already polling and tab is visible
+            if (!this.pollingInterval && !document.hidden) {
+                // Poll every 2 minutes (120000ms) instead of 30 seconds
+                this.pollingInterval = setInterval(() => {
+                    if (!document.hidden) {
+                        this.fetchCount();
+                    }
+                }, 120000);
+            }
+        },
+
+        stopPolling() {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+                this.pollingInterval = null;
+            }
+        },
+
+        fetchCount() {
+            fetch('{{ route("notifications.count") }}')
+                .then(r => r.json())
+                .then(data => {
+                    this.unreadCount = data.count;
+                })
+                .catch(() => {});
+        },
+
+        destroy() {
+            this.stopPolling();
+            if (this.visibilityHandler) {
+                document.removeEventListener('visibilitychange', this.visibilityHandler);
+            }
+        }
+    };
+}
 </script>

@@ -11,17 +11,21 @@ use App\Models\LaundryOrder;
 use App\Models\LaundryOrderItem;
 use App\Models\LaundryService;
 use App\Models\LaundryServiceItem;
-use App\Models\StoreNotification;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\AccountingService;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use App\Services\AccountingService;
 
 class LaundryOrderController extends Controller
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
+
     // GET /laundry/orders
     public function index(Request $request): View
     {
@@ -128,23 +132,23 @@ class LaundryOrderController extends Controller
         });
 
         // Notify SUPERVISOR and LAUNDRY_MANAGER
-        User::whereHas('role', fn ($q) => $q->whereIn('name', ['supervisor', 'laundry_manager']))
-            ->get()
-            ->each(fn ($u) => StoreNotification::create([
-                'user_id'        => $u->id,
-                'type'           => 'new_laundry_order',
-                'title'          => 'New Laundry Order Received',
-                'body'           => "Order {$order->order_number} — " .
-                                    ($order->customer_type === 'guest'
-                                        ? "Room {$order->room_number}"
-                                        : $order->customer_name) .
-                                    " — {$order->items->count()} item(s). Ready by: " .
-                                    $order->expected_ready_at->format('d M H:i'),
-                'reference_type' => 'laundry_order',
-                'reference_id'   => $order->id,
-                'action_url'     => route('laundry.orders.show', $order->id),
-                'created_at'     => now(),
-            ]));
+        $userIds = User::whereHas('role', fn ($q) => $q->whereIn('name', ['supervisor', 'laundry_manager']))
+            ->pluck('id')
+            ->toArray();
+
+        $this->notificationService->createForUsers($userIds, [
+            'type'           => 'new_laundry_order',
+            'title'          => 'New Laundry Order Received',
+            'body'           => "Order {$order->order_number} — " .
+                                ($order->customer_type === 'guest'
+                                    ? "Room {$order->room_number}"
+                                    : $order->customer_name) .
+                                " — {$order->items->count()} item(s). Ready by: " .
+                                $order->expected_ready_at->format('d M H:i'),
+            'reference_type' => 'laundry_order',
+            'reference_id'   => $order->id,
+            'action_url'     => route('laundry.orders.show', $order->id),
+        ]);
 
         return redirect()
             ->route('laundry.orders.show', $order)
@@ -190,18 +194,18 @@ class LaundryOrderController extends Controller
 
         // Notify FRONT_DESK for guest orders
         if ($laundryOrder->customer_type === 'guest') {
-            User::whereHas('role', fn ($q) => $q->where('name', 'front_desk'))
-                ->get()
-                ->each(fn ($u) => StoreNotification::create([
-                    'user_id'        => $u->id,
-                    'type'           => 'laundry_ready',
-                    'title'          => 'Laundry Ready for Delivery',
-                    'body'           => "Order {$laundryOrder->order_number} — Room {$laundryOrder->room_number} is ready.",
-                    'reference_type' => 'laundry_order',
-                    'reference_id'   => $laundryOrder->id,
-                    'action_url'     => route('laundry.orders.show', $laundryOrder->id),
-                    'created_at'     => now(),
-                ]));
+            $frontDeskIds = User::whereHas('role', fn ($q) => $q->where('name', 'front_desk'))
+                ->pluck('id')
+                ->toArray();
+
+            $this->notificationService->createForUsers($frontDeskIds, [
+                'type'           => 'laundry_ready',
+                'title'          => 'Laundry Ready for Delivery',
+                'body'           => "Order {$laundryOrder->order_number} — Room {$laundryOrder->room_number} is ready.",
+                'reference_type' => 'laundry_order',
+                'reference_id'   => $laundryOrder->id,
+                'action_url'     => route('laundry.orders.show', $laundryOrder->id),
+            ]);
         }
 
         // Send SMS/Email notification to guest/walk-in that laundry is ready
