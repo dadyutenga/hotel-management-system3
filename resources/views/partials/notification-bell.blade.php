@@ -1,7 +1,15 @@
 {{-- Notification Bell — include in all module navbars --}}
 {{-- Real-time updates via WebSocket (Laravel Reverb) with fallback to optimized polling --}}
-<div class="relative" x-data="notificationBell()" x-init="init()">
-    <button @click.stop="open = !open" type="button" class="relative text-gray-600 hover:text-blue-600 focus:outline-none">
+<div class="relative" 
+     x-data="notificationBell()" 
+     x-init="init()"
+     @keydown.escape.window="open = false">
+    
+    {{-- Notification Button --}}
+    <button id="notification-btn"
+            @click="open = !open" 
+            type="button" 
+            class="relative text-gray-600 hover:text-blue-600 focus:outline-none">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -14,10 +22,15 @@
         </span>
     </button>
 
+    {{-- Notification Dropdown --}}
     <div x-show="open" 
-         x-transition
-         @click.outside="open = false"
-         @keydown.escape.window="open = false"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-75"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.outside="closeDropdown($event)"
          class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50 max-h-96 overflow-y-auto">
         <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
             <span class="text-sm font-semibold text-gray-700">Notifications</span>
@@ -91,6 +104,15 @@ function notificationBell() {
             
             // Initial fetch
             this.fetchCount();
+        },
+
+        closeDropdown(event) {
+            // Don't close if clicking on the notification button itself
+            const btn = document.getElementById('notification-btn');
+            if (btn && btn.contains(event.target)) {
+                return;
+            }
+            this.open = false;
         },
 
         setupWebSocket() {
