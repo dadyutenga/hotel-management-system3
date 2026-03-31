@@ -1,15 +1,9 @@
 {{-- Notification Bell — include in all module navbars --}}
 {{-- Real-time updates via WebSocket (Laravel Reverb) with fallback to optimized polling --}}
-<div class="relative" 
-     x-data="notificationBell()" 
-     x-init="init()"
-     @keydown.escape.window="open = false">
+<div class="relative" x-data="notificationBell()" x-init="init()" @keydown.escape.window="open = false">
     
     {{-- Notification Button --}}
-    <button id="notification-btn"
-            @click="open = !open" 
-            type="button" 
-            class="relative text-gray-600 hover:text-blue-600 focus:outline-none">
+    <button @click="toggle()" type="button" class="relative text-gray-600 hover:text-blue-600 focus:outline-none" x-ref="button">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -30,7 +24,7 @@
          x-transition:leave="transition ease-in duration-75"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         @click.outside="closeDropdown($event)"
+         x-ref="dropdown"
          class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50 max-h-96 overflow-y-auto">
         <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
             <span class="text-sm font-semibold text-gray-700">Notifications</span>
@@ -94,39 +88,48 @@ function notificationBell() {
         wsConnected: false,
         pollingInterval: null,
         visibilityHandler: null,
+        clickOutsideHandler: null,
 
         init() {
-            // Try to connect to WebSocket first
             this.setupWebSocket();
-            
-            // Setup visibility change handler for optimized polling
             this.setupVisibilityHandler();
-            
-            // Initial fetch
+            this.setupClickOutside();
             this.fetchCount();
         },
 
-        closeDropdown(event) {
-            // Don't close if clicking on the notification button itself
-            const btn = document.getElementById('notification-btn');
-            if (btn && btn.contains(event.target)) {
-                return;
-            }
-            this.open = false;
+        toggle() {
+            this.open = !this.open;
+        },
+
+        setupClickOutside() {
+            const self = this;
+            this.clickOutsideHandler = function(event) {
+                if (!self.open) return;
+                
+                const button = self.$refs.button;
+                const dropdown = self.$refs.dropdown;
+                
+                // If click is on button or dropdown, do nothing
+                if (button && button.contains(event.target)) return;
+                if (dropdown && dropdown.contains(event.target)) return;
+                
+                // Otherwise close dropdown
+                self.open = false;
+            };
+            
+            document.addEventListener('click', this.clickOutsideHandler);
         },
 
         setupWebSocket() {
-            // Check if Echo is available
             if (typeof window.Echo !== 'undefined') {
                 try {
-                    const userId = {{ auth()->id() }};
+                    const userId = '{{ auth()->id() }}';
                     const self = this;
                     
                     window.Echo.private('notifications.' + userId)
                         .listen('.notification.created', function(e) {
                             self.unreadCount = e.unread_count;
                             
-                            // Show browser notification if permission granted
                             if (e.notification && Notification.permission === 'granted') {
                                 new Notification(e.notification.title, {
                                     body: e.notification.body,
@@ -137,15 +140,12 @@ function notificationBell() {
                     
                     self.wsConnected = true;
                     console.log('Notification WebSocket connected');
-                    
-                    // Stop polling if WebSocket is connected
                     self.stopPolling();
                 } catch (error) {
                     console.warn('WebSocket connection failed, falling back to polling:', error);
                     this.startPolling();
                 }
             } else {
-                // Echo not available, use polling
                 console.log('Laravel Echo not available, using polling fallback');
                 this.startPolling();
             }
@@ -155,13 +155,11 @@ function notificationBell() {
             const self = this;
             this.visibilityHandler = function() {
                 if (document.hidden) {
-                    // Tab is hidden, stop polling to save resources
                     self.stopPolling();
                 } else {
-                    // Tab is visible again
-                    self.fetchCount(); // Fetch immediately
+                    self.fetchCount();
                     if (!self.wsConnected) {
-                        self.startPolling(); // Resume polling if not using WebSocket
+                        self.startPolling();
                     }
                 }
             };
@@ -171,9 +169,7 @@ function notificationBell() {
 
         startPolling() {
             const self = this;
-            // Only start if not already polling and tab is visible
             if (!this.pollingInterval && !document.hidden) {
-                // Poll every 2 minutes (120000ms) instead of 30 seconds
                 this.pollingInterval = setInterval(function() {
                     if (!document.hidden) {
                         self.fetchCount();
@@ -203,6 +199,9 @@ function notificationBell() {
             this.stopPolling();
             if (this.visibilityHandler) {
                 document.removeEventListener('visibilitychange', this.visibilityHandler);
+            }
+            if (this.clickOutsideHandler) {
+                document.removeEventListener('click', this.clickOutsideHandler);
             }
         }
     };
