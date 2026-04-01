@@ -272,19 +272,20 @@ Route::middleware(['auth'])->group(function () {
         Route::post('conference-check-in/manual', [ConferenceParticipantController::class, 'checkInByCode'])->name('conference-check-in.manual');
     });
 
-    // Conference Halls - View access for manager/supervisor/front_desk, Full CRUD for admin
-    Route::middleware(['role:admin,supervisor,front_desk,manager'])->group(function () {
-        Route::get('conference-halls', [ConferenceHallController::class, 'index'])->name('conference-halls.index');
-        Route::get('conference-halls/{conferenceHall}', [ConferenceHallController::class, 'show'])->name('conference-halls.show');
-    });
-
     // Conference Halls CRUD (Admin only - infrastructure management)
+    // NOTE: Create route must come BEFORE the {conferenceHall} wildcard route
     Route::middleware(['role:admin'])->group(function () {
         Route::get('conference-halls/create', [ConferenceHallController::class, 'create'])->name('conference-halls.create');
         Route::post('conference-halls', [ConferenceHallController::class, 'store'])->name('conference-halls.store');
         Route::get('conference-halls/{conferenceHall}/edit', [ConferenceHallController::class, 'edit'])->name('conference-halls.edit');
         Route::put('conference-halls/{conferenceHall}', [ConferenceHallController::class, 'update'])->name('conference-halls.update');
         Route::delete('conference-halls/{conferenceHall}', [ConferenceHallController::class, 'destroy'])->name('conference-halls.destroy');
+    });
+
+    // Conference Halls - View access for manager/supervisor/front_desk/admin
+    Route::middleware(['role:admin,supervisor,front_desk,manager'])->group(function () {
+        Route::get('conference-halls', [ConferenceHallController::class, 'index'])->name('conference-halls.index');
+        Route::get('conference-halls/{conferenceHall}', [ConferenceHallController::class, 'show'])->name('conference-halls.show');
     });
 
     // ═══ STORE MODULE ═══

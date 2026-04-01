@@ -140,5 +140,46 @@
         </div>
     </div>
     @stack('scripts')
+    
+    <!-- Live Time Script - Updates every second without page refresh -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent duplicate intervals
+            if (window.liveTimeInterval) {
+                clearInterval(window.liveTimeInterval);
+            }
+            
+            function updateLiveTime() {
+                const now = new Date();
+                
+                // Format time: 12-hour format with AM/PM (e.g., 12:07:45 PM)
+                const timeElement = document.getElementById('liveTime');
+                if (timeElement) {
+                    let hours = now.getHours();
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    const seconds = now.getSeconds().toString().padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12;
+                    hours = hours ? hours : 12; // 0 should be 12
+                    const formattedTime = hours.toString().padStart(2, '0') + ':' + minutes + ':' + seconds + ' ' + ampm;
+                    timeElement.textContent = formattedTime;
+                }
+                
+                // Format date: Full format (e.g., Wednesday, April 01, 2026)
+                const dateElement = document.getElementById('liveDate');
+                if (dateElement) {
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' };
+                    const formattedDate = now.toLocaleDateString('en-US', options);
+                    dateElement.textContent = formattedDate;
+                }
+            }
+            
+            // Run immediately on page load
+            updateLiveTime();
+            
+            // Update every second
+            window.liveTimeInterval = setInterval(updateLiveTime, 1000);
+        });
+    </script>
 </body>
 </html>

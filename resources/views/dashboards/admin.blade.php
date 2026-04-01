@@ -15,8 +15,8 @@
             <p class="text-blue-100">System administration and infrastructure overview.</p>
         </div>
         <div class="hidden md:block text-right">
-            <p class="text-sm text-blue-200">{{ now()->format('l, F d, Y') }}</p>
-            <p class="text-3xl font-extrabold">{{ now()->format('h:i A') }}</p>
+            <p id="liveDate" class="text-sm text-blue-200"></p>
+            <p id="liveTime" class="text-3xl font-extrabold"></p>
         </div>
     </div>
 </div>
