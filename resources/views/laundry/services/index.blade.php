@@ -1,16 +1,16 @@
 {{-- resources/views/laundry/services/index.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Laundry Price List')
-@section('page-title', 'Laundry')
+@section('title', __('laundry.laundry_price_list'))
+@section('page-title', __('laundry.title'))
 
 @section('content')
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold text-secondary">Laundry Price List</h2>
-            <p class="text-sm text-gray-500 mt-1">Manage laundry services and item pricing</p>
+            <h2 class="text-2xl font-extrabold text-secondary">{{ __('laundry.laundry_price_list') }}</h2>
+            <p class="text-sm text-gray-500 mt-1">{{ __('laundry.price_list_subtitle') }}</p>
         </div>
     </div>
 
@@ -21,7 +21,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-secondary">{{ $service->name }}</h3>
-                    <p class="text-sm text-gray-500 mt-1">{{ $service->description }} · {{ $service->turnaround_hours }}h turnaround</p>
+                    <p class="text-sm text-gray-500 mt-1">{{ $service->description }} · {{ $service->turnaround_hours }}{{ __('laundry.turnaround') }}</p>
                 </div>
                 <div class="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
                     🧺
@@ -34,9 +34,9 @@
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Item</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">Price (TZS)</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.item') }}</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.price') }}</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -63,17 +63,17 @@
                                            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm text-right transition-all">
                                 </div>
                                 <button type="submit" class="px-4 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">
-                                    Save
+                                    {{ __('laundry.actions.save') }}
                                 </button>
                             </form>
                         </td>
                         <td class="px-6 py-4 text-right">
                             <form method="POST"
                                   action="{{ route('laundry.services.remove-item', [$service, $item]) }}"
-                                  onsubmit="return confirm('Remove {{ $item->item_name }}?')">
+                                  onsubmit="return confirm('{{ __('laundry.confirm_remove', ['item' => $item->item_name]) }}')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="px-3 py-2 text-red-600 hover:bg-red-50 text-sm font-semibold rounded-xl transition-all">
-                                    Remove
+                                    {{ __('laundry.actions.remove') }}
                                 </button>
                             </form>
                         </td>
@@ -89,12 +89,12 @@
                   class="flex gap-4 items-end">
                 @csrf
                 <div class="flex-1">
-                    <label class="block text-sm font-semibold text-secondary mb-2">New Item Name</label>
+                    <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.new_item.name') }}</label>
                     <input type="text" name="item_name" required placeholder="e.g. Blazer"
                            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
                 </div>
                 <div class="w-48">
-                    <label class="block text-sm font-semibold text-secondary mb-2">Price (TZS)</label>
+                    <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.new_item.price') }}</label>
                     <input type="number" name="price" required min="1" step="100" placeholder="5000"
                            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
                 </div>
@@ -103,7 +103,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Add Item
+                    {{ __('laundry.actions.add_item') }}
                 </button>
             </form>
         </div>

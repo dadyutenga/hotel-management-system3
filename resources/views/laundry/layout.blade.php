@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Laundry') — Hotel Management</title>
+    <title>@yield('title', __('laundry.title')) — Hotel Management</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,15 +27,15 @@
 <body class="bg-gray-100 min-h-screen">
 
 <nav class="bg-white shadow px-6 py-4 flex items-center justify-between">
-    <div class="font-bold text-lg text-gray-800">🧺 Laundry</div>
+    <div class="font-bold text-lg text-gray-800">🧺 {{ __('laundry.title') }}</div>
     <div class="flex gap-4 text-sm">
-        <a href="{{ route('laundry.orders.index') }}"   class="text-gray-600 hover:text-blue-600">Orders</a>
-        <a href="{{ route('laundry.orders.create') }}"  class="text-gray-600 hover:text-blue-600">New Order</a>
+        <a href="{{ route('laundry.orders.index') }}"   class="text-gray-600 hover:text-blue-600">{{ __('laundry.nav.orders') }}</a>
+        <a href="{{ route('laundry.orders.create') }}"  class="text-gray-600 hover:text-blue-600">{{ __('laundry.nav.new_order') }}</a>
         @if(auth()->user()->hasAnyRole(['laundry_manager', 'supervisor', 'store_manager', 'admin']))
-        <a href="{{ route('laundry.services.index') }}" class="text-gray-600 hover:text-blue-600">Price List</a>
-        <a href="{{ route('laundry.reports.daily') }}"  class="text-gray-600 hover:text-blue-600">Reports</a>
+        <a href="{{ route('laundry.services.index') }}" class="text-gray-600 hover:text-blue-600">{{ __('laundry.nav.price_list') }}</a>
+        <a href="{{ route('laundry.reports.daily') }}"  class="text-gray-600 hover:text-blue-600">{{ __('laundry.nav.reports') }}</a>
         @endif
-        <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600">← Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600">← {{ __('laundry.nav.dashboard') }}</a>
     </div>
     <div class="flex items-center gap-3">
         @include('partials.notification-bell')

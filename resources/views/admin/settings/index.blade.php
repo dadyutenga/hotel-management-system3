@@ -1,8 +1,8 @@
 {{-- resources/views/admin/settings/index.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'System Settings')
-@section('page-title', 'System Settings')
+@section('title', __('settings.system_settings'))
+@section('page-title', __('settings.system_settings'))
 
 @section('content')
 <div class="max-w-2xl">
@@ -38,8 +38,8 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-secondary">Currency Settings</h3>
-                <p class="text-sm text-gray-500">Configure system-wide currency display</p>
+                <h3 class="text-lg font-bold text-secondary">{{ __('settings.sections.currency') }}</h3>
+                <p class="text-sm text-gray-500">{{ __('settings.subtitles.currency') }}</p>
             </div>
         </div>
         
@@ -47,7 +47,7 @@
             @csrf
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">Default Currency</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.default_currency') }}</label>
                 <select name="default_currency" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                     @foreach($currencies as $currency)
                     <option value="{{ $currency['code'] }}" {{ $settings['default_currency'] === $currency['code'] ? 'selected' : '' }}>
@@ -55,25 +55,25 @@
                     </option>
                     @endforeach
                 </select>
-                <p class="text-xs text-gray-500 mt-1.5">This currency will be used across the entire system for displaying prices.</p>
+                <p class="text-xs text-gray-500 mt-1.5">{{ __('settings.hints.currency_usage') }}</p>
                 @error('default_currency')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-secondary mb-2">TZS Exchange Rate</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.tzs_exchange_rate') }}</label>
                 <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">1 USD =</span>
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{{ __('settings.labels.usd_equals') }}</span>
                     <input type="number" name="tzs_exchange_rate" value="{{ old('tzs_exchange_rate', $settings['tzs_exchange_rate']) }}" 
                            class="w-full pl-20 pr-16 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                            min="1" step="1" required>
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">TZS</span>
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{{ __('settings.labels.tzs') }}</span>
                 </div>
-                <p class="text-xs text-gray-500 mt-1.5">Update daily for accurate currency conversion.</p>
+                <p class="text-xs text-gray-500 mt-1.5">{{ __('settings.hints.exchange_rate') }}</p>
                 @error('tzs_exchange_rate')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-blue-600 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
-                Save Currency Settings
+                {{ __('settings.save_currency') }}
             </button>
         </form>
     </div>
@@ -87,8 +87,8 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-secondary">Change Password</h3>
-                <p class="text-sm text-gray-500">Update your account password securely</p>
+                <h3 class="text-lg font-bold text-secondary">{{ __('settings.sections.change_password') }}</h3>
+                <p class="text-sm text-gray-500">{{ __('settings.subtitles.password') }}</p>
             </div>
         </div>
         
@@ -96,7 +96,7 @@
             @csrf
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">Current Password</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.current_password') }}</label>
                 <input type="password" name="current_password" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                        required autocomplete="current-password">
@@ -104,23 +104,23 @@
             </div>
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">New Password</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.new_password') }}</label>
                 <input type="password" name="password" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                        required autocomplete="new-password">
-                <p class="text-xs text-gray-500 mt-1.5">Minimum 8 characters, must include uppercase, lowercase, and numbers.</p>
+                <p class="text-xs text-gray-500 mt-1.5">{{ __('settings.hints.password_requirements') }}</p>
                 @error('password')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-secondary mb-2">Confirm New Password</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.confirm_password') }}</label>
                 <input type="password" name="password_confirmation" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                        required autocomplete="new-password">
             </div>
 
             <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all">
-                Change Password
+                {{ __('settings.change_password') }}
             </button>
         </form>
     </div>
@@ -134,8 +134,8 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-secondary">Profile Information</h3>
-                <p class="text-sm text-gray-500">Update your account details</p>
+                <h3 class="text-lg font-bold text-secondary">{{ __('settings.sections.profile_info') }}</h3>
+                <p class="text-sm text-gray-500">{{ __('settings.subtitles.profile') }}</p>
             </div>
         </div>
         
@@ -144,21 +144,21 @@
             @method('PATCH')
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">Name</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.name') }}</label>
                 <input type="text" name="name" value="{{ old('name', auth()->user()->name) }}" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
                 @error('name')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-secondary mb-2">Email</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('settings.fields.email') }}</label>
                 <input type="email" name="email" value="{{ old('email', auth()->user()->email) }}" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
                 @error('email')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-blue-600 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
-                Save Profile
+                {{ __('settings.save_profile') }}
             </button>
         </form>
     </div>

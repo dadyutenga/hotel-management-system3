@@ -22,6 +22,44 @@ return [
     'currency_code' => 'Currency Code',
     'exchange_rate' => 'Exchange Rate',
     
+    // Sections (for admin settings page)
+    'sections' => [
+        'currency' => 'Currency Settings',
+        'change_password' => 'Change Password',
+        'profile_info' => 'Profile Information',
+    ],
+    
+    // Subtitles (for admin settings page)
+    'subtitles' => [
+        'currency' => 'Configure system-wide currency display',
+        'password' => 'Update your account password securely',
+        'profile' => 'Update your account details',
+    ],
+    
+    // Form fields (for admin settings page)
+    'fields' => [
+        'default_currency' => 'Default Currency',
+        'tzs_exchange_rate' => 'TZS Exchange Rate',
+        'current_password' => 'Current Password',
+        'new_password' => 'New Password',
+        'confirm_password' => 'Confirm New Password',
+        'name' => 'Name',
+        'email' => 'Email',
+    ],
+    
+    // Hints (for admin settings page)
+    'hints' => [
+        'currency_usage' => 'This currency will be used across the entire system for displaying prices.',
+        'exchange_rate' => 'Update daily for accurate currency conversion.',
+        'password_requirements' => 'Minimum 8 characters, must include uppercase, lowercase, and numbers.',
+    ],
+    
+    // Labels (for admin settings page)
+    'labels' => [
+        'usd_equals' => '1 USD =',
+        'tzs' => 'TZS',
+    ],
+    
     // Tax
     'tax_settings' => 'Tax Settings',
     'tax_rate' => 'Tax Rate',
@@ -67,6 +105,9 @@ return [
     
     // Actions
     'save_settings' => 'Save Settings',
+    'save_currency' => 'Save Currency Settings',
+    'change_password' => 'Change Password',
+    'save_profile' => 'Save Profile',
     'reset_to_default' => 'Reset to Default',
     'export_settings' => 'Export Settings',
     'import_settings' => 'Import Settings',

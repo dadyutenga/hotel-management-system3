@@ -322,16 +322,16 @@ class LaundryOrderController extends Controller
                 $amountUsd    = FinancePayment::toUsd($laundryOrder->total, 'TZS', $exchangeRate);
 
                 $payment = FinancePayment::create([
-                    'type'            => 'walkin',
+                    'payment_type'    => 'walkin',
                     'checkout_id'     => null,
                     'order_id'        => null,
                     'method'          => $request->payment_method,
                     'currency'        => 'TZS',
-                    'amount_tendered' => $laundryOrder->total,
+                    'amount'          => $laundryOrder->total,
                     'amount_usd'      => $amountUsd,
                     'exchange_rate'   => $exchangeRate,
                     'status'          => 'completed',
-                    'note'            => "Laundry Order {$laundryOrder->order_number}",
+                    'notes'           => "Laundry Order {$laundryOrder->order_number}",
                     'created_by'      => auth()->id(),
                 ]);
 

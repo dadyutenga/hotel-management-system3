@@ -1,16 +1,16 @@
 {{-- resources/views/laundry/reports/daily.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Daily Laundry Report')
-@section('page-title', 'Laundry')
+@section('title', __('laundry.daily_laundry_report'))
+@section('page-title', __('laundry.title'))
 
 @section('content')
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold text-secondary">Daily Laundry Report</h2>
-            <p class="text-sm text-gray-500 mt-1">View daily laundry revenue and order statistics</p>
+            <h2 class="text-2xl font-extrabold text-secondary">{{ __('laundry.daily_laundry_report') }}</h2>
+            <p class="text-sm text-gray-500 mt-1">{{ __('laundry.report_subtitle') }}</p>
         </div>
         <form method="GET" class="flex items-center gap-3">
             <div class="relative">
@@ -18,7 +18,7 @@
                        class="px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
             </div>
             <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">
-                View Report
+                {{ __('laundry.actions.view_report') }}
             </button>
         </form>
     </div>
@@ -34,7 +34,7 @@
                 </div>
                 <div>
                     <div class="text-2xl font-extrabold text-secondary">{{ $summary['total_orders'] }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Total Orders</div>
+                    <div class="text-xs text-gray-500 font-medium">{{ __('laundry.reports.total_orders') }}</div>
                 </div>
             </div>
         </div>
@@ -48,7 +48,7 @@
                 </div>
                 <div>
                     <div class="text-2xl font-extrabold text-secondary">{{ number_format($summary['total_revenue'], 0) }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Total Revenue (TZS)</div>
+                    <div class="text-xs text-gray-500 font-medium">{{ __('laundry.reports.total_revenue_tzs') }}</div>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 </div>
                 <div>
                     <div class="text-2xl font-extrabold text-secondary">{{ number_format($summary['guest_revenue'], 0) }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Guest Revenue</div>
+                    <div class="text-xs text-gray-500 font-medium">{{ __('laundry.reports.guest_revenue') }}</div>
                 </div>
             </div>
         </div>
@@ -76,7 +76,7 @@
                 </div>
                 <div>
                     <div class="text-2xl font-extrabold text-secondary">{{ number_format($summary['walkin_revenue'], 0) }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Walk-in Revenue</div>
+                    <div class="text-xs text-gray-500 font-medium">{{ __('laundry.reports.walkin_revenue') }}</div>
                 </div>
             </div>
         </div>
@@ -91,7 +91,7 @@
                 </svg>
             </div>
             <div class="text-xl font-extrabold text-secondary">{{ number_format($summary['cash'], 0) }}</div>
-            <div class="text-xs text-gray-500 font-medium mt-1">Cash Payments</div>
+            <div class="text-xs text-gray-500 font-medium mt-1">{{ __('laundry.payment.cash_payments') }}</div>
         </div>
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 text-center">
             <div class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -100,7 +100,7 @@
                 </svg>
             </div>
             <div class="text-xl font-extrabold text-secondary">{{ number_format($summary['card'], 0) }}</div>
-            <div class="text-xs text-gray-500 font-medium mt-1">Card Payments</div>
+            <div class="text-xs text-gray-500 font-medium mt-1">{{ __('laundry.payment.card_payments') }}</div>
         </div>
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 text-center">
             <div class="w-12 h-12 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -109,7 +109,7 @@
                 </svg>
             </div>
             <div class="text-xl font-extrabold text-secondary">{{ number_format($summary['charged'], 0) }}</div>
-            <div class="text-xs text-gray-500 font-medium mt-1">Charged to Booking</div>
+            <div class="text-xs text-gray-500 font-medium mt-1">{{ __('laundry.payment.charged_to_booking') }}</div>
         </div>
     </div>
 
@@ -121,18 +121,18 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
-                Overdue Orders ({{ $overdueOrders->count() }})
+                {{ __('laundry.sections.overdue_orders') }} ({{ $overdueOrders->count() }})
             </h3>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-red-50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">Order</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">Customer</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">Expected Ready</th>
-                        <th class="px-6 py-4 text-center text-xs font-bold text-red-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">{{ __('laundry.table.order') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">{{ __('laundry.table.customer') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">{{ __('laundry.table.status') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">{{ __('laundry.table.expected_ready') }}</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-red-600 uppercase tracking-wider">{{ __('laundry.table.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -143,7 +143,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm text-secondary">
-                                {{ $order->customer_type === 'guest' ? 'Room ' . $order->room_number : $order->customer_name }}
+                                {{ $order->customer_type === 'guest' ? __('laundry.info.room') . ' ' . $order->room_number : $order->customer_name }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -156,7 +156,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                             <a href="{{ route('laundry.orders.show', $order) }}" 
-                               class="text-primary hover:text-blue-700 font-semibold text-sm">View</a>
+                               class="text-primary hover:text-blue-700 font-semibold text-sm">{{ __('laundry.actions.view') }}</a>
                         </td>
                     </tr>
                     @endforeach
@@ -169,20 +169,20 @@
     {{-- Settled orders --}}
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
-            <h3 class="text-sm font-bold text-primary uppercase tracking-wider">Settled Orders — {{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</h3>
+            <h3 class="text-sm font-bold text-primary uppercase tracking-wider">{{ __('laundry.sections.settled_orders') }} — {{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Order</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Customer</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">Items</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">Total</th>
-                        <th class="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Payment</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Settled By</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.order') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.customer') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.type') }}</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.items') }}</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.total') }}</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.payment') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.settled_by') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.time') }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -195,13 +195,13 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm text-secondary">
-                                {{ $order->customer_type === 'guest' ? 'Room ' . $order->room_number : $order->customer_name }}
+                                {{ $order->customer_type === 'guest' ? __('laundry.info.room') . ' ' . $order->room_number : $order->customer_name }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs rounded
                                 {{ $order->customer_type === 'guest' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600' }}">
-                                {{ $order->customer_type === 'guest' ? 'Guest' : 'Walk-in' }}
+                                {{ $order->customer_type === 'guest' ? __('laundry.customer_type.guest') : __('laundry.customer_type.walkin') }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
@@ -228,8 +228,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-bold text-secondary">No settled orders</h3>
-                            <p class="mt-2 text-sm text-gray-500">No settled orders on this date.</p>
+                            <h3 class="text-lg font-bold text-secondary">{{ __('laundry.messages.no_settled_orders') }}</h3>
+                            <p class="mt-2 text-sm text-gray-500">{{ __('laundry.messages.no_settled_orders_date') }}</p>
                         </td>
                     </tr>
                     @endforelse

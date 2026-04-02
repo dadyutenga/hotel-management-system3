@@ -1,34 +1,34 @@
 {{-- resources/views/laundry/orders/index.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Laundry Orders')
-@section('page-title', 'Laundry')
+@section('title', __('laundry.laundry_orders'))
+@section('page-title', __('laundry.title'))
 
 @section('content')
 <div class="space-y-6">
     <!-- Header Actions -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold text-secondary">Laundry Orders</h2>
-            <p class="text-sm text-gray-500 mt-1">Manage laundry orders, track status and process items</p>
+            <h2 class="text-2xl font-extrabold text-secondary">{{ __('laundry.laundry_orders') }}</h2>
+            <p class="text-sm text-gray-500 mt-1">{{ __('laundry.manage_subtitle') }}</p>
         </div>
         <a href="{{ route('laundry.orders.create') }}" 
            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            New Order
+            {{ __('laundry.new_order') }}
         </a>
     </div>
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         @foreach([
-            'received'   => ['label' => 'Received',   'color' => 'yellow', 'icon' => 'M19 14l-7 7m0 0l-7-7m7 7V3'],
-            'processing' => ['label' => 'Processing', 'color' => 'blue', 'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'],
-            'ready'      => ['label' => 'Ready',      'color' => 'orange', 'icon' => 'M5 13l4 4L19 7'],
-            'delivered'  => ['label' => 'Delivered',   'color' => 'indigo', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-            'collected'  => ['label' => 'Collected',   'color' => 'teal', 'icon' => 'M5 13l4 4L19 7'],
+            'received'   => ['label' => __('laundry.status.received'),   'color' => 'yellow', 'icon' => 'M19 14l-7 7m0 0l-7-7m7 7V3'],
+            'processing' => ['label' => __('laundry.status.processing'), 'color' => 'blue', 'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'],
+            'ready'      => ['label' => __('laundry.status.ready'),      'color' => 'orange', 'icon' => 'M5 13l4 4L19 7'],
+            'delivered'  => ['label' => __('laundry.status.delivered'),   'color' => 'indigo', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
+            'collected'  => ['label' => __('laundry.status.collected'),   'color' => 'teal', 'icon' => 'M5 13l4 4L19 7'],
         ] as $status => $meta)
         <a href="{{ route('laundry.orders.index', ['status' => $status]) }}" 
            class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all">
@@ -56,17 +56,17 @@
             </div>
             <div>
                 <select name="customer_type" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
-                    <option value="">All Customers</option>
-                    <option value="guest"  {{ request('customer_type') === 'guest'  ? 'selected' : '' }}>Hotel Guests</option>
-                    <option value="walkin" {{ request('customer_type') === 'walkin' ? 'selected' : '' }}>Walk-in</option>
+                    <option value="">{{ __('laundry.filters.all_customers') }}</option>
+                    <option value="guest"  {{ request('customer_type') === 'guest'  ? 'selected' : '' }}>{{ __('laundry.customer_type.hotel_guests') }}</option>
+                    <option value="walkin" {{ request('customer_type') === 'walkin' ? 'selected' : '' }}>{{ __('laundry.customer_type.walkin') }}</option>
                 </select>
             </div>
             <div>
                 <select name="status" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
-                    <option value="">All Statuses</option>
+                    <option value="">{{ __('laundry.filters.all_statuses') }}</option>
                     @foreach(['received','processing','ready','delivered','collected','settled','cancelled'] as $s)
                     <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>
-                        {{ ucfirst($s) }}
+                        {{ __('laundry.status.' . $s) }}
                     </option>
                     @endforeach
                 </select>
@@ -77,10 +77,10 @@
             </div>
             <div class="flex gap-2">
                 <button type="submit" class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">
-                    Filter
+                    {{ __('laundry.actions.filter') }}
                 </button>
                 <a href="{{ route('laundry.orders.index') }}" class="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-all">
-                    Reset
+                    {{ __('laundry.actions.reset') }}
                 </a>
             </div>
         </form>
@@ -92,14 +92,14 @@
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gradient-to-r from-blue-50 to-white">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Order</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Customer</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">Items</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">Total</th>
-                        <th class="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Expected Ready</th>
-                        <th class="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.order') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.customer') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.type') }}</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.items') }}</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.total') }}</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.status') }}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.expected_ready') }}</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-primary uppercase tracking-wider">{{ __('laundry.table.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -120,8 +120,8 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($order->customer_type === 'guest')
-                                <div class="text-sm font-semibold text-secondary">Room {{ $order->room_number }}</div>
-                                <div class="text-xs text-gray-500">Hotel Guest</div>
+                                <div class="text-sm font-semibold text-secondary">{{ __('laundry.info.room') }} {{ $order->room_number }}</div>
+                                <div class="text-xs text-gray-500">{{ __('laundry.customer_type.guest') }}</div>
                             @else
                                 <div class="text-sm font-semibold text-secondary">{{ $order->customer_name }}</div>
                                 <div class="text-xs text-gray-500">{{ $order->customer_phone }}</div>
@@ -132,7 +132,7 @@
                                 {{ $order->customer_type === 'guest'
                                    ? 'bg-purple-100 text-purple-700'
                                    : 'bg-gray-100 text-gray-600' }}">
-                                {{ $order->customer_type === 'guest' ? 'Guest' : 'Walk-in' }}
+                                {{ $order->customer_type === 'guest' ? __('laundry.customer_type.guest') : __('laundry.customer_type.walkin') }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
@@ -150,7 +150,7 @@
                                 @elseif($order->status === 'collected') bg-teal-100 text-teal-700
                                 @elseif($order->status === 'settled')   bg-green-100 text-green-700
                                 @else bg-gray-100 text-gray-500 @endif">
-                                {{ ucfirst($order->status) }}
+                                {{ __('laundry.status.' . $order->status) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -180,15 +180,15 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-bold text-secondary">No orders found</h3>
-                            <p class="mt-2 text-sm text-gray-500">Get started by creating your first laundry order.</p>
+                            <h3 class="text-lg font-bold text-secondary">{{ __('laundry.messages.no_orders') }}</h3>
+                            <p class="mt-2 text-sm text-gray-500">{{ __('laundry.messages.no_orders_subtitle') }}</p>
                             <div class="mt-6">
                                 <a href="{{ route('laundry.orders.create') }}" 
                                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    New Order
+                                    {{ __('laundry.new_order') }}
                                 </a>
                             </div>
                         </td>

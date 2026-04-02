@@ -1,8 +1,8 @@
 {{-- resources/views/profile/edit.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Profile')
-@section('page-title', 'Profile Settings')
+@section('title', __('profile.title'))
+@section('page-title', __('profile.page_title'))
 
 @section('content')
 <div class="max-w-2xl">
@@ -37,7 +37,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
             </div>
-            <h3 class="text-lg font-bold text-secondary">Profile Information</h3>
+            <h3 class="text-lg font-bold text-secondary">{{ __('profile.sections.profile_information') }}</h3>
         </div>
         
         <form method="POST" action="{{ route('profile.update') }}">
@@ -45,19 +45,19 @@
             @method('PATCH')
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">Name</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.name') }}</label>
                 <input type="text" name="name" value="{{ old('name', auth()->user()->name) }}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
                 @error('name')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-secondary mb-2">Email</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.email') }}</label>
                 <input type="email" name="email" value="{{ old('email', auth()->user()->email) }}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
                 @error('email')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-blue-600 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
-                Save Changes
+                {{ __('profile.actions.save_changes') }}
             </button>
         </form>
     </div>
@@ -71,8 +71,8 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-secondary">Change Password</h3>
-                <p class="text-sm text-gray-500">Update your account password securely</p>
+                <h3 class="text-lg font-bold text-secondary">{{ __('profile.sections.change_password') }}</h3>
+                <p class="text-sm text-gray-500">{{ __('profile.subtitles.password_security') }}</p>
             </div>
         </div>
         
@@ -80,7 +80,7 @@
             @csrf
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">Current Password</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.current_password') }}</label>
                 <input type="password" name="current_password" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                        required autocomplete="current-password">
@@ -88,23 +88,23 @@
             </div>
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-secondary mb-2">New Password</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.new_password') }}</label>
                 <input type="password" name="password" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                        required autocomplete="new-password">
-                <p class="text-xs text-gray-500 mt-1.5">Minimum 8 characters, must include uppercase, lowercase, and numbers.</p>
+                <p class="text-xs text-gray-500 mt-1.5">{{ __('profile.subtitles.password_requirements') }}</p>
                 @error('password')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-secondary mb-2">Confirm New Password</label>
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.confirm_new_password') }}</label>
                 <input type="password" name="password_confirmation" 
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" 
                        required autocomplete="new-password">
             </div>
 
             <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all">
-                Change Password
+                {{ __('profile.actions.change_password') }}
             </button>
         </form>
     </div>

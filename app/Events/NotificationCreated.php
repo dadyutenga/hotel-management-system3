@@ -14,14 +14,14 @@ class NotificationCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public int $userId;
+    public string $userId;
     public int $unreadCount;
     public ?array $notification;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(int $userId, int $unreadCount, ?StoreNotification $notification = null)
+    public function __construct(string $userId, int $unreadCount, ?StoreNotification $notification = null)
     {
         $this->userId = $userId;
         $this->unreadCount = $unreadCount;

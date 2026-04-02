@@ -22,6 +22,44 @@ return [
     'currency_code' => 'Nambari ya Sarafu',
     'exchange_rate' => 'Kiwango cha Kubadilishana',
     
+    // Sections (for admin settings page)
+    'sections' => [
+        'currency' => 'Mipangilio ya Sarafu',
+        'change_password' => 'Badilisha Nenosiri',
+        'profile_info' => 'Taarifa za Wasifu',
+    ],
+    
+    // Subtitles (for admin settings page)
+    'subtitles' => [
+        'currency' => 'Weka mipangilio ya sarafu kwa mfumo mzima',
+        'password' => 'Sasisha nenosiri la akaunti yako kwa usalama',
+        'profile' => 'Sasisha maelezo ya akaunti yako',
+    ],
+    
+    // Form fields (for admin settings page)
+    'fields' => [
+        'default_currency' => 'Sarafu ya Kawaida',
+        'tzs_exchange_rate' => 'Kiwango cha Kubadilisha TZS',
+        'current_password' => 'Nenosiri la Sasa',
+        'new_password' => 'Nenosiri Jipya',
+        'confirm_password' => 'Thibitisha Nenosiri Jipya',
+        'name' => 'Jina',
+        'email' => 'Barua Pepe',
+    ],
+    
+    // Hints (for admin settings page)
+    'hints' => [
+        'currency_usage' => 'Sarafu hii itatumika katika mfumo mzima kuonyesha bei.',
+        'exchange_rate' => 'Sasisha kila siku kwa ubadilishaji sahihi wa sarafu.',
+        'password_requirements' => 'Angalau herufi 8, lazima iwe na herufi kubwa, ndogo, na nambari.',
+    ],
+    
+    // Labels (for admin settings page)
+    'labels' => [
+        'usd_equals' => '1 USD =',
+        'tzs' => 'TZS',
+    ],
+    
     // Tax
     'tax_settings' => 'Mipangilio ya Kodi',
     'tax_rate' => 'Kiwango cha Kodi',
@@ -67,6 +105,9 @@ return [
     
     // Actions
     'save_settings' => 'Hifadhi Mipangilio',
+    'save_currency' => 'Hifadhi Mipangilio ya Sarafu',
+    'change_password' => 'Badilisha Nenosiri',
+    'save_profile' => 'Hifadhi Wasifu',
     'reset_to_default' => 'Weka Upya',
     'export_settings' => 'Hamisha Mipangilio',
     'import_settings' => 'Ingiza Mipangilio',
