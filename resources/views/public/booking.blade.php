@@ -140,7 +140,7 @@
                                     <h3 class="text-xl font-bold text-secondary mb-2">{{ $room->roomType->name ?? 'Room' }}</h3>
                                     <p class="text-gray-600 text-sm mb-4">Room {{ $room->room_number }} &bull; Floor {{ $room->floor->number ?? 'N/A' }}</p>
                                     <div class="flex items-center justify-between mb-4">
-                                        <span class="text-2xl font-bold text-primary">${{ number_format($room->roomType->price_per_night ?? 150, 2) }}</span>
+                                        <span class="text-2xl font-bold text-primary"><x-money :amount="$room->roomType->price_per_night ?? 150" /></span>
                                         <span class="text-gray-500 text-sm">per night</span>
                                     </div>
                                     <a href="{{ route('booking.room', $room->id) }}?check_in={{ request('check_in') }}&check_out={{ request('check_out') }}&guests={{ request('guests') }}" 
@@ -199,7 +199,7 @@
                                 </li>
                             </ul>
                             <div class="flex items-baseline gap-1">
-                                <span class="text-2xl font-bold text-primary">${{ number_format($type->base_rate, 2) }}</span>
+                                <span class="text-2xl font-bold text-primary"><x-money :amount="$type->base_rate" /></span>
                                 <span class="text-gray-500 text-sm">/night</span>
                             </div>
                         </div>
@@ -240,7 +240,7 @@
                             </div>
                             <div>
                                 <span class="text-gray-500">Total</span>
-                                <p class="font-bold text-primary text-lg">${{ number_format($totalPrice ?? 0, 2) }}</p>
+                                <p class="font-bold text-primary text-lg"><x-money :amount="$totalPrice ?? 0" /></p>
                             </div>
                         </div>
                     </div>

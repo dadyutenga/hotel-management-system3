@@ -114,7 +114,7 @@
         <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
             <div class="text-3xl font-extrabold text-green-600">{{ $item->count }}</div>
             <div class="text-sm text-gray-600 font-medium mt-1">{{ $item->roomType->name }}</div>
-            <div class="text-xs text-primary font-medium mt-1">${{ number_format($item->roomType->base_rate, 0) }}/night</div>
+            <div class="text-xs text-primary font-medium mt-1"><x-money :amount="$item->roomType->base_rate" />/night</div>
         </div>
         @empty
         <div class="col-span-full text-center text-gray-500 py-6">No available rooms</div>

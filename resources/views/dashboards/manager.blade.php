@@ -209,22 +209,22 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                 <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">Today</p>
-                <p class="text-2xl font-extrabold text-green-700 mt-2">{{ number_format($stats['today_revenue'] ?? 0, 0) }}</p>
+                <p class="text-2xl font-extrabold text-green-700 mt-2"><x-money :amount="$stats['today_revenue'] ?? 0" /></p>
                 <p class="text-xs text-green-600 mt-1">Revenue</p>
             </div>
             <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                 <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">This Week</p>
-                <p class="text-2xl font-extrabold text-blue-700 mt-2">{{ number_format($stats['week_revenue'] ?? 0, 0) }}</p>
+                <p class="text-2xl font-extrabold text-blue-700 mt-2"><x-money :amount="$stats['week_revenue'] ?? 0" /></p>
                 <p class="text-xs text-blue-600 mt-1">Revenue</p>
             </div>
             <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
                 <p class="text-xs font-semibold text-purple-600 uppercase tracking-wider">This Month</p>
-                <p class="text-2xl font-extrabold text-purple-700 mt-2">{{ number_format($stats['month_revenue'] ?? 0, 0) }}</p>
+                <p class="text-2xl font-extrabold text-purple-700 mt-2"><x-money :amount="$stats['month_revenue'] ?? 0" /></p>
                 <p class="text-xs text-purple-600 mt-1">Revenue</p>
             </div>
             <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
                 <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Total</p>
-                <p class="text-2xl font-extrabold text-indigo-700 mt-2">{{ number_format($stats['total_revenue'] ?? 0, 0) }}</p>
+                <p class="text-2xl font-extrabold text-indigo-700 mt-2"><x-money :amount="$stats['total_revenue'] ?? 0" /></p>
                 <p class="text-xs text-indigo-600 mt-1">All Time</p>
             </div>
         </div>
@@ -338,7 +338,7 @@
                         <span class="text-sm text-gray-600">{{ $reservation->check_out_date ? \Carbon\Carbon::parse($reservation->check_out_date)->format('M d, Y') : 'N/A' }}</span>
                     </td>
                     <td class="py-3 pr-4">
-                        <span class="font-semibold text-secondary">{{ number_format($reservation->estimated_amount ?? 0) }}</span>
+                        <span class="font-semibold text-secondary"><x-money :amount="$reservation->estimated_amount ?? 0" /></span>
                     </td>
                     <td class="py-3">
                         @php

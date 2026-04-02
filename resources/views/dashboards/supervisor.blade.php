@@ -130,15 +130,15 @@
             <div class="grid grid-cols-3 gap-4 text-sm">
                 <div class="p-3 bg-gradient-to-br from-blue-50 via-white to-white rounded-xl border border-gray-200">
                     <p class="text-gray-500 font-medium">Today</p>
-                    <p class="text-xl font-extrabold text-secondary">${{ number_format($stats['today_revenue'], 2) }}</p>
+                    <p class="text-xl font-extrabold text-secondary"><x-money :amount="$stats['today_revenue']" /></p>
                 </div>
                 <div class="p-3 bg-gradient-to-br from-blue-50 via-white to-white rounded-xl border border-gray-200">
                     <p class="text-gray-500 font-medium">This Week</p>
-                    <p class="text-xl font-extrabold text-secondary">${{ number_format($stats['week_revenue'], 2) }}</p>
+                    <p class="text-xl font-extrabold text-secondary"><x-money :amount="$stats['week_revenue']" /></p>
                 </div>
                 <div class="p-3 bg-gradient-to-br from-blue-50 via-white to-white rounded-xl border border-gray-200">
                     <p class="text-gray-500 font-medium">This Month</p>
-                    <p class="text-xl font-extrabold text-secondary">${{ number_format($stats['month_revenue'], 2) }}</p>
+                    <p class="text-xl font-extrabold text-secondary"><x-money :amount="$stats['month_revenue']" /></p>
                 </div>
             </div>
         </div>
@@ -282,7 +282,7 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm">{{ $order->guest->first_name ?? '' }} {{ $order->guest->last_name ?? '' }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">{{ $order->booking->room->room_number ?? 'N/A' }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-green-600">{{ number_format($order->total_amount) }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-green-600"><x-money :amount="$order->total_amount" /></td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             @php
                                 $badge = match($order->status) {
