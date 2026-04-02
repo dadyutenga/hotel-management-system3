@@ -56,6 +56,7 @@ use App\Http\Controllers\Finance\PettyCashController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\BroadcastController;
 use App\Http\Controllers\Admin\AuditController;
+use App\Http\Controllers\Admin\SettingsController;
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
     return view('welcome');
@@ -132,7 +133,7 @@ Route::middleware(['auth'])->group(function () {
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Reservations, Bookings, Guests — restricted to authorized roles (NO admin - admin is system only)
     Route::middleware(['role:supervisor,front_desk,manager'])->group(function () {
@@ -523,6 +524,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin,manager,supervisor'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('audit/discounts',                  [AuditController::class, 'discounts'])->name('audit.discounts');
         Route::post('bookings/{booking}/discount',     [AuditController::class, 'applyDiscount'])->name('audit.apply-discount');
+    });
+
+    // ═══ ADMIN — System Settings ═══
+    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('settings',                         [SettingsController::class, 'index'])->name('settings.index');
+        Route::post('settings',                        [SettingsController::class, 'updateSettings'])->name('settings.update');
+        Route::post('settings/password',               [SettingsController::class, 'updatePassword'])->name('settings.password');
     });
 
     // ═══ ACCOUNTING MODULE ═══

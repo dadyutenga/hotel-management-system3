@@ -194,7 +194,7 @@
                             <div class="text-xs text-primary">{{ $booking->nights }} nights</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold text-secondary">${{ number_format($booking->total_amount, 2) }}</span>
+                            <span class="text-sm font-bold text-secondary">@currency($booking->total_amount)</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php

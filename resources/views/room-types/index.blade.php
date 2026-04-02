@@ -46,7 +46,7 @@
                     <h3 class="text-xl font-bold">{{ $roomType->name }}</h3>
                     <span class="text-xs font-bold bg-white/20 px-2.5 py-1 rounded-lg">{{ $roomType->code }}</span>
                 </div>
-                <div class="text-3xl font-extrabold">${{ number_format($roomType->base_rate, 2) }}</div>
+                <div class="text-3xl font-extrabold">@currency($roomType->base_rate)</div>
                 <div class="text-sm text-blue-100 font-medium">per night</div>
             </div>
 

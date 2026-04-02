@@ -25,7 +25,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm font-medium text-gray-500">Today's Revenue</p>
-                <p class="text-2xl font-extrabold text-green-600 mt-1">{{ number_format($stats['today_revenue'], 0) }} <span class="text-sm">TZS</span></p>
+                <p class="text-2xl font-extrabold text-green-600 mt-1">@currency($stats['today_revenue'], 'TZS')</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@
                     <td class="px-4 py-3 font-medium">{{ $booking->room->room_number ?? '—' }}</td>
                     <td class="px-4 py-3">{{ $booking->guest_name ?? $booking->guest_display_name ?? '—' }}</td>
                     <td class="px-4 py-3 text-gray-400 text-xs">{{ $booking->check_out_date->format('h:i A') }}</td>
-                    <td class="px-4 py-3 text-right font-medium">{{ number_format($booking->total_amount, 0) }} TZS</td>
+                    <td class="px-4 py-3 text-right font-medium">@currency($booking->total_amount, 'TZS')</td>
                     <td class="px-4 py-3 text-center">
                         <span class="px-2 py-0.5 rounded-full text-xs font-medium
                             {{ $booking->payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
