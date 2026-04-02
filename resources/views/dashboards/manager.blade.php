@@ -2,16 +2,16 @@
 {{-- Manager Dashboard - Full business operations control --}}
 @extends('layouts.app')
 
-@section('title', 'Manager Dashboard')
-@section('page-title', 'Manager Dashboard')
+@section('title', __('dashboard.manager_title'))
+@section('page-title', __('dashboard.manager_title'))
 
 @section('content')
 <!-- Welcome Banner -->
 <div class="bg-gradient-to-r from-indigo-500 to-indigo-700 rounded-2xl p-6 mb-8 text-white shadow-xl">
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold mb-2">Welcome, {{ auth()->user()->name }}!</h2>
-            <p class="text-indigo-100">Here's your business operations overview for today.</p>
+            <h2 class="text-2xl font-extrabold mb-2">{{ __('dashboard.welcome_back') }}, {{ auth()->user()->name }}!</h2>
+            <p class="text-indigo-100">{{ __('dashboard.manager_welcome') }}</p>
         </div>
         <div class="hidden md:block text-right">
             <p id="liveDate" class="text-sm text-indigo-200"></p>
@@ -25,9 +25,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Active Bookings</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stats.active_bookings') }}</p>
                 <p class="text-3xl font-extrabold text-green-600 mt-1">{{ $stats['active_bookings'] ?? 0 }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">Currently checked-in</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.stats.currently_checked_in') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,9 +40,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Pending Reservations</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stats.pending_reservations') }}</p>
                 <p class="text-3xl font-extrabold text-yellow-600 mt-1">{{ $stats['pending_reservations'] ?? 0 }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">Awaiting confirmation</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.stats.awaiting_confirmation') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,9 +55,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Today's Check-ins</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stats.today_checkins') }}</p>
                 <p class="text-3xl font-extrabold text-blue-600 mt-1">{{ $stats['today_checkins'] ?? 0 }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">Expected arrivals</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.stats.expected_arrivals') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,9 +70,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Today's Check-outs</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stats.today_checkouts') }}</p>
                 <p class="text-3xl font-extrabold text-red-600 mt-1">{{ $stats['today_checkouts'] ?? 0 }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">Expected departures</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.stats.expected_departures') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-red-50 to-red-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,9 +92,9 @@
                 <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
-                Laundry Orders
+                {{ __('dashboard.sections.laundry_orders') }}
             </h3>
-            <a href="{{ route('laundry.orders.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">View All</a>
+            <a href="{{ route('laundry.orders.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">{{ __('dashboard.actions.view_all') }}</a>
         </div>
         @php
             $laundryStats = [
@@ -107,19 +107,19 @@
         <div class="grid grid-cols-2 gap-4">
             <div class="text-center p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                 <p class="text-2xl font-extrabold text-yellow-600">{{ $laundryStats['pending'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Pending</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.laundry.pending') }}</p>
             </div>
             <div class="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <p class="text-2xl font-extrabold text-blue-600">{{ $laundryStats['in_progress'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">In Progress</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.laundry.in_progress') }}</p>
             </div>
             <div class="text-center p-4 bg-green-50 rounded-xl border border-green-200">
                 <p class="text-2xl font-extrabold text-green-600">{{ $laundryStats['completed'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Completed</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.laundry.completed') }}</p>
             </div>
             <div class="text-center p-4 bg-indigo-50 rounded-xl border border-indigo-200">
                 <p class="text-2xl font-extrabold text-indigo-600">{{ $laundryStats['delivered'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Delivered</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.laundry.delivered') }}</p>
             </div>
         </div>
     </div>
@@ -131,9 +131,9 @@
                 <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                Conference Bookings
+                {{ __('dashboard.sections.conference_bookings') }}
             </h3>
-            <a href="{{ route('conference-bookings.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">View All</a>
+            <a href="{{ route('conference-bookings.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">{{ __('dashboard.actions.view_all') }}</a>
         </div>
         @php
             $conferenceStats = [
@@ -146,19 +146,19 @@
         <div class="grid grid-cols-2 gap-4">
             <div class="text-center p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                 <p class="text-2xl font-extrabold text-yellow-600">{{ $conferenceStats['pending'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Pending</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.conference.pending') }}</p>
             </div>
             <div class="text-center p-4 bg-green-50 rounded-xl border border-green-200">
                 <p class="text-2xl font-extrabold text-green-600">{{ $conferenceStats['confirmed'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Confirmed</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.conference.confirmed') }}</p>
             </div>
             <div class="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <p class="text-2xl font-extrabold text-blue-600">{{ $conferenceStats['today'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Today</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.conference.today') }}</p>
             </div>
             <div class="text-center p-4 bg-indigo-50 rounded-xl border border-indigo-200">
                 <p class="text-2xl font-extrabold text-indigo-600">{{ $conferenceStats['upcoming'] }}</p>
-                <p class="text-xs text-gray-500 font-medium">Upcoming</p>
+                <p class="text-xs text-gray-500 font-medium">{{ __('dashboard.conference.upcoming') }}</p>
             </div>
         </div>
     </div>
@@ -168,7 +168,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <!-- Occupancy Rate -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Occupancy Rate</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.stats.occupancy_rate') }}</h3>
         <div class="flex items-center justify-center">
             <div class="relative w-40 h-40">
                 <svg class="transform -rotate-90 w-40 h-40">
@@ -186,46 +186,46 @@
         <div class="mt-6 grid grid-cols-2 gap-2 text-sm">
             <div class="text-center p-3 bg-green-50 rounded-xl">
                 <p class="font-bold text-green-700">{{ $stats['available_rooms'] ?? 0 }}</p>
-                <p class="text-green-600 text-xs">Available</p>
+                <p class="text-green-600 text-xs">{{ __('dashboard.room_status.available') }}</p>
             </div>
             <div class="text-center p-3 bg-red-50 rounded-xl">
                 <p class="font-bold text-red-700">{{ $stats['occupied_rooms'] ?? 0 }}</p>
-                <p class="text-red-600 text-xs">Occupied</p>
+                <p class="text-red-600 text-xs">{{ __('dashboard.room_status.occupied') }}</p>
             </div>
             <div class="text-center p-3 bg-blue-50 rounded-xl">
                 <p class="font-bold text-blue-700">{{ $stats['reserved_rooms'] ?? 0 }}</p>
-                <p class="text-blue-600 text-xs">Reserved</p>
+                <p class="text-blue-600 text-xs">{{ __('dashboard.room_status.reserved') }}</p>
             </div>
             <div class="text-center p-3 bg-yellow-50 rounded-xl">
                 <p class="font-bold text-yellow-700">{{ $stats['dirty_rooms'] ?? 0 }}</p>
-                <p class="text-yellow-600 text-xs">Dirty</p>
+                <p class="text-yellow-600 text-xs">{{ __('dashboard.room_status.dirty') }}</p>
             </div>
         </div>
     </div>
 
     <!-- Revenue Overview -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:col-span-2">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Revenue Overview</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.revenue.title') }}</h3>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">Today</p>
+                <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">{{ __('dashboard.revenue.today_label') }}</p>
                 <p class="text-2xl font-extrabold text-green-700 mt-2"><x-money :amount="$stats['today_revenue'] ?? 0" /></p>
-                <p class="text-xs text-green-600 mt-1">Revenue</p>
+                <p class="text-xs text-green-600 mt-1">{{ __('dashboard.revenue.revenue') }}</p>
             </div>
             <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">This Week</p>
+                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">{{ __('dashboard.revenue.this_week') }}</p>
                 <p class="text-2xl font-extrabold text-blue-700 mt-2"><x-money :amount="$stats['week_revenue'] ?? 0" /></p>
-                <p class="text-xs text-blue-600 mt-1">Revenue</p>
+                <p class="text-xs text-blue-600 mt-1">{{ __('dashboard.revenue.revenue') }}</p>
             </div>
             <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                <p class="text-xs font-semibold text-purple-600 uppercase tracking-wider">This Month</p>
+                <p class="text-xs font-semibold text-purple-600 uppercase tracking-wider">{{ __('dashboard.revenue.this_month') }}</p>
                 <p class="text-2xl font-extrabold text-purple-700 mt-2"><x-money :amount="$stats['month_revenue'] ?? 0" /></p>
-                <p class="text-xs text-purple-600 mt-1">Revenue</p>
+                <p class="text-xs text-purple-600 mt-1">{{ __('dashboard.revenue.revenue') }}</p>
             </div>
             <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
-                <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Total</p>
+                <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">{{ __('dashboard.revenue.total') }}</p>
                 <p class="text-2xl font-extrabold text-indigo-700 mt-2"><x-money :amount="$stats['total_revenue'] ?? 0" /></p>
-                <p class="text-xs text-indigo-600 mt-1">All Time</p>
+                <p class="text-xs text-indigo-600 mt-1">{{ __('dashboard.revenue.all_time') }}</p>
             </div>
         </div>
     </div>
@@ -235,7 +235,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- Staff by Role -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Staff Overview</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.staff_overview') }}</h3>
         <div class="space-y-3">
             @foreach($staffByRole as $roleName => $count)
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
@@ -255,7 +255,7 @@
 
     <!-- Building Stats -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Building Overview</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.building_overview') }}</h3>
         <div class="space-y-3">
             @foreach($buildingStats as $building)
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
@@ -267,10 +267,10 @@
                     </div>
                     <div>
                         <span class="font-semibold text-secondary">{{ $building->name }}</span>
-                        <p class="text-xs text-gray-500">{{ $building->floors_count }} floors</p>
+                        <p class="text-xs text-gray-500">{{ $building->floors_count }} {{ __('dashboard.table.floors') }}</p>
                     </div>
                 </div>
-                <span class="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">{{ $building->rooms_count }} rooms</span>
+                <span class="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">{{ $building->rooms_count }} {{ __('dashboard.table.rooms') }}</span>
             </div>
             @endforeach
         </div>
@@ -279,15 +279,15 @@
 
 <!-- Room Status Distribution -->
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-    <h3 class="text-lg font-extrabold text-secondary mb-6">Room Status Distribution</h3>
+    <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.room_distribution') }}</h3>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         @php
             $statusColors = [
-                'available' => ['bg' => 'bg-green-50', 'border' => 'border-green-200', 'text' => 'text-green-700', 'label' => 'Available'],
-                'occupied' => ['bg' => 'bg-red-50', 'border' => 'border-red-200', 'text' => 'text-red-700', 'label' => 'Occupied'],
-                'reserved' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text' => 'text-blue-700', 'label' => 'Reserved'],
-                'dirty' => ['bg' => 'bg-yellow-50', 'border' => 'border-yellow-200', 'text' => 'text-yellow-700', 'label' => 'Dirty'],
-                'out_of_order' => ['bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text' => 'text-gray-700', 'label' => 'Out of Order'],
+                'available' => ['bg' => 'bg-green-50', 'border' => 'border-green-200', 'text' => 'text-green-700', 'label' => __('dashboard.room_status.available')],
+                'occupied' => ['bg' => 'bg-red-50', 'border' => 'border-red-200', 'text' => 'text-red-700', 'label' => __('dashboard.room_status.occupied')],
+                'reserved' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text' => 'text-blue-700', 'label' => __('dashboard.room_status.reserved')],
+                'dirty' => ['bg' => 'bg-yellow-50', 'border' => 'border-yellow-200', 'text' => 'text-yellow-700', 'label' => __('dashboard.room_status.dirty')],
+                'out_of_order' => ['bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text' => 'text-gray-700', 'label' => __('dashboard.room_status.out_of_order')],
             ];
         @endphp
         @foreach($statusColors as $status => $colors)
@@ -302,9 +302,9 @@
 <!-- Recent Reservations -->
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
     <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-extrabold text-secondary">Recent Reservations</h3>
+        <h3 class="text-lg font-extrabold text-secondary">{{ __('dashboard.sections.recent_reservations') }}</h3>
         <a href="{{ route('reservations.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1">
-            View All
+            {{ __('dashboard.actions.view_all') }}
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -314,12 +314,12 @@
         <table class="w-full">
             <thead>
                 <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                    <th class="pb-3 pr-4">Guest</th>
-                    <th class="pb-3 pr-4">Room</th>
-                    <th class="pb-3 pr-4">Check-in</th>
-                    <th class="pb-3 pr-4">Check-out</th>
-                    <th class="pb-3 pr-4">Amount</th>
-                    <th class="pb-3">Status</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.guest') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.room') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.check_in') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.check_out') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.amount') }}</th>
+                    <th class="pb-3">{{ __('dashboard.table.status') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -358,7 +358,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-400">No recent reservations found.</td>
+                    <td colspan="6" class="py-8 text-center text-gray-400">{{ __('dashboard.no_recent_reservations') }}</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -368,7 +368,7 @@
 
 <!-- Quick Actions -->
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-    <h3 class="text-lg font-extrabold text-secondary mb-6">Quick Actions</h3>
+    <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.quick_actions') }}</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <a href="{{ route('reservations.create') }}" class="flex flex-col items-center p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl hover:shadow-lg transition border border-indigo-200 group">
             <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -376,7 +376,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-secondary">New Reservation</span>
+            <span class="text-sm font-semibold text-secondary">{{ __('dashboard.actions.new_reservation') }}</span>
         </a>
         <a href="{{ route('bookings.create') }}" class="flex flex-col items-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl hover:shadow-lg transition border border-green-200 group">
             <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -384,7 +384,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-secondary">New Booking</span>
+            <span class="text-sm font-semibold text-secondary">{{ __('dashboard.actions.new_booking') }}</span>
         </a>
         <a href="{{ route('laundry.orders.create') }}" class="flex flex-col items-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl hover:shadow-lg transition border border-purple-200 group">
             <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -392,7 +392,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-secondary">New Laundry Order</span>
+            <span class="text-sm font-semibold text-secondary">{{ __('dashboard.actions.new_laundry_order') }}</span>
         </a>
         <a href="{{ route('conference-bookings.create') }}" class="flex flex-col items-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl hover:shadow-lg transition border border-blue-200 group">
             <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -400,7 +400,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-secondary">New Conference</span>
+            <span class="text-sm font-semibold text-secondary">{{ __('dashboard.actions.new_conference') }}</span>
         </a>
     </div>
 </div>

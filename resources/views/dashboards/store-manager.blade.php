@@ -1,16 +1,16 @@
 {{-- resources/views/dashboards/store-manager.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Store Manager Dashboard - MRK Hotel')
-@section('page-title', 'Store Manager Dashboard')
+@section('title', __('dashboard.titles.store_manager'))
+@section('page-title', __('dashboard.titles.store_manager'))
 
 @section('content')
 <!-- Welcome Banner -->
 <div class="bg-gradient-to-r from-indigo-500 to-indigo-700 rounded-2xl p-6 mb-8 text-white shadow-xl">
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold mb-2">Welcome, {{ auth()->user()->name }}!</h2>
-            <p class="text-indigo-100">Procurement & Store Management Overview</p>
+            <h2 class="text-2xl font-extrabold mb-2">{{ __('dashboard.welcome.greeting', ['name' => auth()->user()->name]) }}</h2>
+            <p class="text-indigo-100">{{ __('dashboard.welcome.store_manager_message') }}</p>
         </div>
         <div class="hidden md:block text-right">
             <p id="liveDate" class="text-sm text-indigo-200"></p>
@@ -24,9 +24,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Active Suppliers</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.procurement.active_suppliers') }}</p>
                 <p class="text-3xl font-extrabold text-secondary mt-1">{{ $stats['active_suppliers'] }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">of {{ $stats['total_suppliers'] }} total</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.procurement.of_total', ['total' => $stats['total_suppliers']]) }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,9 +39,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Pending LPOs</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.procurement.pending_lpos') }}</p>
                 <p class="text-3xl font-extrabold text-yellow-600 mt-1">{{ $stats['pending_lpos'] }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">awaiting approval</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.procurement.awaiting_approval') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,9 +54,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Pending GRNs</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.procurement.pending_grns') }}</p>
                 <p class="text-3xl font-extrabold text-orange-600 mt-1">{{ $stats['pending_grns'] }}</p>
-                <p class="text-xs text-gray-500 font-medium mt-1">awaiting confirmation</p>
+                <p class="text-xs text-gray-500 font-medium mt-1">{{ __('dashboard.procurement.awaiting_confirmation') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,9 +69,9 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Low Stock Items</p>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.procurement.low_stock_items') }}</p>
                 <p class="text-3xl font-extrabold text-red-600 mt-1">{{ $stats['low_stock_items'] }}</p>
-                <p class="text-xs text-red-500 font-medium mt-1">need reordering</p>
+                <p class="text-xs text-red-500 font-medium mt-1">{{ __('dashboard.procurement.need_reordering') }}</p>
             </div>
             <div class="w-14 h-14 bg-gradient-to-br from-red-50 to-red-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,16 +86,16 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <!-- LPO Status Overview -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Purchase Order Status</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.purchase_order_status') }}</h3>
         <div class="space-y-3">
             @php
                 $lpoStatuses = [
-                    'draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'label' => 'Draft'],
-                    'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => 'Pending Approval'],
-                    'approved' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => 'Approved'],
-                    'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => 'Rejected'],
-                    'sent' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Sent to Supplier'],
-                    'fully_received' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'label' => 'Fully Received'],
+                    'draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'label' => __('dashboard.procurement.draft')],
+                    'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => __('dashboard.procurement.pending_approval')],
+                    'approved' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => __('dashboard.procurement.approved')],
+                    'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => __('dashboard.procurement.rejected')],
+                    'sent' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => __('dashboard.procurement.sent_to_supplier')],
+                    'fully_received' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'label' => __('dashboard.procurement.fully_received')],
                 ];
             @endphp
             @foreach($lpoStatuses as $status => $colors)
@@ -107,7 +107,7 @@
         </div>
         <div class="mt-4 pt-4 border-t border-gray-100">
             <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">Total LPOs</span>
+                <span class="text-sm text-gray-500">{{ __('dashboard.procurement.total_lpos') }}</span>
                 <span class="text-lg font-extrabold text-secondary">{{ $stats['total_lpos'] }}</span>
             </div>
         </div>
@@ -115,14 +115,14 @@
 
     <!-- GRN Status Overview -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Goods Received Status</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.goods_received_status') }}</h3>
         <div class="space-y-3">
             @php
                 $grnStatuses = [
-                    'draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'label' => 'Draft'],
-                    'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => 'Pending Confirmation'],
-                    'confirmed' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => 'Confirmed'],
-                    'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => 'Rejected'],
+                    'draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'label' => __('dashboard.procurement.draft')],
+                    'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => __('dashboard.procurement.pending_confirmation')],
+                    'confirmed' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => __('dashboard.procurement.confirmed')],
+                    'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => __('dashboard.procurement.rejected')],
                 ];
             @endphp
             @foreach($grnStatuses as $status => $colors)
@@ -134,7 +134,7 @@
         </div>
         <div class="mt-4 pt-4 border-t border-gray-100">
             <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">Total GRNs</span>
+                <span class="text-sm text-gray-500">{{ __('dashboard.procurement.total_grns') }}</span>
                 <span class="text-lg font-extrabold text-secondary">{{ $stats['total_grns'] }}</span>
             </div>
         </div>
@@ -142,26 +142,26 @@
 
     <!-- Financial Summary -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Financial Summary</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.financial_summary') }}</h3>
         <div class="space-y-4">
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">This Month Spending</p>
+                <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">{{ __('dashboard.procurement.month_spending') }}</p>
                 <p class="text-2xl font-extrabold text-green-700 mt-2">{{ number_format($stats['month_spending'], 0) }} TZS</p>
-                <p class="text-xs text-green-600 mt-1">Confirmed GRNs</p>
+                <p class="text-xs text-green-600 mt-1">{{ __('dashboard.procurement.confirmed_grns') }}</p>
             </div>
             <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200">
-                <p class="text-xs font-semibold text-yellow-600 uppercase tracking-wider">Pending Orders Value</p>
+                <p class="text-xs font-semibold text-yellow-600 uppercase tracking-wider">{{ __('dashboard.procurement.pending_orders_value') }}</p>
                 <p class="text-2xl font-extrabold text-yellow-700 mt-2">{{ number_format($stats['pending_orders_value'], 0) }} TZS</p>
-                <p class="text-xs text-yellow-600 mt-1">Awaiting delivery</p>
+                <p class="text-xs text-yellow-600 mt-1">{{ __('dashboard.procurement.awaiting_delivery') }}</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div class="text-center p-3 bg-blue-50 rounded-xl">
                     <p class="text-xl font-extrabold text-blue-700">{{ $stats['today_lpos'] }}</p>
-                    <p class="text-xs text-blue-600">LPOs Today</p>
+                    <p class="text-xs text-blue-600">{{ __('dashboard.procurement.lpos_today') }}</p>
                 </div>
                 <div class="text-center p-3 bg-indigo-50 rounded-xl">
                     <p class="text-xl font-extrabold text-indigo-700">{{ $stats['today_grns'] }}</p>
-                    <p class="text-xs text-indigo-600">GRNs Today</p>
+                    <p class="text-xs text-indigo-600">{{ __('dashboard.procurement.grns_today') }}</p>
                 </div>
             </div>
         </div>
@@ -175,8 +175,8 @@
     @if($pendingApprovals->count() > 0)
     <div class="bg-white rounded-2xl shadow-lg border border-yellow-200 p-6">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-extrabold text-secondary">Pending LPO Approvals</h3>
-            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingApprovals->count() }} pending</span>
+            <h3 class="text-lg font-extrabold text-secondary">{{ __('dashboard.sections.pending_lpo_approvals') }}</h3>
+            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingApprovals->count() }} {{ __('dashboard.stats.pending') }}</span>
         </div>
         <div class="space-y-3">
             @foreach($pendingApprovals as $lpo)
@@ -195,7 +195,7 @@
             @endforeach
         </div>
         <div class="mt-4 pt-4 border-t border-gray-100">
-            <a href="{{ route('procurement.lpo.index') }}?status=pending" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">View All Pending LPOs &rarr;</a>
+            <a href="{{ route('procurement.lpo.index') }}?status=pending" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">{{ __('dashboard.actions.view_all_pending_lpos') }} &rarr;</a>
         </div>
     </div>
     @endif
@@ -204,8 +204,8 @@
     @if($pendingGrnConfirmations->count() > 0)
     <div class="bg-white rounded-2xl shadow-lg border border-orange-200 p-6">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-extrabold text-secondary">Pending GRN Confirmations</h3>
-            <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingGrnConfirmations->count() }} pending</span>
+            <h3 class="text-lg font-extrabold text-secondary">{{ __('dashboard.sections.pending_grn_confirmations') }}</h3>
+            <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingGrnConfirmations->count() }} {{ __('dashboard.stats.pending') }}</span>
         </div>
         <div class="space-y-3">
             @foreach($pendingGrnConfirmations as $grn)
@@ -224,7 +224,7 @@
             @endforeach
         </div>
         <div class="mt-4 pt-4 border-t border-gray-100">
-            <a href="{{ route('procurement.grn.index') }}?status=pending" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">View All Pending GRNs &rarr;</a>
+            <a href="{{ route('procurement.grn.index') }}?status=pending" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">{{ __('dashboard.actions.view_all_pending_grns') }} &rarr;</a>
         </div>
     </div>
     @endif
@@ -235,15 +235,15 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- Recent Purchase Orders -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Recent Purchase Orders</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.recent_purchase_orders') }}</h3>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
                     <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                        <th class="pb-3 pr-4">LPO #</th>
-                        <th class="pb-3 pr-4">Supplier</th>
-                        <th class="pb-3 pr-4">Amount</th>
-                        <th class="pb-3">Status</th>
+                        <th class="pb-3 pr-4">{{ __('dashboard.table.lpo_number') }}</th>
+                        <th class="pb-3 pr-4">{{ __('dashboard.table.supplier') }}</th>
+                        <th class="pb-3 pr-4">{{ __('dashboard.table.amount') }}</th>
+                        <th class="pb-3">{{ __('dashboard.table.status') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -277,20 +277,20 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="py-8 text-center text-gray-400">No purchase orders yet.</td>
+                        <td colspan="4" class="py-8 text-center text-gray-400">{{ __('dashboard.messages.no_purchase_orders_yet') }}</td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
         <div class="mt-4 pt-4 border-t border-gray-100">
-            <a href="{{ route('procurement.lpo.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">View All Purchase Orders &rarr;</a>
+            <a href="{{ route('procurement.lpo.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">{{ __('dashboard.actions.view_all_purchase_orders') }} &rarr;</a>
         </div>
     </div>
 
     <!-- Top Suppliers -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 class="text-lg font-extrabold text-secondary mb-6">Top Suppliers This Month</h3>
+        <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.top_suppliers_month') }}</h3>
         <div class="space-y-3">
             @forelse($topSuppliers as $index => $supplier)
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
@@ -303,31 +303,31 @@
                         <p class="text-xs text-gray-500">{{ $supplier->contact_person ?? 'N/A' }}</p>
                     </div>
                 </div>
-                <span class="bg-indigo-100 text-indigo-700 text-sm font-bold px-3 py-1 rounded-full">{{ $supplier->purchase_orders_count }} orders</span>
+                <span class="bg-indigo-100 text-indigo-700 text-sm font-bold px-3 py-1 rounded-full">{{ $supplier->purchase_orders_count }} {{ __('dashboard.procurement.orders') }}</span>
             </div>
             @empty
-            <div class="text-center py-8 text-gray-400">No supplier activity this month.</div>
+            <div class="text-center py-8 text-gray-400">{{ __('dashboard.messages.no_supplier_activity_month') }}</div>
             @endforelse
         </div>
         <div class="mt-4 pt-4 border-t border-gray-100">
-            <a href="{{ route('procurement.suppliers.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">Manage Suppliers &rarr;</a>
+            <a href="{{ route('procurement.suppliers.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">{{ __('dashboard.actions.manage_suppliers') }} &rarr;</a>
         </div>
     </div>
 </div>
 
 <!-- Recent Goods Received Notes -->
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-    <h3 class="text-lg font-extrabold text-secondary mb-6">Recent Goods Received Notes</h3>
+    <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.recent_goods_received') }}</h3>
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead>
                 <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                    <th class="pb-3 pr-4">GRN #</th>
-                    <th class="pb-3 pr-4">Supplier</th>
-                    <th class="pb-3 pr-4">LPO Ref</th>
-                    <th class="pb-3 pr-4">Received Date</th>
-                    <th class="pb-3 pr-4">Amount</th>
-                    <th class="pb-3">Status</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.grn_number') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.supplier') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.lpo_ref') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.received_date') }}</th>
+                    <th class="pb-3 pr-4">{{ __('dashboard.table.amount') }}</th>
+                    <th class="pb-3">{{ __('dashboard.table.status') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -369,20 +369,20 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-400">No goods received notes yet.</td>
+                    <td colspan="6" class="py-8 text-center text-gray-400">{{ __('dashboard.messages.no_goods_received_yet') }}</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
     <div class="mt-4 pt-4 border-t border-gray-100">
-        <a href="{{ route('procurement.grn.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">View All GRNs &rarr;</a>
+        <a href="{{ route('procurement.grn.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold">{{ __('dashboard.actions.view_all_grns') }} &rarr;</a>
     </div>
 </div>
 
 <!-- Quick Actions -->
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-    <h3 class="text-lg font-extrabold text-secondary mb-6">Quick Actions</h3>
+    <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.quick_actions') }}</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <a href="{{ route('procurement.lpo.create') }}" class="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 hover:shadow-lg transition-all group">
             <div class="w-12 h-12 bg-indigo-200 rounded-full flex items-center justify-center mb-3 group-hover:bg-indigo-300 transition-colors">
@@ -390,7 +390,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-indigo-700">New LPO</span>
+            <span class="text-sm font-semibold text-indigo-700">{{ __('dashboard.actions.new_lpo') }}</span>
         </a>
         <a href="{{ route('procurement.grn.create') }}" class="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 hover:shadow-lg transition-all group">
             <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-300 transition-colors">
@@ -398,7 +398,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-green-700">Receive Goods</span>
+            <span class="text-sm font-semibold text-green-700">{{ __('dashboard.actions.receive_goods') }}</span>
         </a>
         <a href="{{ route('procurement.suppliers.create') }}" class="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 hover:shadow-lg transition-all group">
             <div class="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-300 transition-colors">
@@ -406,7 +406,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-blue-700">Add Supplier</span>
+            <span class="text-sm font-semibold text-blue-700">{{ __('dashboard.actions.add_supplier') }}</span>
         </a>
         <a href="{{ route('store.reports.stock-snapshot') }}" class="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 hover:shadow-lg transition-all group">
             <div class="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-300 transition-colors">
@@ -414,7 +414,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </div>
-            <span class="text-sm font-semibold text-purple-700">Stock Report</span>
+            <span class="text-sm font-semibold text-purple-700">{{ __('dashboard.actions.stock_report') }}</span>
         </a>
     </div>
 </div>

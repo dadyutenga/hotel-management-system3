@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Global middleware — applied to every request
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        
+        // Localization middleware — sets app locale from session
+        $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,

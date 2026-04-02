@@ -57,6 +57,11 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\BroadcastController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\LanguageController;
+
+// Language Switch Route (accessible to everyone)
+Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
+
 // Public welcome page (accessible to everyone)
 Route::get('/', function () {
     return view('welcome');
