@@ -437,7 +437,12 @@ Route::middleware(['auth'])->group(function () {
         // ── Walk-in Payment Processing (unified for laundry/restaurant/bar) ──────
         Route::post('walkin-payment/process', [\App\Http\Controllers\Finance\WalkinPaymentController::class, 'process'])
              ->name('walkin-payment.process')
-             ->middleware('role:cashier,front_desk,laundry_manager,supervisor,bar_tender,restaurant_manager,manager');
+             ->middleware('role:cashier,front_desk,laundry_manager,supervisor,bar_tender,restaurant_manager,manager,admin');
+        Route::get('walkin-payment/status/{reference}', [\App\Http\Controllers\Finance\WalkinPaymentController::class, 'status'])
+             ->name('walkin-payment.status')
+             ->middleware('role:cashier,front_desk,laundry_manager,supervisor,bar_tender,restaurant_manager,manager,admin');
+        Route::get('walkin-payment/callback/{transaction}', [\App\Http\Controllers\Finance\WalkinPaymentController::class, 'callback'])
+             ->name('walkin-payment.callback');
 
         // ── Receipts ──────────────────────────────────────────────────────────────
         Route::get('receipts/guest/{checkout}', [ReceiptController::class, 'guest'])->name('receipt.guest');

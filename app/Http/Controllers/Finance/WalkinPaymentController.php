@@ -7,36 +7,42 @@ use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
 use App\Models\LaundryOrder;
 use App\Models\Order;
+use App\Models\StockMovement;
 use App\Models\SystemSetting;
 use App\Models\WalkinTransaction;
 use App\Services\AccountingService;
 use App\Services\Payment\PaymentEngine;
+use App\Services\Payment\SnippeProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * WalkinPaymentController — handles walk-in payment processing.
  * 
  * This controller provides a unified payment flow for walk-in customers
- * across Laundry, Restaurant, and Bar modules using Snippe payment integration.
+ * across Laundry, Restaurant, and Bar modules.
+ * 
+ * All payments are processed via Snippe integration:
+ * - Cash: Records payment directly (physical cash handled at POS)
+ * - Card: Redirects to Snippe payment page for card entry
+ * - Mobile: Sends USSD push to customer's phone via Snippe
  */
 class WalkinPaymentController extends Controller
 {
-    protected PaymentEngine $paymentEngine;
+    protected SnippeProvider $snippeProvider;
 
     public function __construct()
     {
-        $this->paymentEngine = new PaymentEngine();
+        $this->snippeProvider = new SnippeProvider();
     }
 
     /**
      * Process a walk-in payment.
      * 
      * Handles cash, card, and mobile money payments for walk-in orders.
-     * For mobile money, initiates Snippe payment flow.
-     * For cash/card, records the transaction directly.
      */
     public function process(Request $request): JsonResponse
     {
@@ -69,19 +75,22 @@ class WalkinPaymentController extends Controller
                 ], 422);
             }
 
-            // For mobile payments, use Snippe
-            if ($data['payment_method'] === 'mobile') {
-                return $this->processMobilePayment($order, $data);
-            }
+            // Update customer info on order first
+            $this->updateOrderCustomerInfo($order, $data);
 
-            // For cash/card, process directly
-            return $this->processCashCardPayment($order, $data);
+            // Process based on payment method
+            return match ($data['payment_method']) {
+                'cash'   => $this->processCashPayment($order, $data),
+                'card'   => $this->processCardPayment($order, $data),
+                'mobile' => $this->processMobilePayment($order, $data),
+            };
 
         } catch (\Exception $e) {
             Log::error('Walk-in payment error', [
                 'message' => $e->getMessage(),
-                'module'  => $data['module'],
-                'order_id' => $data['order_id'],
+                'trace'   => $e->getTraceAsString(),
+                'module'  => $data['module'] ?? 'unknown',
+                'order_id' => $data['order_id'] ?? 'unknown',
             ]);
 
             return response()->json([
@@ -89,6 +98,74 @@ class WalkinPaymentController extends Controller
                 'message' => 'An error occurred while processing payment. Please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Check payment status (for polling from frontend).
+     */
+    public function status(string $reference): JsonResponse
+    {
+        $walkinTxn = WalkinTransaction::where('provider_reference', $reference)->first();
+
+        if (!$walkinTxn) {
+            return response()->json([
+                'success' => false,
+                'status'  => 'not_found',
+                'message' => 'Transaction not found.',
+            ], 404);
+        }
+
+        // If still pending, check with Snippe
+        if ($walkinTxn->status === 'pending' && $walkinTxn->provider_reference) {
+            $result = $this->snippeProvider->verifyPayment($walkinTxn->provider_reference);
+            
+            if ($result['success']) {
+                $providerStatus = $result['status'] ?? 'unknown';
+                
+                if ($providerStatus === 'completed') {
+                    // Payment confirmed - settle the order
+                    $order = $this->findOrder($walkinTxn->module, $walkinTxn->order_id);
+                    
+                    if ($order && !$this->isOrderAlreadySettled($order)) {
+                        DB::transaction(function () use ($order, $walkinTxn) {
+                            $data = [
+                                'module'         => $walkinTxn->module,
+                                'amount'         => $walkinTxn->amount,
+                                'payment_method' => $walkinTxn->payment_method,
+                                'customer_name'  => $walkinTxn->customer_name,
+                            ];
+                            
+                            $this->settleOrder($order, $data);
+                            $this->recordFinancePayment($order, $data);
+                            $walkinTxn->markCompleted(['verified_at' => now()]);
+                        });
+                    }
+                    
+                    return response()->json([
+                        'success'      => true,
+                        'status'       => 'completed',
+                        'message'      => 'Payment confirmed!',
+                        'redirect_url' => $this->getRedirectUrl($walkinTxn->module, $order),
+                    ]);
+                } elseif ($providerStatus === 'failed') {
+                    $walkinTxn->markFailed(['reason' => 'Payment failed at provider']);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'status'  => 'failed',
+                        'message' => 'Payment failed or was cancelled.',
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'status'  => $walkinTxn->status,
+            'message' => $walkinTxn->status === 'completed' 
+                ? 'Payment completed!' 
+                : 'Payment is still pending.',
+        ]);
     }
 
     /**
@@ -112,55 +189,12 @@ class WalkinPaymentController extends Controller
     }
 
     /**
-     * Process mobile money payment via Snippe.
+     * Process cash payment - settles immediately.
+     * Cash is handled physically at POS, we just record it.
      */
-    protected function processMobilePayment($order, array $data): JsonResponse
-    {
-        // For now, we'll record as pending and let Snippe handle via webhook
-        // In a real implementation, you'd call PaymentEngine here
-        
-        // Update customer info on order
-        $this->updateOrderCustomerInfo($order, $data);
-
-        // Create a pending transaction record
-        $walkinTxn = WalkinTransaction::create([
-            'module'         => $data['module'],
-            'order_id'       => $order->id,
-            'order_number'   => $order->order_number,
-            'customer_name'  => $data['customer_name'],
-            'customer_phone' => $data['mobile_phone'] ?? $data['customer_phone'],
-            'amount'         => $data['amount'],
-            'currency'       => 'TZS',
-            'payment_method' => 'mobile',
-            'status'         => 'pending',
-            'created_by'     => auth()->id(),
-        ]);
-
-        // Note: For full Snippe integration, you would call PaymentEngine here
-        // For simplicity, we're marking it as completed (simulating successful push)
-        
-        // Simulate successful mobile payment for now
-        DB::transaction(function () use ($order, $data, $walkinTxn) {
-            $this->settleOrder($order, $data);
-            $walkinTxn->update(['status' => 'completed']);
-        });
-
-        return response()->json([
-            'success'      => true,
-            'message'      => 'Mobile money payment initiated. Please complete on your phone.',
-            'redirect_url' => $this->getRedirectUrl($data['module'], $order),
-        ]);
-    }
-
-    /**
-     * Process cash or card payment directly.
-     */
-    protected function processCashCardPayment($order, array $data): JsonResponse
+    protected function processCashPayment($order, array $data): JsonResponse
     {
         DB::transaction(function () use ($order, $data) {
-            // Update customer info
-            $this->updateOrderCustomerInfo($order, $data);
-
             // Create walk-in transaction record
             WalkinTransaction::create([
                 'module'         => $data['module'],
@@ -170,9 +204,10 @@ class WalkinPaymentController extends Controller
                 'customer_phone' => $data['customer_phone'],
                 'amount'         => $data['amount'],
                 'currency'       => 'TZS',
-                'payment_method' => $data['payment_method'],
+                'payment_method' => 'cash',
                 'status'         => 'completed',
                 'created_by'     => auth()->id(),
+                'completed_at'   => now(),
             ]);
 
             // Settle the order
@@ -184,9 +219,196 @@ class WalkinPaymentController extends Controller
 
         return response()->json([
             'success'      => true,
-            'message'      => 'Payment successful! Order has been settled.',
+            'message'      => 'Cash payment recorded. Order has been settled.',
             'redirect_url' => $this->getRedirectUrl($data['module'], $order),
         ]);
+    }
+
+    /**
+     * Process card payment via Snippe - redirects to payment page.
+     */
+    protected function processCardPayment($order, array $data): JsonResponse
+    {
+        $idempotencyKey = Str::uuid()->toString();
+        
+        // Create pending transaction record
+        $walkinTxn = WalkinTransaction::create([
+            'module'         => $data['module'],
+            'order_id'       => $order->id,
+            'order_number'   => $order->order_number,
+            'customer_name'  => $data['customer_name'],
+            'customer_phone' => $data['customer_phone'],
+            'amount'         => $data['amount'],
+            'currency'       => 'TZS',
+            'payment_method' => 'card',
+            'status'         => 'pending',
+            'created_by'     => auth()->id(),
+            'metadata'       => ['idempotency_key' => $idempotencyKey],
+        ]);
+
+        // Call Snippe to initiate card payment
+        $result = $this->snippeProvider->initiatePayment(
+            amount: (float) $data['amount'],
+            currency: 'TZS',
+            method: 'card',
+            metadata: [
+                'payment_id'       => $walkinTxn->id,
+                'order_id'         => $order->id,
+                'order_number'     => $order->order_number,
+                'module'           => $data['module'],
+                'guest_first_name' => explode(' ', $data['customer_name'])[0] ?? 'Customer',
+                'guest_last_name'  => explode(' ', $data['customer_name'])[1] ?? '',
+                'guest_email'      => '',
+                'idempotency_key'  => $idempotencyKey,
+                'redirect_url'     => route('finance.walkin-payment.callback', [
+                    'transaction' => $walkinTxn->id,
+                    'status'      => 'success',
+                ]),
+                'cancel_url'       => route('finance.walkin-payment.callback', [
+                    'transaction' => $walkinTxn->id,
+                    'status'      => 'cancel',
+                ]),
+            ]
+        );
+
+        if ($result['success'] && !empty($result['payment_url'])) {
+            // Update transaction with Snippe reference
+            $walkinTxn->update([
+                'provider_reference' => $result['reference'],
+                'metadata'           => array_merge($walkinTxn->metadata ?? [], [
+                    'snippe_response' => $result['raw'] ?? [],
+                ]),
+            ]);
+
+            return response()->json([
+                'success'     => true,
+                'message'     => 'Redirecting to secure payment page...',
+                'payment_url' => $result['payment_url'],
+                'reference'   => $result['reference'],
+            ]);
+        }
+
+        // Payment initiation failed
+        $walkinTxn->markFailed(['error' => $result['error'] ?? 'Unknown error']);
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['error'] ?? 'Failed to initiate card payment. Please try again.',
+        ], 422);
+    }
+
+    /**
+     * Process mobile money payment via Snippe - sends USSD push.
+     */
+    protected function processMobilePayment($order, array $data): JsonResponse
+    {
+        $idempotencyKey = Str::uuid()->toString();
+        $mobilePhone = $data['mobile_phone'] ?? $data['customer_phone'];
+
+        // Create pending transaction record
+        $walkinTxn = WalkinTransaction::create([
+            'module'         => $data['module'],
+            'order_id'       => $order->id,
+            'order_number'   => $order->order_number,
+            'customer_name'  => $data['customer_name'],
+            'customer_phone' => $mobilePhone,
+            'amount'         => $data['amount'],
+            'currency'       => 'TZS',
+            'payment_method' => 'mobile',
+            'status'         => 'pending',
+            'created_by'     => auth()->id(),
+            'metadata'       => ['idempotency_key' => $idempotencyKey],
+        ]);
+
+        // Call Snippe to initiate mobile payment (USSD push)
+        $result = $this->snippeProvider->initiatePayment(
+            amount: (float) $data['amount'],
+            currency: 'TZS',
+            method: 'mobile',
+            metadata: [
+                'payment_id'       => $walkinTxn->id,
+                'order_id'         => $order->id,
+                'order_number'     => $order->order_number,
+                'module'           => $data['module'],
+                'phone_number'     => $mobilePhone,
+                'guest_first_name' => explode(' ', $data['customer_name'])[0] ?? 'Customer',
+                'guest_last_name'  => explode(' ', $data['customer_name'])[1] ?? '',
+                'guest_email'      => '',
+                'idempotency_key'  => $idempotencyKey,
+            ]
+        );
+
+        if ($result['success']) {
+            // Update transaction with Snippe reference
+            $walkinTxn->update([
+                'provider_reference' => $result['reference'],
+                'metadata'           => array_merge($walkinTxn->metadata ?? [], [
+                    'snippe_response' => $result['raw'] ?? [],
+                ]),
+            ]);
+
+            return response()->json([
+                'success'   => true,
+                'pending'   => true,
+                'message'   => 'Payment request sent! Please check your phone and enter PIN to confirm.',
+                'reference' => $result['reference'],
+            ]);
+        }
+
+        // Payment initiation failed
+        $walkinTxn->markFailed(['error' => $result['error'] ?? 'Unknown error']);
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['error'] ?? 'Failed to send payment request. Please check the phone number and try again.',
+        ], 422);
+    }
+
+    /**
+     * Handle callback from Snippe after card payment.
+     */
+    public function callback(Request $request, string $transaction): \Illuminate\Http\RedirectResponse
+    {
+        $walkinTxn = WalkinTransaction::findOrFail($transaction);
+        $status = $request->query('status', 'cancel');
+
+        if ($status === 'success' && $walkinTxn->provider_reference) {
+            // Verify payment with Snippe
+            $result = $this->snippeProvider->verifyPayment($walkinTxn->provider_reference);
+            
+            if ($result['success'] && ($result['status'] ?? '') === 'completed') {
+                // Payment confirmed - settle the order
+                $order = $this->findOrder($walkinTxn->module, $walkinTxn->order_id);
+                
+                if ($order && !$this->isOrderAlreadySettled($order)) {
+                    DB::transaction(function () use ($order, $walkinTxn) {
+                        $data = [
+                            'module'         => $walkinTxn->module,
+                            'amount'         => $walkinTxn->amount,
+                            'payment_method' => $walkinTxn->payment_method,
+                            'customer_name'  => $walkinTxn->customer_name,
+                        ];
+                        
+                        $this->settleOrder($order, $data);
+                        $this->recordFinancePayment($order, $data);
+                        $walkinTxn->markCompleted(['callback_verified' => true]);
+                    });
+                    
+                    return redirect($this->getRedirectUrl($walkinTxn->module, $order))
+                        ->with('success', 'Payment successful! Order has been settled.');
+                }
+            }
+        }
+
+        // Payment failed or cancelled
+        if ($walkinTxn->isPending()) {
+            $walkinTxn->markFailed(['reason' => 'Payment cancelled or failed']);
+        }
+
+        $order = $this->findOrder($walkinTxn->module, $walkinTxn->order_id);
+        
+        return redirect($this->getRedirectUrl($walkinTxn->module, $order))
+            ->with('error', 'Payment was cancelled or failed. Please try again.');
     }
 
     /**
@@ -238,6 +460,26 @@ class WalkinPaymentController extends Controller
             );
         } else {
             // Restaurant/Bar order
+            
+            // Deduct stock for every order item that has ingredients
+            $order->load('items.menuItem.ingredients');
+
+            foreach ($order->items as $orderItem) {
+                if ($orderItem->status === 'cancelled') continue;
+
+                foreach ($orderItem->menuItem->ingredients ?? [] as $ingredient) {
+                    StockMovement::record([
+                        'product_id'     => $ingredient->product_id,
+                        'location_id'    => $order->location_id,
+                        'type'           => 'recipe_use',
+                        'quantity'       => $ingredient->quantity * $orderItem->quantity,
+                        'reference_type' => 'order',
+                        'reference_id'   => $order->id,
+                        'notes'          => "Order {$order->order_number} — {$orderItem->menuItem->name} x{$orderItem->quantity}",
+                    ], auth()->id());
+                }
+            }
+
             $order->update([
                 'status'         => 'settled',
                 'payment_method' => $paymentMethod,

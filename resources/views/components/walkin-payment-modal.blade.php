@@ -1,6 +1,11 @@
 {{--
     Walk-in Payment Modal Component
     
+    All payments are processed via Snippe integration:
+    - Cash: Records payment directly (handled at POS)
+    - Card: Redirects to Snippe payment page for card entry
+    - Mobile: Sends USSD push to customer's phone
+    
     Usage:
     <x-walkin-payment-modal 
         :amount="$order->total" 
@@ -149,8 +154,8 @@
                             {{-- Card --}}
                             <label class="relative cursor-pointer">
                                 <input type="radio" x-model="form.payment_method" value="card" class="sr-only peer">
-                                <div class="p-3 border-2 border-gray-200 rounded-xl text-center transition-all peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-gray-300">
-                                    <svg class="w-6 h-6 mx-auto mb-1 text-gray-400 peer-checked:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-3 border-2 border-gray-200 rounded-xl text-center transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:border-gray-300">
+                                    <svg class="w-6 h-6 mx-auto mb-1 text-gray-400 peer-checked:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                     </svg>
                                     <span class="text-xs font-medium text-gray-600">{{ __('Card') }}</span>
@@ -160,8 +165,8 @@
                             {{-- Mobile Money --}}
                             <label class="relative cursor-pointer">
                                 <input type="radio" x-model="form.payment_method" value="mobile" class="sr-only peer">
-                                <div class="p-3 border-2 border-gray-200 rounded-xl text-center transition-all peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-gray-300">
-                                    <svg class="w-6 h-6 mx-auto mb-1 text-gray-400 peer-checked:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-3 border-2 border-gray-200 rounded-xl text-center transition-all peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:border-gray-300">
+                                    <svg class="w-6 h-6 mx-auto mb-1 text-gray-400 peer-checked:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                     </svg>
                                     <span class="text-xs font-medium text-gray-600">{{ __('Mobile') }}</span>
@@ -170,15 +175,28 @@
                         </div>
                         <p x-show="errors.payment_method" x-text="errors.payment_method" class="text-xs text-red-500"></p>
                         
+                        {{-- Card Payment Info --}}
+                        <div x-show="form.payment_method === 'card'" x-transition class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-blue-700">{{ __('Card Payment via Snippe') }}</p>
+                                    <p class="text-xs text-blue-600 mt-1">{{ __('You will be redirected to a secure payment page to enter card details (Visa, Mastercard).') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
                         {{-- Mobile Money Phone (shown only for mobile payments) --}}
                         <div x-show="form.payment_method === 'mobile'" x-transition class="mt-3">
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ __('Mobile Money Number') }} <span class="text-red-500">*</span></label>
                             <input type="tel" 
                                    x-model="form.mobile_phone"
                                    :class="{'border-red-300 ring-red-100': errors.mobile_phone}"
-                                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                                   placeholder="+255 7XX XXX XXX">
-                            <p class="mt-1 text-xs text-gray-400">{{ __('A payment prompt will be sent to this number') }}</p>
+                                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                                   placeholder="255 7XX XXX XXX">
+                            <p class="mt-1 text-xs text-gray-400">{{ __('M-Pesa, Tigo Pesa, Airtel Money - A USSD prompt will be sent') }}</p>
                             <p x-show="errors.mobile_phone" x-text="errors.mobile_phone" class="mt-1 text-xs text-red-500"></p>
                         </div>
                     </div>
@@ -186,7 +204,7 @@
                     {{-- Error Message --}}
                     <div x-show="globalError" x-transition class="p-3 bg-red-50 border border-red-200 rounded-xl">
                         <p class="text-sm text-red-600 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             <span x-text="globalError"></span>
@@ -196,11 +214,24 @@
                     {{-- Success Message --}}
                     <div x-show="successMessage" x-transition class="p-3 bg-green-50 border border-green-200 rounded-xl">
                         <p class="text-sm text-green-600 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             <span x-text="successMessage"></span>
                         </p>
+                    </div>
+                    
+                    {{-- Pending Payment Status (for mobile/card) --}}
+                    <div x-show="paymentPending" x-transition class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-6 h-6 text-yellow-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-yellow-700">{{ __('Waiting for payment confirmation...') }}</p>
+                                <p class="text-xs text-yellow-600 mt-1" x-text="paymentPendingMessage"></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -208,19 +239,19 @@
                 <div class="px-6 py-4 bg-gray-50 rounded-b-2xl flex items-center justify-between gap-3">
                     <button type="button" 
                             @click="closeModal()"
-                            :disabled="processing"
+                            :disabled="processing || paymentPending"
                             class="px-5 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-100 transition-all disabled:opacity-50">
                         {{ __('Cancel') }}
                     </button>
                     <button type="button" 
                             @click="submitPayment()"
-                            :disabled="processing"
+                            :disabled="processing || paymentPending"
                             class="px-6 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all disabled:opacity-50 flex items-center gap-2">
                         <svg x-show="processing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span x-text="processing ? '{{ __('Processing...') }}' : '{{ __('Confirm Payment') }}'"></span>
+                        <span x-text="getButtonText()"></span>
                     </button>
                 </div>
             </div>
@@ -233,9 +264,13 @@ function walkinPayment(config) {
     return {
         showModal: false,
         processing: false,
+        paymentPending: false,
+        paymentPendingMessage: '',
         globalError: '',
         successMessage: '',
         errors: {},
+        paymentReference: null,
+        pollInterval: null,
         
         // Config from props
         amount: config.amount,
@@ -256,11 +291,14 @@ function walkinPayment(config) {
             this.globalError = '';
             this.successMessage = '';
             this.errors = {};
+            this.paymentPending = false;
+            this.paymentReference = null;
         },
         
         closeModal() {
-            if (!this.processing) {
+            if (!this.processing && !this.paymentPending) {
                 this.showModal = false;
+                this.stopPolling();
             }
         },
         
@@ -270,6 +308,13 @@ function walkinPayment(config) {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
             }).format(amount) + ' TZS';
+        },
+        
+        getButtonText() {
+            if (this.processing) return '{{ __('Processing...') }}';
+            if (this.form.payment_method === 'card') return '{{ __('Proceed to Card Payment') }}';
+            if (this.form.payment_method === 'mobile') return '{{ __('Send Payment Request') }}';
+            return '{{ __('Confirm Payment') }}';
         },
         
         validate() {
@@ -319,16 +364,30 @@ function walkinPayment(config) {
                 const data = await response.json();
                 
                 if (data.success) {
-                    this.successMessage = data.message || '{{ __('Payment successful!') }}';
-                    
-                    // Redirect after short delay
-                    setTimeout(() => {
-                        if (data.redirect_url) {
-                            window.location.href = data.redirect_url;
-                        } else {
-                            window.location.reload();
-                        }
-                    }, 1500);
+                    // Handle different payment methods
+                    if (data.payment_url) {
+                        // Card payment - redirect to Snippe payment page
+                        this.successMessage = '{{ __('Redirecting to payment page...') }}';
+                        setTimeout(() => {
+                            window.location.href = data.payment_url;
+                        }, 1000);
+                    } else if (data.pending && data.reference) {
+                        // Mobile payment - show pending status and start polling
+                        this.paymentPending = true;
+                        this.paymentPendingMessage = data.message || '{{ __('Please check your phone and enter PIN to confirm payment.') }}';
+                        this.paymentReference = data.reference;
+                        this.startPolling();
+                    } else {
+                        // Cash payment - immediate success
+                        this.successMessage = data.message || '{{ __('Payment successful!') }}';
+                        setTimeout(() => {
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            } else {
+                                window.location.reload();
+                            }
+                        }, 1500);
+                    }
                 } else {
                     this.globalError = data.message || '{{ __('Payment failed. Please try again.') }}';
                     
@@ -341,6 +400,62 @@ function walkinPayment(config) {
                 this.globalError = '{{ __('An error occurred. Please try again.') }}';
             } finally {
                 this.processing = false;
+            }
+        },
+        
+        startPolling() {
+            // Poll for payment status every 5 seconds
+            this.pollInterval = setInterval(async () => {
+                if (!this.paymentReference) {
+                    this.stopPolling();
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('{{ url('finance/walkin-payment/status') }}/' + this.paymentReference, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        this.stopPolling();
+                        this.paymentPending = false;
+                        this.successMessage = '{{ __('Payment confirmed! Settling order...') }}';
+                        setTimeout(() => {
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            } else {
+                                window.location.reload();
+                            }
+                        }, 1500);
+                    } else if (data.status === 'failed') {
+                        this.stopPolling();
+                        this.paymentPending = false;
+                        this.globalError = data.message || '{{ __('Payment failed or was cancelled.') }}';
+                    }
+                } catch (error) {
+                    console.error('Status check error:', error);
+                }
+            }, 5000);
+            
+            // Stop polling after 5 minutes
+            setTimeout(() => {
+                if (this.paymentPending) {
+                    this.stopPolling();
+                    this.paymentPending = false;
+                    this.globalError = '{{ __('Payment timed out. Please try again or use a different payment method.') }}';
+                }
+            }, 300000);
+        },
+        
+        stopPolling() {
+            if (this.pollInterval) {
+                clearInterval(this.pollInterval);
+                this.pollInterval = null;
             }
         }
     };
