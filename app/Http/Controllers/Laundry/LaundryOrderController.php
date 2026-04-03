@@ -209,11 +209,11 @@ class LaundryOrderController extends Controller
         }
 
         // Send SMS/Email notification to guest/walk-in that laundry is ready
-        $guest = $laundryOrder->guest;
+        $guest = $laundryOrder->booking?->guest;
         \App\Jobs\SendLaundryReadyJob::dispatch([
             'order_number' => $laundryOrder->order_number,
             'email'        => $guest?->email ?? null,
-            'phone'        => $guest?->phone_number ?? $laundryOrder->walkin_phone ?? null,
+            'phone'        => $guest?->phone_number ?? $laundryOrder->customer_phone ?? null,
             'room_number'  => $laundryOrder->room_number ?? null,
             'total'        => $laundryOrder->total ?? 0,
         ])->onQueue('notifications');
@@ -265,7 +265,8 @@ class LaundryOrderController extends Controller
      */
     public function settle(Request $request, LaundryOrder $laundryOrder): RedirectResponse
     {
-        abort_if($laundryOrder->status === 'settled',   422, 'Order already settled.');
+        // Prevent re-settlement of already charged or settled orders
+        abort_if(in_array($laundryOrder->status, ['charged', 'settled']), 422, 'Order already charged or settled.');
         abort_if($laundryOrder->status === 'cancelled', 422, 'Cannot settle a cancelled order.');
 
         // For guest orders, we ONLY allow charge_to_booking (enforces checkout flow)
@@ -287,7 +288,16 @@ class LaundryOrderController extends Controller
         DB::transaction(function () use ($request, $laundryOrder, $bookingId) {
 
             // Apply discount if provided
+            // ROLE RESTRICTION: Only LAUNDRY_MANAGER and MANAGER can apply discounts
             if ($request->filled('discount') && $request->discount > 0) {
+                // Check if user has permission to apply discount
+                $user = auth()->user();
+                $canApplyDiscount = $user->hasAnyRole(['laundry_manager', 'manager']);
+                
+                if (!$canApplyDiscount) {
+                    abort(403, 'Only Laundry Manager or Manager can apply discounts to laundry orders.');
+                }
+                
                 $laundryOrder->update(['discount' => $request->discount]);
                 $laundryOrder->load('items');
                 $laundryOrder->recalculate();
@@ -302,6 +312,11 @@ class LaundryOrderController extends Controller
             ]);
 
             // Create BookingCharge — payment will happen at Finance Checkout
+            // Store amount in USD (converted from TZS) and also store TZS amount
+            $exchangeRate = (float) (DB::table('system_settings')
+                ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+            $amountUsd = round($laundryOrder->total / $exchangeRate, 2);
+
             BookingCharge::create([
                 'booking_id'   => $bookingId,
                 'charge_type'  => 'laundry',
@@ -309,8 +324,9 @@ class LaundryOrderController extends Controller
                 'reference_id' => $laundryOrder->id,
                 'description'  => "Laundry Order {$laundryOrder->order_number} — " .
                                   $laundryOrder->items->count() . " item(s)",
-                'amount'       => $laundryOrder->total,
-                'currency'     => 'TZS',
+                'amount'       => $amountUsd,
+                'currency'     => 'USD',
+                'amount_tzs'   => $laundryOrder->total,
                 'status'       => 'unpaid',
                 'created_by'   => auth()->id(),
             ]);

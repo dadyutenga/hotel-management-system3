@@ -62,6 +62,7 @@ class Checkout extends Model implements ReceiptPrintable
 
     /**
      * Pull all unpaid charges for this booking and calculate totals.
+     * Handles both USD and TZS charges by converting everything to USD.
      */
     public function calculateTotals(): void
     {
@@ -69,9 +70,20 @@ class Checkout extends Model implements ReceiptPrintable
             ->where('key', 'tzs_exchange_rate')
             ->value('value') ?? 2500);
 
-        $totalUsd = BookingCharge::where('booking_id', $this->booking_id)
+        $charges = BookingCharge::where('booking_id', $this->booking_id)
             ->where('status', 'unpaid')
-            ->sum('amount');
+            ->get();
+
+        // Sum all charges, converting TZS to USD where needed
+        $totalUsd = $charges->sum(function ($charge) use ($exchangeRate) {
+            if ($charge->currency === 'TZS' && $charge->amount_tzs) {
+                return round($charge->amount_tzs / $exchangeRate, 2);
+            }
+            if ($charge->currency === 'TZS') {
+                return round($charge->amount / $exchangeRate, 2);
+            }
+            return (float) $charge->amount;
+        });
 
         $grandTotal = $totalUsd - $this->discount_usd;
 

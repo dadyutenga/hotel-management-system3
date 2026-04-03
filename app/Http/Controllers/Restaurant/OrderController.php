@@ -173,8 +173,10 @@ class OrderController extends Controller
      */
     public function settle(Request $request, Order $order): RedirectResponse
     {
+        // Prevent re-settlement of already charged or settled orders
+        abort_if(in_array($order->status, ['charged', 'settled']), 422, 'Order already charged or settled.');
+        abort_if($order->status === 'cancelled', 422, 'Cannot settle a cancelled order.');
         abort_if(!in_array($order->status, ['served', 'ready', 'sent', 'open']), 422, 'Order cannot be settled.');
-        abort_if($order->status === 'settled', 422, 'Order already settled.');
 
         // For guest orders, we ONLY allow charge_to_booking (enforces checkout flow)
         // Walk-in direct payments are handled by WalkinPaymentController
@@ -224,6 +226,11 @@ class OrderController extends Controller
             ]);
 
             // 3. Create BookingCharge — payment will happen at Finance Checkout
+            // Store amount in USD (converted from TZS) and also store TZS amount
+            $exchangeRate = (float) (DB::table('system_settings')
+                ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+            $amountUsd = round($order->total / $exchangeRate, 2);
+
             BookingCharge::create([
                 'booking_id'   => $bookingId,
                 'order_id'     => $order->id,
@@ -231,8 +238,9 @@ class OrderController extends Controller
                 'source'       => 'restaurant',
                 'reference_id' => $order->id,
                 'description'  => "Restaurant order {$order->order_number}",
-                'amount'       => $order->total,
-                'currency'     => 'TZS',
+                'amount'       => $amountUsd,
+                'currency'     => 'USD',
+                'amount_tzs'   => $order->total,
                 'status'       => 'unpaid',
                 'created_by'   => auth()->id(),
             ]);

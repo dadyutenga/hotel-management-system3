@@ -171,6 +171,8 @@
                 This will add the laundry charges to the guest's folio. Payment will be collected at checkout.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {{-- Discount field - Only visible to Laundry Manager and Manager --}}
+                @if(auth()->user()->hasAnyRole(['laundry_manager', 'manager']))
                 <div>
                     <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.fields.discount') }}</label>
                     <div class="relative">
@@ -178,6 +180,18 @@
                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                     </div>
                 </div>
+                @else
+                <div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <p class="text-sm text-blue-800">
+                            <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Discounts can only be applied by the Laundry Manager or Manager.
+                        </p>
+                    </div>
+                </div>
+                @endif
                 <div>
                     <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.fields.booking_id') }}</label>
                     <input type="text" name="booking_id"

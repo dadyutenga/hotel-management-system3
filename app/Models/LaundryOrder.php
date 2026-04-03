@@ -78,6 +78,29 @@ class LaundryOrder extends Model implements ReceiptPrintable
         return $this->belongsTo(Booking::class);
     }
 
+    /**
+     * Get the guest associated with this laundry order through the booking.
+     * Only applicable for guest orders (customer_type = 'guest').
+     */
+    public function guest(): BelongsTo
+    {
+        return $this->belongsTo(Guest::class, 'booking_id', 'id')
+            ->withDefault(function ($guest) {
+                if ($this->booking && $this->booking->guest) {
+                    return $this->booking->guest;
+                }
+                return null;
+            });
+    }
+
+    /**
+     * Get the guest through the booking relationship.
+     */
+    public function getGuestThroughBookingAttribute(): ?Guest
+    {
+        return $this->booking?->guest;
+    }
+
     public function receiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');

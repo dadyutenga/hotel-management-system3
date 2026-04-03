@@ -45,10 +45,27 @@
                     @foreach($items as $charge)
                     <tr>
                         <td class="px-4 py-2 text-gray-400 text-xs">{{ $charge->created_at->format('d M Y') }}</td>
-                        <td class="px-4 py-2">{{ $charge->description }}</td>
+                        <td class="px-4 py-2">
+                            {{ $charge->description }}
+                            @if($charge->charge_type === 'laundry' && $charge->laundryOrder)
+                                <a href="{{ route('laundry.orders.show', $charge->laundryOrder) }}"
+                                   class="text-xs text-blue-500 hover:underline ml-1" target="_blank">
+                                    (view order)
+                                </a>
+                            @elseif($charge->charge_type === 'restaurant' && $charge->order)
+                                <a href="{{ route('restaurant.orders.show', $charge->order) }}"
+                                   class="text-xs text-blue-500 hover:underline ml-1" target="_blank">
+                                    (view order)
+                                </a>
+                            @endif
+                        </td>
                         <td class="px-4 py-2 text-right font-medium">{{ CurrencyHelper::formatCurrency($charge->amount, 'USD', false) }}</td>
                         <td class="px-4 py-2 text-right text-gray-500">
-                            {{ CurrencyHelper::formatCurrency($charge->amount * $exchangeRate, 'TZS', false) }}
+                            @if($charge->amount_tzs)
+                                {{ CurrencyHelper::formatCurrency($charge->amount_tzs, 'TZS', false) }}
+                            @else
+                                {{ CurrencyHelper::formatCurrency($charge->amount * $exchangeRate, 'TZS', false) }}
+                            @endif
                         </td>
                         <td class="px-4 py-2 text-center">
                             <span class="text-xs px-2 py-0.5 rounded-full
@@ -62,7 +79,12 @@
                         <td colspan="2" class="px-4 py-2 text-right text-gray-600">Subtotal</td>
                         <td class="px-4 py-2 text-right">{{ CurrencyHelper::formatCurrency($items->sum('amount'), 'USD', false) }}</td>
                         <td class="px-4 py-2 text-right text-gray-500">
-                            {{ CurrencyHelper::formatCurrency($items->sum('amount') * $exchangeRate, 'TZS', false) }}
+                            @php
+                                $totalTzs = $items->sum(function($c) {
+                                    return $c->amount_tzs ?? ($c->amount * $exchangeRate);
+                                });
+                            @endphp
+                            {{ CurrencyHelper::formatCurrency($totalTzs, 'TZS', false) }}
                         </td>
                         <td></td>
                     </tr>
