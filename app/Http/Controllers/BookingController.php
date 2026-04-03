@@ -142,6 +142,24 @@ class BookingController extends Controller
                 ->with('error', $e->getMessage());
         }
 
+        // Load room relationship for notification
+        $reservation->load('room.roomType');
+
+        // Dispatch reservation confirmation notification (email + SMS)
+        \App\Jobs\SendReservationConfirmationJob::dispatch([
+            'reference'       => $reservation->reservation_number,
+            'guest_name'      => $reservation->guest_name,
+            'email'           => $reservation->guest_email,
+            'phone'           => $reservation->guest_phone,
+            'room_number'     => $reservation->room?->room_number ?? '',
+            'room_type'       => $reservation->room?->roomType?->name ?? '',
+            'check_in'        => $reservation->check_in_date->format('Y-m-d'),
+            'check_out'       => $reservation->check_out_date->format('Y-m-d'),
+            'nights'          => $reservation->nights,
+            'guests'          => $reservation->number_of_guests,
+            'estimated_total' => $reservation->estimated_amount,
+        ])->onQueue('notifications');
+
         return redirect()->route('booking.confirmation', $reservation->id);
     }
 
