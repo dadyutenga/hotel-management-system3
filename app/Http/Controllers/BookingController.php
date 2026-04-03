@@ -453,7 +453,11 @@ class BookingController extends Controller
 
     /**
      * Check out a checked-in booking.
-     * Collects all unpaid booking charges and marks them as paid.
+     * 
+     * UNIFIED CHECKOUT FLOW:
+     * - Redirect to Finance Checkout if there are unpaid charges
+     * - Finance Checkout handles all payment processing
+     * - Only allow direct checkout if no unpaid charges exist
      */
     public function checkOut(Booking $booking)
     {
@@ -470,16 +474,27 @@ class BookingController extends Controller
             return back()->with('error', 'Cannot check out: there are ' . $pendingLaundry . ' pending/undelivered laundry order(s). Please deliver all laundry first.');
         }
 
-        // Collect all unpaid charges
-        $unpaidCharges = $booking->bookingCharges()->unpaid()->sum('amount');
-        $booking->bookingCharges()->unpaid()->update(['status' => 'paid']);
+        // Check for unsettled restaurant/bar orders (status = 'charged' but not 'settled')
+        $pendingOrders = \App\Models\Order::where('booking_id', $booking->id)
+            ->whereIn('status', ['open', 'sent', 'ready', 'served', 'charged'])
+            ->count();
 
-        $booking->update(['status' => 'checked_out']);
-
-        $message = 'Guest checked out successfully.';
-        if ($unpaidCharges > 0) {
-            $message .= ' Total service charges collected: ' . number_format($unpaidCharges);
+        if ($pendingOrders > 0) {
+            return back()->with('error', 'Cannot check out: there are ' . $pendingOrders . ' pending restaurant/bar order(s). Please settle all orders first.');
         }
+
+        // Check for unpaid charges
+        $unpaidCharges = $booking->bookingCharges()->unpaid()->sum('amount');
+
+        if ($unpaidCharges > 0) {
+            // Redirect to Finance Checkout to process payment
+            return redirect()
+                ->route('finance.checkout.show', $booking->id)
+                ->with('info', 'Please complete payment for all charges (Total: ' . number_format($unpaidCharges, 0) . ' TZS) before checking out.');
+        }
+
+        // No unpaid charges - proceed with checkout
+        $booking->update(['status' => 'checked_out']);
 
         // Award loyalty points for the stay
         if ($booking->guest) {
@@ -495,7 +510,7 @@ class BookingController extends Controller
             $booking->guest->increment('total_spent', $booking->total_amount ?? 0);
         }
 
-        return back()->with('success', $message);
+        return back()->with('success', 'Guest checked out successfully.');
     }
 
     /**

@@ -57,6 +57,7 @@
                     @elseif($laundryOrder->status === 'ready')     bg-orange-100 text-orange-700
                     @elseif($laundryOrder->status === 'delivered') bg-indigo-100 text-indigo-700
                     @elseif($laundryOrder->status === 'collected') bg-teal-100 text-teal-700
+                    @elseif($laundryOrder->status === 'charged')   bg-purple-100 text-purple-700
                     @elseif($laundryOrder->status === 'settled')   bg-green-100 text-green-700
                     @else bg-gray-100 text-gray-500 @endif">
                     {{ ucfirst($laundryOrder->status) }}
@@ -113,9 +114,9 @@
                 @endif
 
                 {{-- Settle payment --}}
-                @if(!in_array($laundryOrder->status, ['settled', 'cancelled']) && auth()->user()->hasAnyRole(['cashier','front_desk','laundry_manager','supervisor','admin']))
+                @if(!in_array($laundryOrder->status, ['settled', 'charged', 'cancelled']) && auth()->user()->hasAnyRole(['cashier','front_desk','laundry_manager','supervisor','admin']))
                     @if($laundryOrder->customer_type === 'walkin')
-                        {{-- Walk-in: Use unified payment modal --}}
+                        {{-- Walk-in: Use unified payment modal (direct payment allowed) --}}
                         <x-walkin-payment-modal 
                             :amount="$laundryOrder->total" 
                             :order-id="$laundryOrder->id"
@@ -125,12 +126,18 @@
                             :customer-phone="$laundryOrder->customer_phone ?? ''"
                         />
                     @else
-                        {{-- Guest: Show existing settle panel toggle --}}
+                        {{-- Guest: Charge to Booking button --}}
                         <button onclick="document.getElementById('settle-panel').classList.toggle('hidden')"
                                 class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all">
-                            {{ __('laundry.actions.settle_payment') }}
+                            Charge to Guest Folio
                         </button>
                     @endif
+                @elseif($laundryOrder->status === 'charged')
+                    {{-- Already charged - show link to checkout --}}
+                    <a href="{{ route('finance.checkout.show', $laundryOrder->booking_id) }}"
+                       class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all">
+                        View Guest Checkout
+                    </a>
                 @endif
 
                 {{-- Cancel --}}
@@ -148,7 +155,7 @@
     </div>
 
     {{-- Settle panel (for guest orders only - walk-ins use the modal) --}}
-    @if(!in_array($laundryOrder->status, ['settled', 'cancelled']) && $laundryOrder->customer_type === 'guest')
+    @if(!in_array($laundryOrder->status, ['settled', 'charged', 'cancelled']) && $laundryOrder->customer_type === 'guest')
     <div id="settle-panel" class="hidden bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <h3 class="text-lg font-bold text-secondary mb-4 flex items-center gap-2">
             <div class="w-8 h-8 bg-gradient-to-br from-green-50 to-green-100 rounded-lg flex items-center justify-center">
@@ -156,23 +163,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            {{ __('laundry.sections.settle_payment') }}
+            Charge to Guest Folio
         </h3>
         <form method="POST" action="{{ route('laundry.orders.settle', $laundryOrder) }}">
             @csrf
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.fields.payment_method') }} <span class="text-red-500">*</span></label>
-                    <select name="payment_method"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                            onchange="document.getElementById('booking-field').classList.toggle('hidden', this.value !== 'charge_to_booking')">
-                        <option value="cash">{{ __('laundry.payment.cash') }}</option>
-                        <option value="card">{{ __('laundry.payment.card') }}</option>
-                        @if($laundryOrder->customer_type === 'guest')
-                        <option value="charge_to_booking" selected>{{ __('laundry.payment.charge_to_booking') }}</option>
-                        @endif
-                    </select>
-                </div>
+            <p class="text-sm text-gray-600 mb-4">
+                This will add the laundry charges to the guest's folio. Payment will be collected at checkout.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.fields.discount') }}</label>
                     <div class="relative">
@@ -180,7 +178,7 @@
                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                     </div>
                 </div>
-                <div id="booking-field" class="{{ $laundryOrder->customer_type === 'guest' ? '' : 'hidden' }}">
+                <div>
                     <label class="block text-sm font-semibold text-secondary mb-2">{{ __('laundry.fields.booking_id') }}</label>
                     <input type="text" name="booking_id"
                            value="{{ $laundryOrder->booking_id }}"
@@ -190,10 +188,25 @@
             <div class="flex justify-end">
                 <button type="submit" 
                         class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all">
-                    {{ __('laundry.actions.confirm_payment') }} — {{ number_format($laundryOrder->total, 0) }} TZS
+                    Charge to Booking & Proceed to Checkout
                 </button>
             </div>
         </form>
+    </div>
+    @elseif($laundryOrder->status === 'charged' && $laundryOrder->customer_type === 'guest')
+    {{-- Order is charged but not yet settled at checkout --}}
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <h3 class="text-lg font-bold text-secondary mb-4">Order Charged to Folio</h3>
+        <p class="text-sm text-gray-600 mb-4">
+            This laundry order has been added to the guest's folio. Payment pending at checkout.
+        </p>
+        <a href="{{ route('finance.checkout.show', $laundryOrder->booking_id) }}"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:opacity-90 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            View Guest Checkout
+        </a>
     </div>
     @endif
 

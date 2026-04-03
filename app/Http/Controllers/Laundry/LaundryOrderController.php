@@ -256,19 +256,35 @@ class LaundryOrderController extends Controller
             ->with('success', "Order {$laundryOrder->order_number} collected by {$laundryOrder->customer_name}.");
     }
 
-    // POST /laundry/orders/{laundryOrder}/settle
+    /**
+     * POST /laundry/orders/{laundryOrder}/settle
+     * 
+     * UNIFIED CHECKOUT FLOW:
+     * - Guest orders: Create BookingCharge and redirect to Finance Checkout
+     * - Walk-in orders: Use WalkinPaymentController (direct payment modal)
+     */
     public function settle(Request $request, LaundryOrder $laundryOrder): RedirectResponse
     {
         abort_if($laundryOrder->status === 'settled',   422, 'Order already settled.');
         abort_if($laundryOrder->status === 'cancelled', 422, 'Cannot settle a cancelled order.');
 
-        $request->validate([
-            'payment_method' => 'required|in:cash,card,charge_to_booking',
-            'discount'       => 'nullable|numeric|min:0',
-            'booking_id'     => 'required_if:payment_method,charge_to_booking|nullable|uuid',
-        ]);
+        // For guest orders, we ONLY allow charge_to_booking (enforces checkout flow)
+        // Walk-in direct payments are handled by WalkinPaymentController
+        if ($laundryOrder->customer_type === 'guest') {
+            $request->validate([
+                'discount'   => 'nullable|numeric|min:0',
+                'booking_id' => 'nullable|uuid|exists:bookings,id',
+            ]);
+            
+            $bookingId = $request->booking_id ?? $laundryOrder->booking_id;
+            abort_if(!$bookingId, 422, 'Booking ID is required for guest laundry orders.');
+        } else {
+            // Walk-in orders can settle directly (handled by WalkinPaymentController)
+            // This path should NOT be used for walk-ins - they use the modal
+            abort(422, 'Walk-in orders must be settled through the payment modal.');
+        }
 
-        DB::transaction(function () use ($request, $laundryOrder) {
+        DB::transaction(function () use ($request, $laundryOrder, $bookingId) {
 
             // Apply discount if provided
             if ($request->filled('discount') && $request->discount > 0) {
@@ -278,90 +294,44 @@ class LaundryOrderController extends Controller
                 $laundryOrder->refresh();
             }
 
+            // Mark order as charged (NOT settled - will be settled at checkout)
             $laundryOrder->update([
-                'status'         => 'settled',
-                'payment_method' => $request->payment_method,
-                'settled_by'     => auth()->id(),
-                'settled_at'     => now(),
-                'booking_id'     => $request->booking_id ?? $laundryOrder->booking_id,
+                'status'         => 'charged',
+                'payment_method' => 'charge_to_booking',
+                'booking_id'     => $bookingId,
             ]);
 
-            // Post to accounting journal (if cash/card settlement)
-            if (in_array($request->payment_method, ['cash', 'card'])) {
-                app(AccountingService::class)->postLaundrySettlement(
-                    orderNo: $laundryOrder->order_number,
-                    orderId: $laundryOrder->id,
-                    amount: (float) $laundryOrder->total,
-                    paymentMethod: $request->payment_method,
-                    actorId: auth()->id()
-                );
-            }
-
-            // Guest charge to booking → create BookingCharge
-            if ($request->payment_method === 'charge_to_booking') {
-                $bookingId = $request->booking_id ?? $laundryOrder->booking_id;
-                abort_if(!$bookingId, 422, 'Booking ID is required to charge to booking.');
-
-                BookingCharge::create([
-                    'booking_id'   => $bookingId,
-                    'charge_type'  => 'laundry',
-                    'source'       => 'laundry',
-                    'reference_id' => $laundryOrder->id,
-                    'description'  => "Laundry Order {$laundryOrder->order_number} — " .
-                                      $laundryOrder->items->count() . " item(s)",
-                    'amount'       => $laundryOrder->total,
-                    'currency'     => 'TZS',
-                    'status'       => 'unpaid',
-                    'created_by'   => auth()->id(),
-                ]);
-            }
-
-            // Walk-in cash/card → create FinancePayment + FinancialTransaction
-            if (in_array($request->payment_method, ['cash', 'card'])) {
-                $exchangeRate = (float) (SystemSetting::where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
-                $amountUsd    = FinancePayment::toUsd($laundryOrder->total, 'TZS', $exchangeRate);
-
-                $payment = FinancePayment::create([
-                    'payment_type'    => 'walkin',
-                    'checkout_id'     => null,
-                    'order_id'        => null,
-                    'method'          => $request->payment_method,
-                    'currency'        => 'TZS',
-                    'amount'          => $laundryOrder->total,
-                    'amount_usd'      => $amountUsd,
-                    'exchange_rate'   => $exchangeRate,
-                    'status'          => 'completed',
-                    'notes'           => "Laundry Order {$laundryOrder->order_number}",
-                    'created_by'      => auth()->id(),
-                ]);
-
-                FinancialTransaction::record([
-                    'payment_id'     => $payment->id,
-                    'type'           => 'walkin_sale',
-                    'source_module'  => 'laundry',
-                    'description'    => "Laundry walk-in payment — {$laundryOrder->order_number}",
-                    'amount_usd'     => $amountUsd,
-                    'currency'       => 'TZS',
-                    'amount'         => $laundryOrder->total,
-                    'exchange_rate'  => $exchangeRate,
-                    'payment_method' => $request->payment_method,
-                ], auth()->id());
-            }
+            // Create BookingCharge — payment will happen at Finance Checkout
+            BookingCharge::create([
+                'booking_id'   => $bookingId,
+                'charge_type'  => 'laundry',
+                'source'       => 'laundry',
+                'reference_id' => $laundryOrder->id,
+                'description'  => "Laundry Order {$laundryOrder->order_number} — " .
+                                  $laundryOrder->items->count() . " item(s)",
+                'amount'       => $laundryOrder->total,
+                'currency'     => 'TZS',
+                'status'       => 'unpaid',
+                'created_by'   => auth()->id(),
+            ]);
         });
 
         // Award loyalty points for laundry (30 points per 10,000 TZS)
         $freshOrder = $laundryOrder->fresh();
-        if ($freshOrder->guest_id && $freshOrder->guest) {
-            $pointsEarned = (int) floor(($freshOrder->total ?? 0) / 10000) * 30;
-            if ($pointsEarned > 0) {
-                $freshOrder->guest->addPoints($pointsEarned, 'laundry', $freshOrder->id);
+        if ($freshOrder->booking_id) {
+            $booking = Booking::with('guest')->find($freshOrder->booking_id);
+            if ($booking && $booking->guest) {
+                $pointsEarned = (int) floor(($freshOrder->total ?? 0) / 10000) * 30;
+                if ($pointsEarned > 0) {
+                    $booking->guest->addPoints($pointsEarned, 'laundry', $freshOrder->id);
+                }
             }
         }
 
+        // Redirect to Finance Checkout page
         return redirect()
-            ->route('laundry.orders.show', $laundryOrder)
-            ->with('success', "Order {$laundryOrder->order_number} settled. Total: " .
-                              number_format($freshOrder->total, 2) . ' TZS');
+            ->route('finance.checkout.show', $bookingId)
+            ->with('success', "Laundry order {$laundryOrder->order_number} charged to booking. Please complete payment at checkout.");
     }
 
     // POST /laundry/orders/{laundryOrder}/cancel
