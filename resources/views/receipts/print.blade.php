@@ -564,6 +564,9 @@
         <button onclick="window.print()" class="btn btn-primary">
             🖨️ Print Receipt
         </button>
+        <a href="{{ route('receipts.reprint', $receipt->receipt_number) }}" class="btn btn-secondary">
+            📄 Reprint
+        </a>
         <a href="javascript:history.back()" class="btn btn-secondary">
             ← Go Back
         </a>

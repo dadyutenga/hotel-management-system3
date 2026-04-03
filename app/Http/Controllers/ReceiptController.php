@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Receipt;
 use App\Models\WalkinTransaction;
 use App\Services\ReceiptService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -23,7 +24,7 @@ class ReceiptController extends Controller
      * Show printable receipt by UUID.
      * GET /receipts/{uuid}
      */
-    public function show(string $uuid): View
+    public function show(string $uuid): View|RedirectResponse
     {
         $receipt = $this->receiptService->findByUuid($uuid);
         
@@ -32,7 +33,10 @@ class ReceiptController extends Controller
         }
 
         // Authorization: user must have access to the source module
-        $this->authorizeReceiptAccess($receipt);
+        if (!$this->hasModuleAccess($receipt->module)) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to view this receipt.');
+        }
 
         return view('receipts.print', compact('receipt'));
     }
@@ -41,9 +45,12 @@ class ReceiptController extends Controller
      * Print receipt for a laundry order (get or create).
      * GET /receipts/laundry/{laundryOrder}
      */
-    public function laundry(LaundryOrder $laundryOrder): View
+    public function laundry(LaundryOrder $laundryOrder): View|RedirectResponse
     {
-        $this->authorizeModuleAccess('laundry');
+        if (!$this->hasModuleAccess('laundry')) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to print laundry receipts.');
+        }
 
         $receipt = $this->receiptService->getOrCreateReceipt($laundryOrder);
 
@@ -54,10 +61,14 @@ class ReceiptController extends Controller
      * Print receipt for a restaurant/bar order (get or create).
      * GET /receipts/order/{order}
      */
-    public function order(Order $order): View
+    public function order(Order $order): View|RedirectResponse
     {
         $module = $order->location?->slug === 'bar' ? 'bar' : 'restaurant';
-        $this->authorizeModuleAccess($module);
+
+        if (!$this->hasModuleAccess($module)) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to print this receipt.');
+        }
 
         $receipt = $this->receiptService->getOrCreateReceipt($order);
 
@@ -68,9 +79,12 @@ class ReceiptController extends Controller
      * Print receipt for a hotel checkout (get or create).
      * GET /receipts/checkout/{checkout}
      */
-    public function checkout(Checkout $checkout): View
+    public function checkout(Checkout $checkout): View|RedirectResponse
     {
-        $this->authorizeModuleAccess('checkout');
+        if (!$this->hasModuleAccess('checkout')) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to print checkout receipts.');
+        }
 
         $receipt = $this->receiptService->getOrCreateReceipt($checkout);
 
@@ -81,9 +95,12 @@ class ReceiptController extends Controller
      * Print receipt for a walk-in transaction (get or create).
      * GET /receipts/walkin/{walkinTransaction}
      */
-    public function walkin(WalkinTransaction $walkinTransaction): View
+    public function walkin(WalkinTransaction $walkinTransaction): View|RedirectResponse
     {
-        $this->authorizeModuleAccess('walkin');
+        if (!$this->hasModuleAccess('walkin')) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to print walk-in receipts.');
+        }
 
         $receipt = $this->receiptService->getOrCreateReceipt($walkinTransaction);
 
@@ -94,7 +111,7 @@ class ReceiptController extends Controller
      * Reprint receipt by receipt number (same data, increments print count).
      * GET /receipts/reprint/{receiptNumber}
      */
-    public function reprint(string $receiptNumber): View
+    public function reprint(string $receiptNumber): View|RedirectResponse
     {
         $receipt = $this->receiptService->findByNumber($receiptNumber);
 
@@ -102,7 +119,10 @@ class ReceiptController extends Controller
             abort(404, 'Receipt not found');
         }
 
-        $this->authorizeReceiptAccess($receipt);
+        if (!$this->hasModuleAccess($receipt->module)) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to reprint this receipt.');
+        }
 
         // Mark as reprinted
         $this->receiptService->markPrinted($receipt);
@@ -117,7 +137,7 @@ class ReceiptController extends Controller
      * Refresh receipt data from source model and show.
      * POST /receipts/{uuid}/refresh
      */
-    public function refresh(string $uuid): View
+    public function refresh(string $uuid): View|RedirectResponse
     {
         $receipt = $this->receiptService->findByUuid($uuid);
 
@@ -125,7 +145,10 @@ class ReceiptController extends Controller
             abort(404, 'Receipt not found');
         }
 
-        $this->authorizeReceiptAccess($receipt);
+        if (!$this->hasModuleAccess($receipt->module)) {
+            return redirect()->route('dashboard')
+                ->with('unauthorized', 'You do not have permission to refresh this receipt.');
+        }
 
         // Refresh data from source model
         $receipt = $this->receiptService->refreshReceipt($receipt);
@@ -159,7 +182,9 @@ class ReceiptController extends Controller
             return response()->json(['error' => 'Receipt not found'], 404);
         }
 
-        $this->authorizeReceiptAccess($receipt);
+        if (!$this->hasModuleAccess($receipt->module)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
 
         $this->receiptService->markPrinted($receipt);
 
@@ -171,13 +196,15 @@ class ReceiptController extends Controller
 
     /**
      * Get module role mapping.
+     * Front desk has access to ALL receipt types — they handle guest checkouts,
+     * laundry charges, and restaurant/bar charges on behalf of guests.
      */
     protected function getModuleRoles(): array
     {
         return [
             'laundry'    => ['laundry_manager', 'house_help', 'front_desk', 'supervisor', 'manager', 'cashier', 'admin'],
-            'restaurant' => ['restaurant_manager', 'bar_tender', 'cashier', 'waiter', 'manager', 'admin'],
-            'bar'        => ['restaurant_manager', 'bar_tender', 'cashier', 'waiter', 'manager', 'admin'],
+            'restaurant' => ['restaurant_manager', 'bar_tender', 'cashier', 'waiter', 'front_desk', 'manager', 'admin'],
+            'bar'        => ['restaurant_manager', 'bar_tender', 'cashier', 'waiter', 'front_desk', 'manager', 'admin'],
             'checkout'   => ['front_desk', 'cashier', 'manager', 'admin'],
             'walkin'     => ['cashier', 'front_desk', 'bar_tender', 'restaurant_manager', 'manager', 'admin'],
             'conference' => ['front_desk', 'supervisor', 'manager', 'admin'],
@@ -185,31 +212,21 @@ class ReceiptController extends Controller
     }
 
     /**
-     * Authorize access to a specific module.
+     * Check if current user has access to a module.
      */
-    protected function authorizeModuleAccess(string $module): void
+    protected function hasModuleAccess(string $module): bool
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
         if (!$user) {
-            abort(403, 'Unauthorized');
+            return false;
         }
 
         $moduleRoles = $this->getModuleRoles();
         $allowedRoles = $moduleRoles[$module] ?? [];
-        $userRole = strtolower($user->role?->slug ?? '');
+        $userRole = strtolower($user->role?->name ?? '');
 
-        if (!in_array($userRole, $allowedRoles)) {
-            abort(403, 'You do not have permission to access this module');
-        }
-    }
-
-    /**
-     * Authorize access to a receipt based on its module.
-     */
-    protected function authorizeReceiptAccess(Receipt $receipt): void
-    {
-        $this->authorizeModuleAccess($receipt->module);
+        return in_array($userRole, $allowedRoles);
     }
 }
