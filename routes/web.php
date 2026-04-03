@@ -453,6 +453,23 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:store_manager');
         Route::post('petty-cash/{pettyCash}/reject',  [PettyCashController::class, 'reject'])->name('petty-cash.reject')
              ->middleware('role:store_manager');
+
+        // ── Refunds ─────────────────────────────────────────────────────────
+        Route::get('refunds', [\App\Http\Controllers\Finance\RefundController::class, 'index'])->name('refunds.index')
+             ->middleware('role:manager,cashier,store_manager');
+        Route::get('refunds/payment/{payment}', [\App\Http\Controllers\Finance\RefundController::class, 'showPayment'])->name('refunds.payment')
+             ->middleware('role:manager,cashier,store_manager');
+        Route::post('refunds/payment/{payment}', [\App\Http\Controllers\Finance\RefundController::class, 'processPaymentRefund'])->name('refunds.payment.process')
+             ->middleware('role:manager');
+        Route::get('refunds/walkin/{transaction}', [\App\Http\Controllers\Finance\RefundController::class, 'showWalkin'])->name('refunds.walkin')
+             ->middleware('role:manager,cashier,store_manager');
+        Route::post('refunds/walkin/{transaction}', [\App\Http\Controllers\Finance\RefundController::class, 'processWalkinRefund'])->name('refunds.walkin.process')
+             ->middleware('role:manager');
+        // API endpoints for validation
+        Route::get('refunds/payment/{payment}/validate', [\App\Http\Controllers\Finance\RefundController::class, 'validatePaymentRefund'])->name('refunds.payment.validate')
+             ->middleware('role:manager,cashier,store_manager');
+        Route::get('refunds/walkin/{transaction}/validate', [\App\Http\Controllers\Finance\RefundController::class, 'validateWalkinRefund'])->name('refunds.walkin.validate')
+             ->middleware('role:manager,cashier,store_manager');
     });
 
     // ═══ PROCUREMENT MODULE ═══ (Store Manager exclusive - per Task 8 requirements)

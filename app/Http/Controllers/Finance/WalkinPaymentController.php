@@ -11,7 +11,7 @@ use App\Models\StockMovement;
 use App\Models\SystemSetting;
 use App\Models\WalkinTransaction;
 use App\Services\AccountingService;
-use App\Services\Payment\PaymentEngine;
+use App\Services\Payment\StandardizedPaymentService;
 use App\Services\Payment\SnippeProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,18 +25,21 @@ use Illuminate\Support\Str;
  * This controller provides a unified payment flow for walk-in customers
  * across Laundry, Restaurant, and Bar modules.
  * 
- * All payments are processed via Snippe integration:
+ * Uses StandardizedPaymentService to ensure correct customer identity
+ * is passed to Snippe for all payment types:
  * - Cash: Records payment directly (physical cash handled at POS)
  * - Card: Redirects to Snippe payment page for card entry
  * - Mobile: Sends USSD push to customer's phone via Snippe
  */
 class WalkinPaymentController extends Controller
 {
+    protected StandardizedPaymentService $paymentService;
     protected SnippeProvider $snippeProvider;
 
-    public function __construct()
+    public function __construct(StandardizedPaymentService $paymentService)
     {
-        $this->snippeProvider = new SnippeProvider();
+        $this->paymentService = $paymentService;
+        $this->snippeProvider = $paymentService->getProvider();
     }
 
     /**
@@ -226,6 +229,7 @@ class WalkinPaymentController extends Controller
 
     /**
      * Process card payment via Snippe - redirects to payment page.
+     * Uses StandardizedPaymentService to ensure correct customer identity.
      */
     protected function processCardPayment($order, array $data): JsonResponse
     {
@@ -246,25 +250,28 @@ class WalkinPaymentController extends Controller
             'metadata'       => ['idempotency_key' => $idempotencyKey],
         ]);
 
-        // Call Snippe to initiate card payment
-        $result = $this->snippeProvider->initiatePayment(
+        // Get customer identity using standardized service
+        $identity = $this->paymentService->resolveIdentity(null, [
+            'customer_name'  => $data['customer_name'],
+            'customer_phone' => $data['customer_phone'],
+        ]);
+
+        // Call Snippe via standardized service
+        $result = $this->paymentService->initiateCardPayment(
             amount: (float) $data['amount'],
             currency: 'TZS',
-            method: 'card',
+            identity: $identity,
             metadata: [
-                'payment_id'       => $walkinTxn->id,
-                'order_id'         => $order->id,
-                'order_number'     => $order->order_number,
-                'module'           => $data['module'],
-                'guest_first_name' => explode(' ', $data['customer_name'])[0] ?? 'Customer',
-                'guest_last_name'  => explode(' ', $data['customer_name'])[1] ?? '',
-                'guest_email'      => '',
-                'idempotency_key'  => $idempotencyKey,
-                'redirect_url'     => route('finance.walkin-payment.callback', [
+                'payment_id'     => $walkinTxn->id,
+                'order_id'       => $order->id,
+                'order_number'   => $order->order_number,
+                'module'         => $data['module'],
+                'idempotency_key' => $idempotencyKey,
+                'redirect_url'   => route('finance.walkin-payment.callback', [
                     'transaction' => $walkinTxn->id,
                     'status'      => 'success',
                 ]),
-                'cancel_url'       => route('finance.walkin-payment.callback', [
+                'cancel_url'     => route('finance.walkin-payment.callback', [
                     'transaction' => $walkinTxn->id,
                     'status'      => 'cancel',
                 ]),
@@ -277,6 +284,7 @@ class WalkinPaymentController extends Controller
                 'provider_reference' => $result['reference'],
                 'metadata'           => array_merge($walkinTxn->metadata ?? [], [
                     'snippe_response' => $result['raw'] ?? [],
+                    'customer_identity' => $identity,
                 ]),
             ]);
 
@@ -299,11 +307,21 @@ class WalkinPaymentController extends Controller
 
     /**
      * Process mobile money payment via Snippe - sends USSD push.
+     * Uses StandardizedPaymentService to ensure correct customer identity and phone validation.
      */
     protected function processMobilePayment($order, array $data): JsonResponse
     {
         $idempotencyKey = Str::uuid()->toString();
         $mobilePhone = $data['mobile_phone'] ?? $data['customer_phone'];
+
+        // Validate phone number first using standardized service
+        $phoneValidation = $this->paymentService->validatePhone($mobilePhone);
+        if (!$phoneValidation['valid']) {
+            return response()->json([
+                'success' => false,
+                'message' => $phoneValidation['error'],
+            ], 422);
+        }
 
         // Create pending transaction record
         $walkinTxn = WalkinTransaction::create([
@@ -320,20 +338,22 @@ class WalkinPaymentController extends Controller
             'metadata'       => ['idempotency_key' => $idempotencyKey],
         ]);
 
-        // Call Snippe to initiate mobile payment (USSD push)
-        $result = $this->snippeProvider->initiatePayment(
+        // Get customer identity using standardized service
+        $identity = $this->paymentService->resolveIdentity(null, [
+            'customer_name'  => $data['customer_name'],
+            'customer_phone' => $mobilePhone,
+        ]);
+
+        // Call Snippe via standardized service (phone already validated)
+        $result = $this->paymentService->initiateUssdPayment(
             amount: (float) $data['amount'],
             currency: 'TZS',
-            method: 'mobile',
+            identity: $identity,
             metadata: [
                 'payment_id'       => $walkinTxn->id,
                 'order_id'         => $order->id,
                 'order_number'     => $order->order_number,
                 'module'           => $data['module'],
-                'phone_number'     => $mobilePhone,
-                'guest_first_name' => explode(' ', $data['customer_name'])[0] ?? 'Customer',
-                'guest_last_name'  => explode(' ', $data['customer_name'])[1] ?? '',
-                'guest_email'      => '',
                 'idempotency_key'  => $idempotencyKey,
             ]
         );
@@ -344,6 +364,7 @@ class WalkinPaymentController extends Controller
                 'provider_reference' => $result['reference'],
                 'metadata'           => array_merge($walkinTxn->metadata ?? [], [
                     'snippe_response' => $result['raw'] ?? [],
+                    'customer_identity' => $identity,
                 ]),
             ]);
 
