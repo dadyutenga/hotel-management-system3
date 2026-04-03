@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder {
             StockLocationSeeder::class,
             SystemSettingsSeeder::class,
             MenuCategorySeeder::class,
+            AccountSeeder::class,
         ]);
     }
 }

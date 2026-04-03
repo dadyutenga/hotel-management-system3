@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Str;
 
 /**
  * Receipt — stores all generated receipts for printing/reprinting.
@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class Receipt extends Model
 {
-    use HasUuid;
 
     protected $fillable = [
         'receipt_number',
@@ -65,6 +64,10 @@ class Receipt extends Model
     protected static function booted(): void
     {
         static::creating(function (Receipt $receipt) {
+            // Generate UUID for the uuid column
+            if (empty($receipt->uuid)) {
+                $receipt->uuid = (string) Str::uuid();
+            }
             if (empty($receipt->receipt_number)) {
                 $receipt->receipt_number = self::generateReceiptNumber();
             }

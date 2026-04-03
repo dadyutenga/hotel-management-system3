@@ -132,12 +132,13 @@ class LaundryOrder extends Model implements ReceiptPrintable
 
     public function toReceiptData(): array
     {
-        $this->loadMissing(['items.laundryItem', 'settler', 'booking']);
+        $this->loadMissing(['items.serviceItem', 'settler', 'booking']);
 
         $items = $this->items->map(function ($item) {
+            $serviceItem = $item->serviceItem;
             return [
-                'name'       => $item->laundryItem?->name ?? 'Laundry Item',
-                'details'    => $item->service_type,
+                'name'       => $serviceItem?->item_name ?? 'Laundry Item',
+                'details'    => $serviceItem?->service?->name ?? 'Service',
                 'quantity'   => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'amount'     => $item->subtotal,
