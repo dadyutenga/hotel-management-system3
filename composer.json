@@ -50,6 +50,9 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "translations:check": [
+            "@php artisan translations:verify"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'dashboard' => [
+        'title' => 'Financial Dashboard',
+        'apply' => 'Apply',
+        'today_revenue' => 'Today Revenue',
+        'checkout' => 'Checkout',
+        'walkin_sales' => 'Walk-in Sales',
+        'cash' => 'Cash',
+        'card' => 'Card',
+        'revenue_by_module' => 'Revenue by Module',
+        'by_payment_method' => 'By Payment Method',
+        'outstanding_balance' => 'Outstanding Balance',
+        'outstanding_help' => 'Unpaid guest charges pending checkout',
+        'no_data' => 'No data for selected period.',
+        'completed_missing_charges' => 'Completed Orders Missing Charges',
+        'missing_charge' => 'Missing charge',
+        'no_missing_charges' => 'No completed module orders are missing billing charges.',
+        'unpaid_charges_by_booking' => 'Unpaid Charges by Booking',
+        'unknown_booking' => 'Unknown Booking',
+        'unpaid_charge_count' => ':count unpaid charge(s)',
+        'no_unpaid_charges' => 'No unpaid booking charges.',
+        'recent_transactions' => 'Recent Transactions',
+        'txn' => 'TXN #',
+        'type' => 'Type',
+        'module' => 'Module',
+        'method' => 'Method',
+        'by' => 'By',
+        'time' => 'Time',
+        'no_transactions' => 'No transactions yet.',
+    ],
+];

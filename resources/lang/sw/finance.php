@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'dashboard' => [
+        'title' => 'Dashibodi ya Fedha',
+        'apply' => 'Tumia',
+        'today_revenue' => 'Mapato ya Leo',
+        'checkout' => 'Checkout',
+        'walkin_sales' => 'Mauzo ya Moja kwa Moja',
+        'cash' => 'Fedha Taslimu',
+        'card' => 'Kadi',
+        'revenue_by_module' => 'Mapato kwa Moduli',
+        'by_payment_method' => 'Kwa Njia ya Malipo',
+        'outstanding_balance' => 'Salio Linalodaiwa',
+        'outstanding_help' => 'Gharama za wageni ambazo hazijalipwa na zinasubiri checkout',
+        'no_data' => 'Hakuna data kwa kipindi kilichochaguliwa.',
+        'completed_missing_charges' => 'Maagizo Yaliyokamilika Yenye Gharama Zinazokosekana',
+        'missing_charge' => 'Gharama inakosekana',
+        'no_missing_charges' => 'Hakuna maagizo ya moduli yaliyokamilika yenye gharama za malipo zinazokosekana.',
+        'unpaid_charges_by_booking' => 'Gharama Zisizolipwa kwa Kila Uhifadhi',
+        'unknown_booking' => 'Uhifadhi Usiojulikana',
+        'unpaid_charge_count' => 'gharama :count zisizolipwa',
+        'no_unpaid_charges' => 'Hakuna gharama za uhifadhi zisizolipwa.',
+        'recent_transactions' => 'Miamala ya Hivi Karibuni',
+        'txn' => 'TXN #',
+        'type' => 'Aina',
+        'module' => 'Moduli',
+        'method' => 'Njia',
+        'by' => 'Na',
+        'time' => 'Muda',
+        'no_transactions' => 'Bado hakuna miamala.',
+    ],
+];

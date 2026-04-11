@@ -135,6 +135,8 @@ return [
         'unauthorized' => 'Huna ruhusa ya kufanya kitendo hiki.',
         'confirm_delete' => 'Una uhakika unataka kufuta hii?',
         'no_permission' => 'Huna ruhusa ya kufikia rasilimali hii.',
+        'language_switched_english' => 'Lugha imebadilishwa kuwa Kiingereza',
+        'language_switched_swahili' => 'Lugha imebadilishwa kuwa Kiswahili',
     ],
     
     // Time periods

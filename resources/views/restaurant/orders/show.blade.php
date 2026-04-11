@@ -244,8 +244,8 @@
                 {{-- Settlement/Checkout --}}
                 @if($order->order_type === 'walkin' && $order->order_source === 'restaurant')
                     <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-700">
-                        This bar walk-in order is processed from the bartender desk. Prepare it there first, then collect payment.
-                        <a href="{{ route('bartender.orders.show', $order) }}" class="underline font-medium">Open bartender order</a>
+                        {{ __('bartender.messages.restaurant_walkin_redirect') }}
+                        <a href="{{ route('bartender.orders.show', $order) }}" class="underline font-medium">{{ __('bartender.messages.open_bartender_order') }}</a>
                     </div>
                 @elseif($order->order_type === 'walkin')
                     {{-- Walk-in: Use unified payment modal (direct payment allowed) --}}

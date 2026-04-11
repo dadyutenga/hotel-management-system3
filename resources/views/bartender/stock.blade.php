@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Bar Stock View')
-@section('page-title', 'Bar Stock View')
+@section('title', __('bartender.titles.stock'))
+@section('page-title', __('bartender.titles.stock'))
 
 @section('content')
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
     <div class="p-4 border-b border-gray-100 flex items-center justify-between">
         <div>
             <h2 class="font-semibold text-gray-800">{{ $bar->name }}</h2>
-            <p class="text-xs text-gray-500">Read-only stock levels for bartender role</p>
+            <p class="text-xs text-gray-500">{{ __('bartender.messages.read_only_stock') }}</p>
         </div>
         <form class="flex gap-2" method="GET">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search item or SKU" class="border-gray-300 rounded-lg text-sm px-3 py-2">
-            <button class="px-3 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200">Filter</button>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ __('bartender.placeholders.search_item_or_sku') }}" class="border-gray-300 rounded-lg text-sm px-3 py-2">
+            <button class="px-3 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200">{{ __('bartender.actions.filter') }}</button>
         </form>
     </div>
 
@@ -20,12 +20,12 @@
         <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-600">
                 <tr>
-                    <th class="px-4 py-3 text-left">Drink Item</th>
-                    <th class="px-4 py-3 text-left">SKU</th>
-                    <th class="px-4 py-3 text-right">Current Qty</th>
-                    <th class="px-4 py-3 text-left">Unit</th>
-                    <th class="px-4 py-3 text-right">Reorder Level</th>
-                    <th class="px-4 py-3 text-left">Last Updated</th>
+                    <th class="px-4 py-3 text-left">{{ __('bartender.fields.drink_item') }}</th>
+                    <th class="px-4 py-3 text-left">{{ __('bartender.fields.sku') }}</th>
+                    <th class="px-4 py-3 text-right">{{ __('bartender.fields.current_qty') }}</th>
+                    <th class="px-4 py-3 text-left">{{ __('bartender.fields.unit') }}</th>
+                    <th class="px-4 py-3 text-right">{{ __('bartender.fields.reorder_level') }}</th>
+                    <th class="px-4 py-3 text-left">{{ __('bartender.fields.last_updated') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -40,7 +40,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-400">No bar stock records found.</td>
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-400">{{ __('bartender.messages.no_stock') }}</td>
                     </tr>
                 @endforelse
             </tbody>

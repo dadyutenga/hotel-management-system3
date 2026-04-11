@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Blade;
 use App\Models\Reservation;
@@ -46,5 +48,26 @@ class AppServiceProvider extends ServiceProvider
             $view->with('currencySymbol', CurrencyHelper::getCurrencySymbol());
             $view->with('exchangeRate', CurrencyHelper::getExchangeRate());
         });
+
+        if (method_exists($this->app['translator'], 'handleMissingKeysUsing')) {
+            $this->app['translator']->handleMissingKeysUsing(function (string $key, array $replace = [], ?string $locale = null) {
+                $activeLocale = $locale ?: App::currentLocale();
+                $fallbackLocale = config('app.fallback_locale', 'en');
+
+                if ($activeLocale === $fallbackLocale) {
+                    return $key;
+                }
+
+                if ($activeLocale === 'sw') {
+                    Log::warning('Missing Swahili translation key', [
+                        'key' => $key,
+                        'locale' => $activeLocale,
+                        'fallback_locale' => $fallbackLocale,
+                    ]);
+                }
+
+                return $this->app['translator']->get($key, $replace, $fallbackLocale);
+            });
+        }
     }
 }

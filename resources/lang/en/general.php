@@ -135,6 +135,8 @@ return [
         'unauthorized' => 'You are not authorized to perform this action.',
         'confirm_delete' => 'Are you sure you want to delete this?',
         'no_permission' => 'You don\'t have permission to access this resource.',
+        'language_switched_english' => 'Language switched to English',
+        'language_switched_swahili' => 'Language switched to Swahili',
     ],
     
     // Time periods

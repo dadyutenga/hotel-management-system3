@@ -33,7 +33,9 @@ class LanguageController extends Controller
         App::setLocale($locale);
 
         // Redirect back to the previous page
-        return redirect()->back()->with('success', $locale === 'sw' ? 'Lugha imebadilishwa kuwa Kiswahili' : 'Language switched to English');
+        return redirect()->back()->with('success', $locale === 'sw'
+            ? __('general.messages.language_switched_swahili')
+            : __('general.messages.language_switched_english'));
     }
 
     /**
