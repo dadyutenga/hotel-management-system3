@@ -9,10 +9,12 @@ use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use App\Models\Table;
+use App\Services\Billing\ModuleBillingService;
+use App\Services\Bartender\BarOrderStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use App\Services\AccountingService;
@@ -72,15 +74,21 @@ class OrderController extends Controller
         ]);
 
         $order = DB::transaction(function () use ($data) {
+            $location = StockLocation::findOrFail($data['location_id']);
+            $isBarOrder = strtolower($location->code ?? '') === 'bar';
+
             $order = Order::create([
                 'location_id'   => $data['location_id'],
                 'table_id'      => $data['table_id'] ?? null,
                 'order_type'    => $data['order_type'],
+                'order_source'  => $isBarOrder ? 'restaurant' : null,
+                'bartender_status' => $isBarOrder ? 'pending' : null,
+                'bartender_status_updated_at' => $isBarOrder ? now() : null,
                 'booking_id'    => $data['booking_id'] ?? null,
                 'customer_name' => $data['customer_name'] ?? null,
                 'status'        => 'open',
                 'notes'         => $data['notes'] ?? null,
-                'created_by'    => auth()->id(),
+                'created_by'    => (string) Auth::id(),
             ]);
 
             foreach ($data['items'] as $item) {
@@ -140,6 +148,7 @@ class OrderController extends Controller
      */
     public function ready(Order $order): RedirectResponse
     {
+        abort_if($this->isBartenderManagedBarOrder($order), 422, 'Bar drink orders are prepared from the bartender desk.');
         abort_if($order->status !== 'sent', 422, 'Order must be sent before marking ready.');
 
         $order->update(['status' => 'ready']);
@@ -154,9 +163,16 @@ class OrderController extends Controller
      */
     public function serve(Order $order): RedirectResponse
     {
+        abort_if($this->isBartenderManagedBarOrder($order), 422, 'Bar drink orders are served from the bartender desk.');
         abort_if($order->status !== 'ready', 422, 'Order must be ready before serving.');
 
-        $order->update(['status' => 'served']);
+        DB::transaction(function () use ($order) {
+            if ($order->booking_id) {
+                app(ModuleBillingService::class)->syncOrderCharge($order, (string) Auth::id());
+            }
+
+            $order->update(['status' => 'served']);
+        });
 
         return redirect()
             ->route('restaurant.orders.show', $order)
@@ -181,6 +197,10 @@ class OrderController extends Controller
         // For guest orders, we ONLY allow charge_to_booking (enforces checkout flow)
         // Walk-in direct payments are handled by WalkinPaymentController
         if ($order->order_type === 'guest') {
+            if ($this->isBartenderManagedBarOrder($order)) {
+                abort_if($order->bartender_status !== 'served', 422, 'Bartender must mark the drink order as served before billing it to the guest folio.');
+            }
+
             $request->validate([
                 'booking_id' => 'required|uuid|exists:bookings,id',
             ]);
@@ -197,32 +217,15 @@ class OrderController extends Controller
         abort_if(!$bookingId, 422, 'Booking ID is required for guest orders.');
 
         DB::transaction(function () use ($order, $bookingId) {
-
-            // 1. Deduct stock for every order item that has ingredients
-            $order->load('items.menuItem.ingredients');
-
-            foreach ($order->items as $orderItem) {
-                if ($orderItem->status === 'cancelled') continue;
-
-                foreach ($orderItem->menuItem->ingredients as $ingredient) {
-                    $locationId = $order->location_id;
-                    StockMovement::record([
-                        'product_id'     => $ingredient->product_id,
-                        'location_id'    => $locationId,
-                        'type'           => 'recipe_use',
-                        'quantity'       => $ingredient->quantity * $orderItem->quantity,
-                        'reference_type' => 'order',
-                        'reference_id'   => $order->id,
-                        'notes'          => "Order {$order->order_number} — {$orderItem->menuItem->name} x{$orderItem->quantity}",
-                    ], auth()->id());
-                }
-            }
+            // 1. Deduct stock only once per order
+            app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
 
             // 2. Mark order as charged (NOT settled - will be settled at checkout)
             $order->update([
                 'status'         => 'charged',
                 'payment_method' => 'charge_to_booking',
                 'booking_id'     => $bookingId,
+                'billed_to_folio_at' => now(),
             ]);
 
             // 3. Create BookingCharge — payment will happen at Finance Checkout
@@ -231,19 +234,7 @@ class OrderController extends Controller
                 ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
             $amountUsd = round($order->total / $exchangeRate, 2);
 
-            BookingCharge::create([
-                'booking_id'   => $bookingId,
-                'order_id'     => $order->id,
-                'charge_type'  => 'restaurant',
-                'source'       => 'restaurant',
-                'reference_id' => $order->id,
-                'description'  => "Restaurant order {$order->order_number}",
-                'amount'       => $amountUsd,
-                'currency'     => 'USD',
-                'amount_tzs'   => $order->total,
-                'status'       => 'unpaid',
-                'created_by'   => auth()->id(),
-            ]);
+            app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());
 
             // 4. Free up the table
             if ($order->table_id) {
@@ -277,6 +268,12 @@ class OrderController extends Controller
         abort_if($order->status === 'settled', 422, 'Cannot cancel a settled order.');
 
         DB::transaction(function () use ($order) {
+            if ($order->stock_deducted_at && !$order->stock_reversed_at) {
+                app(BarOrderStockService::class)->reverseForCancelledOrder($order, (string) Auth::id());
+            }
+
+            app(ModuleBillingService::class)->voidChargeForOrder($order);
+
             $order->update(['status' => 'cancelled']);
 
             // Free the table
@@ -352,5 +349,11 @@ class OrderController extends Controller
         return redirect()
             ->route('restaurant.orders.show', $order)
             ->with('success', 'Item removed from order.');
+    }
+
+    protected function isBartenderManagedBarOrder(Order $order): bool
+    {
+        return $order->order_source === 'restaurant'
+            && str_contains(strtolower($order->location?->code ?? ''), 'bar');
     }
 }

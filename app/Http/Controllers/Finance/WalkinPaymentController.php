@@ -7,14 +7,15 @@ use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
 use App\Models\LaundryOrder;
 use App\Models\Order;
-use App\Models\StockMovement;
 use App\Models\SystemSetting;
 use App\Models\WalkinTransaction;
+use App\Services\Bartender\BarOrderStockService;
 use App\Services\AccountingService;
 use App\Services\Payment\StandardizedPaymentService;
 use App\Services\Payment\SnippeProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -77,6 +78,15 @@ class WalkinPaymentController extends Controller
                     'message' => 'This order has already been settled.',
                 ], 422);
             }
+
+            if (!$this->canUseWalkinPaymentFlow($order, $data['module'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This order must use its module billing flow and cannot be settled as a walk-in payment.',
+                ], 422);
+            }
+
+            $data['amount'] = (float) $order->total;
 
             // Update customer info on order first
             $this->updateOrderCustomerInfo($order, $data);
@@ -191,6 +201,33 @@ class WalkinPaymentController extends Controller
         return in_array($order->status, ['settled', 'cancelled']);
     }
 
+    protected function canUseWalkinPaymentFlow($order, string $module): bool
+    {
+        if ($order instanceof LaundryOrder) {
+            return $order->customer_type === 'walkin';
+        }
+
+        if ($order instanceof Order) {
+            if ($order->booking_id || $order->order_type !== 'walkin') {
+                return false;
+            }
+
+            $locationCode = strtolower($order->location?->code ?? '');
+
+            if (str_contains($locationCode, 'bar') && $order->bartender_status !== 'prepared') {
+                return false;
+            }
+
+            return match ($module) {
+                'bar' => str_contains($locationCode, 'bar'),
+                'restaurant' => !str_contains($locationCode, 'bar'),
+                default => false,
+            };
+        }
+
+        return false;
+    }
+
     /**
      * Process cash payment - settles immediately.
      * Cash is handled physically at POS, we just record it.
@@ -209,7 +246,7 @@ class WalkinPaymentController extends Controller
                 'currency'       => 'TZS',
                 'payment_method' => 'cash',
                 'status'         => 'completed',
-                'created_by'     => auth()->id(),
+                'created_by'     => (string) Auth::id(),
                 'completed_at'   => now(),
             ]);
 
@@ -246,7 +283,7 @@ class WalkinPaymentController extends Controller
             'currency'       => 'TZS',
             'payment_method' => 'card',
             'status'         => 'pending',
-            'created_by'     => auth()->id(),
+            'created_by'     => (string) Auth::id(),
             'metadata'       => ['idempotency_key' => $idempotencyKey],
         ]);
 
@@ -334,7 +371,7 @@ class WalkinPaymentController extends Controller
             'currency'       => 'TZS',
             'payment_method' => 'mobile',
             'status'         => 'pending',
-            'created_by'     => auth()->id(),
+            'created_by'     => (string) Auth::id(),
             'metadata'       => ['idempotency_key' => $idempotencyKey],
         ]);
 
@@ -461,7 +498,7 @@ class WalkinPaymentController extends Controller
             $updateData = [
                 'status'         => 'settled',
                 'payment_method' => $paymentMethod,
-                'settled_by'     => auth()->id(),
+                'settled_by'     => (string) Auth::id(),
                 'settled_at'     => now(),
             ];
 
@@ -477,34 +514,19 @@ class WalkinPaymentController extends Controller
                 orderId: $order->id,
                 amount: (float) $data['amount'],
                 paymentMethod: $paymentMethod,
-                actorId: auth()->id()
+                actorId: (string) Auth::id()
             );
         } else {
             // Restaurant/Bar order
             
-            // Deduct stock for every order item that has ingredients
-            $order->load('items.menuItem.ingredients');
-
-            foreach ($order->items as $orderItem) {
-                if ($orderItem->status === 'cancelled') continue;
-
-                foreach ($orderItem->menuItem->ingredients ?? [] as $ingredient) {
-                    StockMovement::record([
-                        'product_id'     => $ingredient->product_id,
-                        'location_id'    => $order->location_id,
-                        'type'           => 'recipe_use',
-                        'quantity'       => $ingredient->quantity * $orderItem->quantity,
-                        'reference_type' => 'order',
-                        'reference_id'   => $order->id,
-                        'notes'          => "Order {$order->order_number} — {$orderItem->menuItem->name} x{$orderItem->quantity}",
-                    ], auth()->id());
-                }
-            }
+            app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
 
             $order->update([
                 'status'         => 'settled',
+                'bartender_status' => 'served',
+                'bartender_status_updated_at' => now(),
                 'payment_method' => $paymentMethod,
-                'settled_by'     => auth()->id(),
+                'settled_by'     => (string) Auth::id(),
                 'settled_at'     => now(),
             ]);
 
@@ -514,7 +536,7 @@ class WalkinPaymentController extends Controller
                 orderId: $order->id,
                 amount: (float) $data['amount'],
                 paymentMethod: $paymentMethod,
-                actorId: auth()->id()
+                actorId: (string) Auth::id()
             );
 
             // Free up the table if applicable
@@ -543,7 +565,7 @@ class WalkinPaymentController extends Controller
             'exchange_rate' => $exchangeRate,
             'status'        => 'completed',
             'notes'         => "{$data['module']} walk-in — {$order->order_number} — {$data['customer_name']}",
-            'created_by'    => auth()->id(),
+            'created_by'    => (string) Auth::id(),
             'paid_at'       => now(),
         ]);
 
@@ -567,7 +589,7 @@ class WalkinPaymentController extends Controller
             'exchange_rate'  => $exchangeRate,
             'payment_method' => $data['payment_method'] === 'mobile' ? 'mobile_money' : $data['payment_method'],
             'description'    => "Walk-in {$data['module']} payment — {$order->order_number} — {$data['customer_name']}",
-        ], auth()->id());
+        ], (string) Auth::id());
     }
 
     /**

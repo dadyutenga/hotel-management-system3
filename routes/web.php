@@ -53,6 +53,7 @@ use App\Http\Controllers\Accounting\InvoiceController;
 use App\Http\Controllers\Accounting\PayrollController;
 use App\Http\Controllers\Accounting\BankReconciliationController;
 use App\Http\Controllers\Finance\PettyCashController;
+use App\Http\Controllers\Bartender\BartenderController;
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\BroadcastController;
@@ -412,6 +413,31 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:restaurant_manager,admin');
         Route::get('reports/popular-items',  [RestaurantReportController::class, 'popularItems'])->name('reports.popularItems')
              ->middleware('role:restaurant_manager,admin');
+    });
+
+    // ═══ BARTENDER MODULE ═══
+    Route::prefix('bartender')->name('bartender.')->middleware('role:bar_tender,manager,admin')->group(function () {
+        Route::get('/', [BartenderController::class, 'dashboard'])->name('dashboard');
+
+        Route::get('stock', [BartenderController::class, 'stock'])->name('stock');
+
+        Route::get('orders', [BartenderController::class, 'inbox'])->name('inbox');
+        Route::get('orders/{order}', [BartenderController::class, 'showOrder'])->name('orders.show');
+        Route::post('orders/{order}/accept', [BartenderController::class, 'acceptOrder'])->name('orders.accept');
+        Route::post('orders/{order}/prepare', [BartenderController::class, 'prepareOrder'])->name('orders.prepare');
+        Route::post('orders/{order}/serve', [BartenderController::class, 'serveOrder'])->name('orders.serve');
+        Route::post('orders/{order}/reject', [BartenderController::class, 'rejectOrder'])->name('orders.reject');
+        Route::post('orders/{order}/cancel', [BartenderController::class, 'cancelOrder'])->name('orders.cancel');
+
+        Route::get('orders/create/walkin', [BartenderController::class, 'createWalkinOrder'])->name('orders.walkin.create');
+        Route::post('orders/create/walkin', [BartenderController::class, 'storeWalkinOrder'])->name('orders.walkin.store');
+
+        Route::get('orders/create/room-service', [BartenderController::class, 'createRoomServiceOrder'])->name('orders.room-service.create');
+        Route::post('orders/create/room-service', [BartenderController::class, 'storeRoomServiceOrder'])->name('orders.room-service.store');
+
+        Route::get('damage', [BartenderController::class, 'damageIndex'])->name('damage.index');
+        Route::get('damage/create', [BartenderController::class, 'damageForm'])->name('damage.create');
+        Route::post('damage', [BartenderController::class, 'reportDamage'])->name('damage.store');
     });
 
     // ═══ FINANCE MODULE ═══

@@ -7,8 +7,10 @@ use App\Models\FinancialTransaction;
 use App\Models\FinancePayment;
 use App\Models\Order;
 use App\Models\PaymentItem;
+use App\Services\Bartender\BarOrderStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -68,6 +70,8 @@ class FinancePaymentController extends Controller
         DB::transaction(function () use ($data, $amountUsd, $exchangeRate) {
 
             $order = Order::with('items.menuItem')->findOrFail($data['order_id']);
+            abort_if($order->booking_id, 422, 'Booking-linked orders must be settled through the guest folio checkout flow.');
+            abort_if(in_array($order->status, ['cancelled', 'settled', 'charged'], true), 422, 'This order cannot be settled through walk-in payment.');
 
             $payment = FinancePayment::create([
                 'payment_type'  => 'walkin',
@@ -80,7 +84,7 @@ class FinancePaymentController extends Controller
                 'status'        => 'completed',
                 'reference'     => $data['reference'] ?? null,
                 'notes'         => $data['notes'] ?? null,
-                'created_by'    => auth()->id(),
+                'created_by'    => (string) Auth::id(),
                 'paid_at'       => now(),
             ]);
 
@@ -118,7 +122,18 @@ class FinancePaymentController extends Controller
                 'exchange_rate'  => $exchangeRate,
                 'payment_method' => $data['method'],
                 'description'    => "Walk-in sale — Order {$order->order_number}",
-            ], auth()->id());
+            ], (string) Auth::id());
+
+            app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
+
+            $order->update([
+                'status' => 'settled',
+                'bartender_status' => 'served',
+                'bartender_status_updated_at' => now(),
+                'payment_method' => $data['method'],
+                'settled_by' => (string) Auth::id(),
+                'settled_at' => now(),
+            ]);
         });
 
         return redirect()

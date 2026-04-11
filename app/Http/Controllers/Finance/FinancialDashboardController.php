@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\BookingCharge;
 use App\Models\FinancialTransaction;
 use App\Models\FinancePayment;
+use App\Models\LaundryOrder;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -70,10 +72,41 @@ class FinancialDashboardController extends Controller
             ->take(15)
             ->get();
 
+        $ordersMissingCharges = Order::with(['booking', 'location'])
+            ->whereNotNull('booking_id')
+            ->whereIn('status', ['served', 'charged'])
+            ->whereDoesntHave('charge')
+            ->latest('created_at')
+            ->take(10)
+            ->get();
+
+        $laundryMissingCharges = LaundryOrder::with(['booking', 'booking.bookingCharges'])
+            ->whereNotNull('booking_id')
+            ->whereIn('status', ['ready', 'delivered', 'charged'])
+            ->whereNotIn('status', ['settled', 'cancelled'])
+            ->latest('created_at')
+            ->take(30)
+            ->get()
+            ->filter(function (LaundryOrder $order) {
+                return !$order->booking?->bookingCharges
+                    ? true
+                    : !$order->booking->bookingCharges->contains(fn ($charge) => $charge->source === 'laundry' && $charge->reference_id === $order->id);
+            })
+            ->take(10)
+            ->values();
+
+        $unpaidChargesByBooking = BookingCharge::with('booking')
+            ->where('status', 'unpaid')
+            ->select('booking_id', DB::raw('COUNT(*) as charge_count'), DB::raw('SUM(amount_tzs) as total_tzs'))
+            ->groupBy('booking_id')
+            ->orderByDesc('total_tzs')
+            ->take(10)
+            ->get();
+
         return view('finance.dashboard.index', compact(
             'revenueByModule', 'revenueByMethod', 'dailyRevenue',
             'todaySummary', 'outstandingTotal', 'recentTransactions',
-            'dateFrom', 'dateTo'
+            'dateFrom', 'dateTo', 'ordersMissingCharges', 'laundryMissingCharges', 'unpaidChargesByBooking'
         ));
     }
 }

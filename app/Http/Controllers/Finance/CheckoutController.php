@@ -10,14 +10,21 @@ use App\Models\FinancialTransaction;
 use App\Models\FinancePayment;
 use App\Models\LaundryOrder;
 use App\Models\Order;
+use App\Services\Billing\ModuleBillingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use App\Services\AccountingService;
 
 class CheckoutController extends Controller
 {
+    public function __construct(
+        protected ModuleBillingService $moduleBillingService
+    ) {
+    }
+
     /**
      * GET /finance/checkout/{booking}
      * Show the guest folio — all charges grouped by type.
@@ -27,10 +34,12 @@ class CheckoutController extends Controller
      */
     public function show(Booking $booking): View
     {
+        $this->moduleBillingService->syncBookingChargesForBooking($booking, (string) Auth::id());
+
         // Get or create a pending checkout for this booking
         $checkout = Checkout::firstOrCreate(
             ['booking_id' => $booking->id, 'status' => 'pending'],
-            ['initiated_by' => auth()->id()]
+            ['initiated_by' => (string) Auth::id()]
         );
 
         // Get exchange rate
@@ -85,6 +94,11 @@ class CheckoutController extends Controller
         $exchangeRate = (float) $checkout->exchange_rate;
 
         DB::transaction(function () use ($data, $checkout, $exchangeRate) {
+            $this->moduleBillingService->syncBookingChargesForBooking($checkout->booking, (string) Auth::id());
+
+            $checkout->calculateTotals();
+            $checkout->refresh();
+
 
             // Apply discount if given
             if (!empty($data['discount_usd'])) {
@@ -124,6 +138,8 @@ class CheckoutController extends Controller
             $totalPaidUsd = $paidCashUsd + $paidCardUsd;
             $changeDueUsd = max(0, $totalPaidUsd - $grandTotalUsd);
 
+            abort_if($totalPaidUsd + 0.001 < $grandTotalUsd, 422, 'Payment is not enough to complete checkout. Settle the full folio balance first.');
+
             // Map payment method for module settlement
             $paymentMethodMap = [
                 'cash_usd' => 'cash',
@@ -145,7 +161,7 @@ class CheckoutController extends Controller
                 'total_paid_usd' => $totalPaidUsd,
                 'change_due_usd' => $changeDueUsd,
                 'notes'          => $data['notes'] ?? null,
-                'completed_by'   => auth()->id(),
+                'completed_by'   => (string) Auth::id(),
                 'completed_at'   => now(),
             ]);
 
@@ -164,20 +180,33 @@ class CheckoutController extends Controller
 
             // FINALIZE RELATED MODULE ORDERS
             // This ensures orders in Restaurant, Bar, Laundry are marked as 'settled'
-            $this->finalizeModuleOrders($unpaidCharges, $modulePaymentMethod);
+            $this->moduleBillingService->finalizeCharges($unpaidCharges, $modulePaymentMethod, (string) Auth::id());
 
             // Create the payment record
+            $paymentCurrency = match ($data['payment_method']) {
+                'cash_tzs', 'card_tzs' => 'TZS',
+                default => 'USD',
+            };
+
+            $paymentAmount = $paymentCurrency === 'TZS'
+                ? (float) $checkout->grand_total_tzs
+                : $grandTotalUsd;
+
+            $financeMethod = $data['payment_method'] === 'split'
+                ? 'split'
+                : (str_contains($data['payment_method'], 'cash') ? 'cash' : 'card');
+
             $payment = FinancePayment::create([
                 'payment_type'  => 'checkout',
                 'checkout_id'   => $checkout->id,
                 'booking_id'    => $checkout->booking_id,
-                'currency'      => str_contains($data['payment_method'], 'tzs') ? 'TZS' : 'USD',
-                'amount'        => $grandTotalUsd,
+                'currency'      => $paymentCurrency,
+                'amount'        => $paymentAmount,
                 'amount_usd'    => $grandTotalUsd,
                 'exchange_rate' => $exchangeRate,
-                'method'        => str_contains($data['payment_method'], 'cash') ? 'cash' : 'card',
+                'method'        => $financeMethod,
                 'status'        => 'completed',
-                'created_by'    => auth()->id(),
+                'created_by'    => (string) Auth::id(),
                 'paid_at'       => now(),
             ]);
 
@@ -188,12 +217,12 @@ class CheckoutController extends Controller
                 'payment_id'     => $payment->id,
                 'booking_id'     => $checkout->booking_id,
                 'currency'       => $payment->currency,
-                'amount'         => $grandTotalUsd,
+                'amount'         => $paymentAmount,
                 'amount_usd'     => $grandTotalUsd,
                 'exchange_rate'  => $exchangeRate,
-                'payment_method' => $payment->method,
+                'payment_method' => $financeMethod,
                 'description'    => "Guest checkout — Receipt {$checkout->receipt_number}",
-            ], auth()->id());
+            ], (string) Auth::id());
 
             // Post to accounting journal (room revenue)
             $booking = Booking::find($checkout->booking_id);
@@ -203,7 +232,7 @@ class CheckoutController extends Controller
                 bookingId: $booking->id,
                 amount: (float) $checkout->grand_total_tzs,
                 paymentMethod: $paymentMethod,
-                actorId: auth()->id()
+                actorId: (string) Auth::id()
             );
         });
 
@@ -220,62 +249,6 @@ class CheckoutController extends Controller
      * - Laundry orders as 'settled'
      * - Other module orders as appropriate
      */
-    protected function finalizeModuleOrders($charges, string $paymentMethod): void
-    {
-        foreach ($charges as $charge) {
-            // Handle Restaurant/Bar orders
-            if (in_array($charge->charge_type, ['restaurant', 'bar', 'room_service'])) {
-                if ($charge->order_id || $charge->reference_id) {
-                    $orderId = $charge->order_id ?? $charge->reference_id;
-                    $order = Order::find($orderId);
-                    
-                    if ($order && $order->status !== 'settled') {
-                        $order->update([
-                            'status'         => 'settled',
-                            'payment_method' => $paymentMethod,
-                            'settled_by'     => auth()->id(),
-                            'settled_at'     => now(),
-                        ]);
-
-                        // Post to accounting journal
-                        app(AccountingService::class)->postRestaurantSettlement(
-                            orderNo: $order->order_number,
-                            orderId: $order->id,
-                            amount: (float) $order->total,
-                            paymentMethod: $paymentMethod,
-                            actorId: auth()->id()
-                        );
-                    }
-                }
-            }
-
-            // Handle Laundry orders
-            if ($charge->charge_type === 'laundry') {
-                if ($charge->reference_id) {
-                    $laundryOrder = LaundryOrder::find($charge->reference_id);
-                    
-                    if ($laundryOrder && $laundryOrder->status !== 'settled') {
-                        $laundryOrder->update([
-                            'status'         => 'settled',
-                            'payment_method' => $paymentMethod,
-                            'settled_by'     => auth()->id(),
-                            'settled_at'     => now(),
-                        ]);
-
-                        // Post to accounting journal
-                        app(AccountingService::class)->postLaundrySettlement(
-                            orderNo: $laundryOrder->order_number,
-                            orderId: $laundryOrder->id,
-                            amount: (float) $laundryOrder->total,
-                            paymentMethod: $paymentMethod,
-                            actorId: auth()->id()
-                        );
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * POST /finance/checkout/{checkout}/add-charge
      * Manually add a charge to a checkout that is still pending.
@@ -302,7 +275,7 @@ class CheckoutController extends Controller
             'currency'    => 'USD',
             'amount_tzs'  => round($data['amount'] * $exchangeRate, 2),
             'status'      => 'unpaid',
-            'created_by'  => auth()->id(),
+            'created_by'  => (string) Auth::id(),
         ]);
 
         return redirect()

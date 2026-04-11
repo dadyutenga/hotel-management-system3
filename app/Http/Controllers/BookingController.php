@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Guest;
+use App\Services\Billing\ModuleBillingService;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -21,6 +23,11 @@ use Illuminate\Support\Facades\DB;
  */
 class BookingController extends Controller
 {
+    public function __construct(
+        protected ModuleBillingService $moduleBillingService
+    ) {
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  PUBLIC BOOKING FLOW — creates a Reservation (future intent)
     // ═══════════════════════════════════════════════════════════════
@@ -328,7 +335,7 @@ class BookingController extends Controller
                     'special_requests' => $validated['special_requests'] ?? null,
                     'status' => 'checked_in', // Walk-in = immediately checked in
                     'source' => $validated['source'] ?? 'walkin',
-                    'created_by' => auth()->id(),
+                    'created_by' => (string) Auth::id(),
                 ]);
             });
         } catch (\RuntimeException $e) {
@@ -465,9 +472,11 @@ class BookingController extends Controller
             return back()->with('error', 'Only checked-in bookings can be checked out.');
         }
 
+        $this->moduleBillingService->syncBookingChargesForBooking($booking, (string) Auth::id());
+
         // Check for pending/undelivered laundry orders
         $pendingLaundry = $booking->laundryOrders()
-            ->whereIn('status', ['pending', 'in_progress', 'completed'])
+            ->whereIn('status', ['received', 'processing', 'ready', 'delivered', 'charged'])
             ->count();
 
         if ($pendingLaundry > 0) {

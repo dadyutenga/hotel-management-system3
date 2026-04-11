@@ -80,6 +80,56 @@
     </div>
 </div>
 
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded shadow p-5">
+        <h2 class="font-semibold text-gray-700 mb-3">Completed Orders Missing Charges</h2>
+        <div class="space-y-2 text-sm">
+            @php($missingChargeCount = $ordersMissingCharges->count() + $laundryMissingCharges->count())
+
+            @forelse($ordersMissingCharges as $order)
+                <div class="flex justify-between items-start border-b last:border-0 pb-2">
+                    <div>
+                        <p class="font-medium text-gray-800">{{ $order->order_number }}</p>
+                        <p class="text-gray-500">{{ $order->booking?->booking_number }} · {{ $order->location?->name }} · {{ ucfirst($order->status) }}</p>
+                    </div>
+                    <span class="text-red-600 font-medium">Missing charge</span>
+                </div>
+            @empty @endforelse
+
+            @forelse($laundryMissingCharges as $order)
+                <div class="flex justify-between items-start border-b last:border-0 pb-2">
+                    <div>
+                        <p class="font-medium text-gray-800">{{ $order->order_number }}</p>
+                        <p class="text-gray-500">{{ $order->booking?->booking_number }} · Laundry · {{ ucfirst($order->status) }}</p>
+                    </div>
+                    <span class="text-red-600 font-medium">Missing charge</span>
+                </div>
+            @empty @endforelse
+
+            @if($missingChargeCount === 0)
+                <p class="text-sm text-gray-400">No completed module orders are missing billing charges.</p>
+            @endif
+        </div>
+    </div>
+
+    <div class="bg-white rounded shadow p-5">
+        <h2 class="font-semibold text-gray-700 mb-3">Unpaid Charges by Booking</h2>
+        <div class="space-y-2 text-sm">
+            @forelse($unpaidChargesByBooking as $row)
+                <div class="flex justify-between items-start border-b last:border-0 pb-2">
+                    <div>
+                        <p class="font-medium text-gray-800">{{ $row->booking?->booking_number ?? 'Unknown Booking' }}</p>
+                        <p class="text-gray-500">{{ $row->charge_count }} unpaid charge(s)</p>
+                    </div>
+                    <span class="font-medium text-amber-700">TZS {{ number_format($row->total_tzs, 0) }}</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">No unpaid booking charges.</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
 {{-- Recent transactions --}}
 <div class="bg-white rounded shadow overflow-hidden">
     <div class="px-5 py-4 border-b">

@@ -14,9 +14,11 @@ use App\Models\LaundryServiceItem;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\AccountingService;
+use App\Services\Billing\ModuleBillingService;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -109,7 +111,7 @@ class LaundryOrderController extends Controller
                 'special_instructions' => $data['special_instructions'] ?? null,
                 'status'              => 'received',
                 'expected_ready_at'   => now()->addHours($maxTurnaround),
-                'received_by'         => auth()->id(),
+                'received_by'         => (string) Auth::id(),
             ]);
 
             foreach ($data['items'] as $item) {
@@ -174,7 +176,7 @@ class LaundryOrderController extends Controller
 
         $laundryOrder->update([
             'status'       => 'processing',
-            'processed_by' => auth()->id(),
+            'processed_by' => (string) Auth::id(),
         ]);
 
         return redirect()
@@ -229,11 +231,15 @@ class LaundryOrderController extends Controller
         abort_if($laundryOrder->status !== 'ready', 422, 'Order must be ready before delivery.');
         abort_if($laundryOrder->customer_type !== 'guest', 422, 'Delivery is only for hotel guest orders.');
 
-        $laundryOrder->update([
-            'status'       => 'delivered',
-            'delivered_at' => now(),
-            'delivered_by' => auth()->id(),
-        ]);
+        DB::transaction(function () use ($laundryOrder) {
+            app(ModuleBillingService::class)->syncLaundryCharge($laundryOrder, (string) Auth::id());
+
+            $laundryOrder->update([
+                'status'       => 'delivered',
+                'delivered_at' => now(),
+                'delivered_by' => (string) Auth::id(),
+            ]);
+        });
 
         return redirect()
             ->route('laundry.orders.show', $laundryOrder)
@@ -246,14 +252,9 @@ class LaundryOrderController extends Controller
         abort_if($laundryOrder->status !== 'ready', 422, 'Order must be ready before collection.');
         abort_if($laundryOrder->customer_type !== 'walkin', 422, 'Collected is only for walk-in orders.');
 
-        $laundryOrder->update([
-            'status'       => 'collected',
-            'collected_at' => now(),
-        ]);
-
         return redirect()
             ->route('laundry.orders.show', $laundryOrder)
-            ->with('success', "Order {$laundryOrder->order_number} collected by {$laundryOrder->customer_name}.");
+            ->with('error', 'Walk-in laundry orders must be settled through payment before collection is completed.');
     }
 
     /**
@@ -291,8 +292,8 @@ class LaundryOrderController extends Controller
             // ROLE RESTRICTION: Only LAUNDRY_MANAGER and MANAGER can apply discounts
             if ($request->filled('discount') && $request->discount > 0) {
                 // Check if user has permission to apply discount
-                $user = auth()->user();
-                $canApplyDiscount = $user->hasAnyRole(['laundry_manager', 'manager']);
+                $roleName = Auth::user()?->role?->name;
+                $canApplyDiscount = in_array($roleName, ['laundry_manager', 'manager'], true);
                 
                 if (!$canApplyDiscount) {
                     abort(403, 'Only Laundry Manager or Manager can apply discounts to laundry orders.');
@@ -311,25 +312,7 @@ class LaundryOrderController extends Controller
                 'booking_id'     => $bookingId,
             ]);
 
-            // Create BookingCharge — payment will happen at Finance Checkout
-            // Store amount in USD (converted from TZS) and also store TZS amount
-            $exchangeRate = (float) (DB::table('system_settings')
-                ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
-            $amountUsd = round($laundryOrder->total / $exchangeRate, 2);
-
-            BookingCharge::create([
-                'booking_id'   => $bookingId,
-                'charge_type'  => 'laundry',
-                'source'       => 'laundry',
-                'reference_id' => $laundryOrder->id,
-                'description'  => "Laundry Order {$laundryOrder->order_number} — " .
-                                  $laundryOrder->items->count() . " item(s)",
-                'amount'       => $amountUsd,
-                'currency'     => 'USD',
-                'amount_tzs'   => $laundryOrder->total,
-                'status'       => 'unpaid',
-                'created_by'   => auth()->id(),
-            ]);
+            app(ModuleBillingService::class)->syncLaundryCharge($laundryOrder->fresh(), (string) Auth::id());
         });
 
         // Award loyalty points for laundry (30 points per 10,000 TZS)
@@ -354,6 +337,8 @@ class LaundryOrderController extends Controller
     public function cancel(LaundryOrder $laundryOrder): RedirectResponse
     {
         abort_if($laundryOrder->status === 'settled', 422, 'Cannot cancel a settled order.');
+
+        app(ModuleBillingService::class)->voidChargeForLaundry($laundryOrder);
 
         $laundryOrder->update(['status' => 'cancelled']);
 
