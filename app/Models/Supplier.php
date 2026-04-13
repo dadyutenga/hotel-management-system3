@@ -39,6 +39,16 @@ class Supplier extends Model
         return $this->hasMany(GoodsReceivedNote::class);
     }
 
+    public function payables(): HasMany
+    {
+        return $this->hasMany(SupplierPayable::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

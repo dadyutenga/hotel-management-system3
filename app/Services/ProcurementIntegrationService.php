@@ -106,6 +106,8 @@ class ProcurementIntegrationService
                     $grn->update(['accounting_journal_entry_id' => $entry->id]);
                 }
 
+                app(SupplierPayablesService::class)->ensurePayableFromGrn($grn->fresh(), $actorId);
+
                 $this->syncLpoReceivingStatus($grn->lpo->fresh('items'));
 
                 return $grn->fresh(['items.lpoItem', 'lpo.items']);

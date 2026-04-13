@@ -15,7 +15,7 @@
         <span>{{ __('accountant.sidebar.journal_entries') }}</span>
     </a>
 
-    <a href="{{ route('accountant.accounts-payable') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('accountant.accounts-payable') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+    <a href="{{ route('accountant.payables.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('accountant.payables.*') || request()->routeIs('accountant.payments.*') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
         <span>{{ __('accountant.sidebar.accounts_payable') }}</span>
     </a>
 

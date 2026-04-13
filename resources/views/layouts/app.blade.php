@@ -164,6 +164,12 @@
                     </div>
                 @endif
 
+                @if($errors->any())
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 shadow-sm">
+                        <div class="font-medium">{{ $errors->first() }}</div>
+                    </div>
+                @endif
+
                 @yield('content')
             </main>
         </div>

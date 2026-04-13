@@ -11,6 +11,8 @@ use App\Models\JournalLine;
 use App\Models\PayrollRun;
 use App\Models\StoreNotification;
 use App\Models\Supplier;
+use App\Models\SupplierPayable;
+use App\Models\SupplierPayment;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
@@ -171,30 +173,22 @@ class AccountantDashboardController extends Controller
             'cashPosition' => (float) Account::findByCode('1100')->getBalance(),
             'pendingInvoices' => Invoice::whereIn('status', ['draft', 'issued'])->count(),
             'openPayrollRuns' => PayrollRun::where('status', 'draft')->count(),
+            'draftSupplierPayments' => SupplierPayment::where('status', 'draft')->count(),
         ];
     }
 
     private function supplierPayables(): Collection
     {
-        $apAccount = Account::findByCode('2100');
-
-        $lines = JournalLine::with(['entry.supplier'])
-            ->where('account_id', $apAccount->id)
-            ->whereHas('entry', fn ($query) => $query->where('status', 'posted')->whereNotNull('supplier_id'))
-            ->get();
-
-        return Supplier::whereIn('id', $lines->pluck('entry.supplier_id')->filter()->unique())
+        return SupplierPayable::with('supplier')
+            ->orderByDesc('payable_date')
             ->get()
-            ->map(function (Supplier $supplier) use ($lines) {
-                $supplierLines = $lines->filter(fn (JournalLine $line) => $line->entry?->supplier_id === $supplier->id);
-                $credits = (float) $supplierLines->where('type', 'credit')->sum('amount');
-                $debits = (float) $supplierLines->where('type', 'debit')->sum('amount');
-
+            ->groupBy('supplier_id')
+            ->map(function (Collection $payables) {
                 return [
-                    'supplier' => $supplier,
-                    'invoiced' => $credits,
-                    'paid' => $debits,
-                    'balance' => $credits - $debits,
+                    'supplier' => $payables->first()->supplier,
+                    'invoiced' => (float) $payables->sum('amount_total'),
+                    'paid' => (float) $payables->sum('amount_paid'),
+                    'balance' => (float) $payables->sum('balance'),
                 ];
             })
             ->sortByDesc('balance')

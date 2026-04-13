@@ -54,7 +54,7 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div class="flex items-center justify-between"><h3 class="text-lg font-extrabold text-secondary">{{ __('accountant.sections.accounts_payable') }}</h3><a href="{{ route('accountant.accounts-payable') }}" class="text-sm font-semibold text-indigo-600">{{ __('general.view_all') }}</a></div>
+            <div class="flex items-center justify-between"><h3 class="text-lg font-extrabold text-secondary">{{ __('accountant.sections.accounts_payable') }}</h3><a href="{{ route('accountant.payables.dashboard') }}" class="text-sm font-semibold text-indigo-600">{{ __('general.view_all') }}</a></div>
             <div class="mt-4 space-y-3">
                 @forelse($pendingPayables as $row)
                     <div class="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">

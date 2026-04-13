@@ -194,10 +194,14 @@ class AccountingService
         string $sourceId,
         ?string $supplierId,
         float $amount,
-        string $actorId
+        string $paymentMethod,
+        string $actorId,
+        ?string $paymentDate = null
     ): JournalEntry {
+        $cashAccountCode = $paymentMethod === 'cash' ? '1100' : '1200';
+
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date'        => $paymentDate ?? now()->toDateString(),
             'description' => "Supplier payment - {$reference}",
             'source'      => 'procurement',
             'source_id'   => $sourceId,
@@ -205,7 +209,7 @@ class AccountingService
             'reference'   => $reference,
             'lines' => [
                 ['account_code' => '2100', 'type' => 'debit',  'amount' => $amount],
-                ['account_code' => '1200', 'type' => 'credit', 'amount' => $amount],
+                ['account_code' => $cashAccountCode, 'type' => 'credit', 'amount' => $amount],
             ],
         ], $actorId);
     }
