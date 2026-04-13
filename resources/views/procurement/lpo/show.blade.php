@@ -5,6 +5,12 @@
 @section('page-title', 'Local Purchase Orders')
 
 @section('content')
+@php
+    $orderedQty = (float) $localPurchaseOrder->items->sum('quantity');
+    $receivedQty = (float) $localPurchaseOrder->items->sum('received_quantity');
+    $pendingQty = $localPurchaseOrder->items->sum(fn ($item) => max((float) $item->quantity - (float) $item->received_quantity, 0));
+    $receivingPercent = $orderedQty > 0 ? min(100, ($receivedQty / $orderedQty) * 100) : 0;
+@endphp
 <div class="max-w-6xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -69,6 +75,21 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column -->
         <div class="lg:col-span-2 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                    <div class="text-sm text-gray-500">Ordered Quantity</div>
+                    <div class="mt-2 text-3xl font-extrabold text-secondary">{{ number_format($orderedQty, 2) }}</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                    <div class="text-sm text-gray-500">Received Quantity</div>
+                    <div class="mt-2 text-3xl font-extrabold text-green-600">{{ number_format($receivedQty, 2) }}</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                    <div class="text-sm text-gray-500">Pending Quantity</div>
+                    <div class="mt-2 text-3xl font-extrabold text-amber-600">{{ number_format($pendingQty, 2) }}</div>
+                </div>
+            </div>
+
             <!-- Basic Info -->
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-secondary mb-4">Order Information</h3>
@@ -136,6 +157,8 @@
                                 <th class="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider">Item</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider">Unit</th>
                                 <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Quantity</th>
+                                <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Received</th>
+                                <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Pending</th>
                                 <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Unit Price</th>
                                 <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Subtotal</th>
                             </tr>
@@ -156,6 +179,12 @@
                                     <span class="text-sm font-medium text-secondary">{{ number_format($item->quantity, 2) }}</span>
                                 </td>
                                 <td class="px-6 py-3 text-right">
+                                    <span class="text-sm font-semibold text-green-600">{{ number_format($item->received_quantity, 2) }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-right">
+                                    <span class="text-sm font-semibold text-amber-600">{{ number_format(max((float) $item->quantity - (float) $item->received_quantity, 0), 2) }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-right">
                                     <span class="text-sm text-secondary"><x-money :amount="$item->unit_price" /></span>
                                 </td>
                                 <td class="px-6 py-3 text-right">
@@ -166,15 +195,15 @@
                         </tbody>
                         <tfoot class="bg-gradient-to-r from-blue-50 to-white">
                             <tr>
-                                <td colspan="4" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Subtotal:</td>
+                                <td colspan="6" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Subtotal:</td>
                                 <td class="px-6 py-3 text-right text-sm font-bold text-secondary"><x-money :amount="$localPurchaseOrder->subtotal" /></td>
                             </tr>
                             <tr>
-                                <td colspan="4" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Tax (18%):</td>
+                                <td colspan="6" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Tax (18%):</td>
                                 <td class="px-6 py-3 text-right text-sm font-bold text-secondary"><x-money :amount="$localPurchaseOrder->tax_amount" /></td>
                             </tr>
                             <tr class="bg-gradient-to-r from-primary/10 to-blue-100">
-                                <td colspan="4" class="px-6 py-4 text-right text-base font-bold text-gray-800">Grand Total:</td>
+                                <td colspan="6" class="px-6 py-4 text-right text-base font-bold text-gray-800">Grand Total:</td>
                                 <td class="px-6 py-4 text-right text-xl font-extrabold text-primary"><x-money :amount="$localPurchaseOrder->grand_total" /></td>
                             </tr>
                         </tfoot>
@@ -245,11 +274,36 @@
                         <div class="mt-2 text-xs text-primary font-bold">
                             <x-money :amount="$grn->grand_total" />
                         </div>
+                        <div class="mt-1 text-[11px] text-gray-500">
+                            Accounting: {{ $grn->accounting_journal_entry_id ? 'posted' : 'pending' }}
+                        </div>
                     </a>
                     @endforeach
                 </div>
             </div>
             @endif
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-secondary mb-4">Integration Status</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Receiving Progress</span>
+                        <span class="font-semibold text-secondary">{{ number_format($receivingPercent, 0) }}%</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+                        <span>Receiving synchronized</span>
+                        <span>{{ number_format($receivedQty, 2) }} / {{ number_format($orderedQty, 2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Confirmed GRNs</span>
+                        <span class="font-semibold text-secondary">{{ $localPurchaseOrder->goodsReceivedNotes->where('status', 'confirmed')->count() }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Accounting Linked GRNs</span>
+                        <span class="font-semibold text-secondary">{{ $localPurchaseOrder->goodsReceivedNotes->filter(fn($grn) => !empty($grn->accounting_journal_entry_id))->count() }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

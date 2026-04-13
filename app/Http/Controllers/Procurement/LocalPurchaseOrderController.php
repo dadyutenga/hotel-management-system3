@@ -18,7 +18,7 @@ class LocalPurchaseOrderController extends Controller
 {
     public function index(Request $request): View
     {
-        $lpos = LocalPurchaseOrder::with(['supplier', 'creator', 'approver'])
+        $lpos = LocalPurchaseOrder::with(['supplier', 'creator', 'approver', 'items'])
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
@@ -90,7 +90,7 @@ class LocalPurchaseOrderController extends Controller
 
     public function show(LocalPurchaseOrder $localPurchaseOrder): View
     {
-        $localPurchaseOrder->load(['supplier', 'items.product', 'creator', 'approver', 'goodsReceivedNotes']);
+        $localPurchaseOrder->load(['supplier', 'items.product', 'creator', 'approver', 'goodsReceivedNotes.accountingEntry']);
 
         return view('procurement.lpo.show', compact('localPurchaseOrder'));
     }

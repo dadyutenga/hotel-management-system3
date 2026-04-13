@@ -119,6 +119,7 @@
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Supplier</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Order Date</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Receiving</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Status</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Actions</th>
                 </tr>
@@ -147,6 +148,20 @@
                         <span class="text-sm font-bold text-secondary"><x-money :amount="$lpo->grand_total" /></span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
+                        @php
+                            $orderedQty = (float) $lpo->items->sum('quantity');
+                            $receivedQty = (float) $lpo->items->sum('received_quantity');
+                        @endphp
+                        <div class="text-sm font-semibold text-secondary">{{ number_format($receivedQty, 2) }} / {{ number_format($orderedQty, 2) }}</div>
+                        <div class="text-xs text-gray-500">
+                            @if($orderedQty > 0)
+                                {{ number_format(($receivedQty / $orderedQty) * 100, 0) }}% received
+                            @else
+                                No items
+                            @endif
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
                         @include('components.lpo-status-badge', ['status' => $lpo->status])
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -160,7 +175,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-16 text-center">
+                    <td colspan="7" class="px-6 py-16 text-center">
                         <div class="w-16 h-16 bg-gradient-to-br from-primary/10 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>

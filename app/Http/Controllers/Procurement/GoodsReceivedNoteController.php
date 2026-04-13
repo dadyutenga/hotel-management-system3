@@ -19,7 +19,7 @@ class GoodsReceivedNoteController extends Controller
 {
     public function index(Request $request): View
     {
-        $grns = GoodsReceivedNote::with(['lpo', 'supplier', 'receiver', 'confirmer'])
+        $grns = GoodsReceivedNote::with(['lpo', 'supplier', 'receiver', 'confirmer', 'accountingEntry', 'items.stockMovement'])
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
@@ -110,8 +110,10 @@ class GoodsReceivedNoteController extends Controller
             'supplier',
             'items.product',
             'items.lpoItem',
+            'items.stockMovement',
             'receiver',
-            'confirmer'
+            'confirmer',
+            'accountingEntry'
         ]);
 
         return view('procurement.grn.show', compact('goodsReceivedNote'));

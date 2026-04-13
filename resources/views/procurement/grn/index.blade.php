@@ -112,6 +112,7 @@
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Supplier</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Received Date</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Integration</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Status</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Actions</th>
                 </tr>
@@ -145,6 +146,10 @@
                         <span class="text-sm font-bold text-secondary"><x-money :amount="$grn->grand_total" /></span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-xs text-gray-600">Stock: {{ $grn->items->whereNotNull('stock_movement_id')->count() }}/{{ $grn->items->whereNotNull('product_id')->count() }}</div>
+                        <div class="text-xs {{ $grn->accounting_journal_entry_id ? 'text-green-600' : 'text-amber-600' }}">Accounting: {{ $grn->accounting_journal_entry_id ? 'posted' : 'pending' }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
                         @include('components.grn-status-badge', ['status' => $grn->status])
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -153,7 +158,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-16 text-center">
+                    <td colspan="8" class="px-6 py-16 text-center">
                         <div class="w-16 h-16 bg-gradient-to-br from-primary/10 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>

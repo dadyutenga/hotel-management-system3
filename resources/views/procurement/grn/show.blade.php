@@ -60,6 +60,21 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column -->
         <div class="lg:col-span-2 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                    <div class="text-sm text-gray-500">Inventory Movements</div>
+                    <div class="mt-2 text-3xl font-extrabold text-secondary">{{ $goodsReceivedNote->items->whereNotNull('stock_movement_id')->count() }}</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                    <div class="text-sm text-gray-500">Inventory-Linked Items</div>
+                    <div class="mt-2 text-3xl font-extrabold text-green-600">{{ $goodsReceivedNote->items->whereNotNull('product_id')->count() }}</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                    <div class="text-sm text-gray-500">Accounting Status</div>
+                    <div class="mt-2 text-lg font-extrabold {{ $goodsReceivedNote->accounting_journal_entry_id ? 'text-green-600' : 'text-amber-600' }}">{{ $goodsReceivedNote->accounting_journal_entry_id ? 'Posted' : 'Pending' }}</div>
+                </div>
+            </div>
+
             <!-- Basic Info -->
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-secondary mb-4">GRN Information</h3>
@@ -145,6 +160,7 @@
                                 <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Received</th>
                                 <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Unit Price</th>
                                 <th class="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider">Subtotal</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider">Linked Records</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -179,20 +195,30 @@
                                 <td class="px-6 py-3 text-right">
                                     <span class="text-sm font-bold text-secondary"><x-money :amount="$item->subtotal" /></span>
                                 </td>
+                                <td class="px-6 py-3">
+                                    <div class="space-y-1">
+                                        <div class="text-xs {{ $item->stock_movement_id ? 'text-green-600' : 'text-amber-600' }}">
+                                            Stock: {{ $item->stock_movement_id ? 'linked' : 'pending' }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            LPO Item: {{ $item->lpo_item_id ? 'linked' : 'manual' }}
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
                         <tfoot class="bg-gradient-to-r from-blue-50 to-white">
                             <tr>
-                                <td colspan="5" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Subtotal:</td>
+                                <td colspan="6" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Subtotal:</td>
                                 <td class="px-6 py-3 text-right text-sm font-bold text-secondary"><x-money :amount="$goodsReceivedNote->subtotal" /></td>
                             </tr>
                             <tr>
-                                <td colspan="5" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Tax (18%):</td>
+                                <td colspan="6" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Tax (18%):</td>
                                 <td class="px-6 py-3 text-right text-sm font-bold text-secondary"><x-money :amount="$goodsReceivedNote->tax_amount" /></td>
                             </tr>
                             <tr class="bg-gradient-to-r from-primary/10 to-blue-100">
-                                <td colspan="5" class="px-6 py-4 text-right text-base font-bold text-gray-800">Grand Total:</td>
+                                <td colspan="6" class="px-6 py-4 text-right text-base font-bold text-gray-800">Grand Total:</td>
                                 <td class="px-6 py-4 text-right text-xl font-extrabold text-primary"><x-money :amount="$goodsReceivedNote->grand_total" /></td>
                             </tr>
                         </tfoot>
@@ -259,6 +285,30 @@
                         <div class="text-sm font-bold text-primary"><x-money :amount="$goodsReceivedNote->lpo->grand_total" /></div>
                     </div>
                 </a>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-secondary mb-4">Integration Links</h3>
+                <div class="space-y-4 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Stock synchronization</span>
+                        <span class="font-semibold {{ $goodsReceivedNote->items->whereNotNull('stock_movement_id')->count() === $goodsReceivedNote->items->whereNotNull('product_id')->count() ? 'text-green-600' : 'text-amber-600' }}">
+                            {{ $goodsReceivedNote->items->whereNotNull('stock_movement_id')->count() }}/{{ $goodsReceivedNote->items->whereNotNull('product_id')->count() }} linked
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Accounting journal</span>
+                        @if($goodsReceivedNote->accountingEntry)
+                            <a href="{{ route('accounting.journal.show', $goodsReceivedNote->accountingEntry) }}" class="font-semibold text-primary hover:text-blue-700">{{ $goodsReceivedNote->accountingEntry->entry_no }}</a>
+                        @else
+                            <span class="font-semibold text-amber-600">Not posted</span>
+                        @endif
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Supplier liability reference</span>
+                        <span class="font-semibold text-secondary">{{ $goodsReceivedNote->supplierName }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Timeline -->
