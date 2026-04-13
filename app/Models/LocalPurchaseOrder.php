@@ -27,6 +27,7 @@ class LocalPurchaseOrder extends Model
         'rejection_reason',
         'created_by',
         'approved_by',
+        'rejected_by',
         'approved_at',
     ];
 
@@ -84,6 +85,11 @@ class LocalPurchaseOrder extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     public function getSupplierNameAttribute(): string

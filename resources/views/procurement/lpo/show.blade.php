@@ -32,7 +32,7 @@
             </a>
             @endif
 
-            @if($localPurchaseOrder->status === 'pending_approval' && auth()->user()->hasAnyRole(['store_manager', 'supervisor', 'admin']))
+            @if($localPurchaseOrder->status === 'pending_approval' && auth()->user()->hasRole('manager'))
             <form method="POST" action="{{ route('procurement.lpo.approve', $localPurchaseOrder) }}" class="inline">
                 @csrf
                 <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
@@ -119,6 +119,12 @@
                     <div class="flex items-center justify-between py-2 border-b border-gray-100">
                         <span class="text-sm text-gray-500">Approved By</span>
                         <span class="text-sm font-semibold text-secondary">{{ $localPurchaseOrder->approver->name }}</span>
+                    </div>
+                    @endif
+                    @if($localPurchaseOrder->rejector)
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="text-sm text-gray-500">Rejected By</span>
+                        <span class="text-sm font-semibold text-secondary">{{ $localPurchaseOrder->rejector->name }}</span>
                     </div>
                     @endif
                 </div>
@@ -315,6 +321,7 @@
     </div>
 </div>
 
+@if($localPurchaseOrder->status === 'pending_approval' && auth()->user()->hasRole('manager'))
 <!-- Reject Modal -->
 <div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 no-print">
     <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4">
@@ -351,6 +358,7 @@
         </form>
     </div>
 </div>
+@endif
 
 <style>
 @media print {

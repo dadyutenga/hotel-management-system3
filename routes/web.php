@@ -52,6 +52,7 @@ use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\InvoiceController;
 use App\Http\Controllers\Accounting\PayrollController;
 use App\Http\Controllers\Accounting\BankReconciliationController;
+use App\Http\Controllers\Manager\OversightController;
 use App\Http\Controllers\Finance\PettyCashController;
 use App\Http\Controllers\Bartender\BartenderController;
 
@@ -503,17 +504,17 @@ Route::middleware(['auth'])->group(function () {
 
         // Dashboard
         Route::get('/', [ProcurementDashboardController::class, 'index'])->name('dashboard')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
 
         // ── Suppliers ─────────────────────────────────────────────────────
         Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
         Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create')
              ->middleware('role:store_manager,store_keeper');
         Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store')
              ->middleware('role:store_manager,store_keeper');
         Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
         Route::get('suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit')
              ->middleware('role:store_manager,store_keeper');
         Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update')
@@ -523,13 +524,13 @@ Route::middleware(['auth'])->group(function () {
 
         // ── Local Purchase Orders ─────────────────────────────────────────
         Route::get('lpo', [LocalPurchaseOrderController::class, 'index'])->name('lpo.index')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
         Route::get('lpo/create', [LocalPurchaseOrderController::class, 'create'])->name('lpo.create')
              ->middleware('role:store_manager,store_keeper');
         Route::post('lpo', [LocalPurchaseOrderController::class, 'store'])->name('lpo.store')
              ->middleware('role:store_manager,store_keeper');
         Route::get('lpo/{localPurchaseOrder}', [LocalPurchaseOrderController::class, 'show'])->name('lpo.show')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
         Route::get('lpo/{localPurchaseOrder}/edit', [LocalPurchaseOrderController::class, 'edit'])->name('lpo.edit')
              ->middleware('role:store_manager,store_keeper');
         Route::put('lpo/{localPurchaseOrder}', [LocalPurchaseOrderController::class, 'update'])->name('lpo.update')
@@ -539,21 +540,21 @@ Route::middleware(['auth'])->group(function () {
         Route::post('lpo/{localPurchaseOrder}/submit', [LocalPurchaseOrderController::class, 'submitForApproval'])->name('lpo.submit')
              ->middleware('role:store_manager,store_keeper');
         Route::post('lpo/{localPurchaseOrder}/approve', [LocalPurchaseOrderController::class, 'approve'])->name('lpo.approve')
-             ->middleware('role:store_manager');
+             ->middleware('role:manager');
         Route::post('lpo/{localPurchaseOrder}/reject', [LocalPurchaseOrderController::class, 'reject'])->name('lpo.reject')
-             ->middleware('role:store_manager');
+             ->middleware('role:manager');
         Route::post('lpo/{localPurchaseOrder}/sent', [LocalPurchaseOrderController::class, 'markSent'])->name('lpo.sent')
              ->middleware('role:store_manager,store_keeper');
 
         // ── Goods Received Notes ──────────────────────────────────────────
         Route::get('grn', [GoodsReceivedNoteController::class, 'index'])->name('grn.index')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
         Route::get('grn/create', [GoodsReceivedNoteController::class, 'create'])->name('grn.create')
              ->middleware('role:store_manager,store_keeper');
         Route::post('grn', [GoodsReceivedNoteController::class, 'store'])->name('grn.store')
              ->middleware('role:store_manager,store_keeper');
         Route::get('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'show'])->name('grn.show')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,manager');
         Route::delete('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'destroy'])->name('grn.destroy')
              ->middleware('role:store_manager');
         Route::post('grn/{goodsReceivedNote}/receipt', [GoodsReceivedNoteController::class, 'uploadReceipt'])->name('grn.upload-receipt')
@@ -564,6 +565,14 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:store_manager');
         Route::post('grn/{goodsReceivedNote}/reject', [GoodsReceivedNoteController::class, 'reject'])->name('grn.reject')
              ->middleware('role:store_manager');
+    });
+
+    Route::middleware(['role:manager'])->prefix('manager')->name('manager.')->group(function () {
+        Route::get('procurement/approvals', [OversightController::class, 'lpoApprovals'])->name('procurement.approvals');
+        Route::get('stock/overview', [OversightController::class, 'stockOverview'])->name('stock.overview');
+        Route::get('stock/movements', [OversightController::class, 'stockMovements'])->name('stock.movements');
+        Route::get('accounting/journal/{journalEntry}', [JournalEntryController::class, 'show'])->name('accounting.journal.show');
+        Route::get('accounting/reports/supplier-payables', [AccountingReportController::class, 'supplierPayables'])->name('accounting.reports.supplier-payables');
     });
 
     // ═══ NOTIFICATIONS ═══

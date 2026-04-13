@@ -3,6 +3,11 @@
 {{-- Includes: Operations, Reservations, Bookings, Guests, Laundry Orders, Hall Bookings, Conference --}}
 {{-- NOTE: Manager does NOT have access to infrastructure (Buildings, Floors, Rooms, Room Types, Users) --}}
 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    @php
+        $pendingApprovals = \App\Models\LocalPurchaseOrder::where('status', 'pending_approval')->count();
+        $pendingLaundry = \App\Models\LaundryOrder::whereIn('status', ['pending', 'in_progress'])->count();
+    @endphp
+
     <!-- Dashboard -->
     <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('dashboard') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,6 +54,41 @@
         </a>
     </div>
 
+    <div class="pt-4">
+        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{{ __('general.nav.procurement') }}</p>
+
+        <a href="{{ route('manager.procurement.approvals') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('manager.procurement.approvals') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span>{{ __('general.nav.approval_dashboard') }}</span>
+            @if($pendingApprovals > 0)
+                <span class="ml-auto bg-yellow-100 text-yellow-600 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingApprovals }}</span>
+            @endif
+        </a>
+
+        <a href="{{ route('manager.stock.overview') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('manager.stock.overview') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <span>{{ __('general.nav.stock_overview') }}</span>
+        </a>
+
+        <a href="{{ route('manager.stock.movements') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('manager.stock.movements') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+            </svg>
+            <span>{{ __('general.nav.movements') }}</span>
+        </a>
+
+        <a href="{{ route('manager.accounting.reports.supplier-payables') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('manager.accounting.reports.supplier-payables') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>{{ __('general.nav.supplier_payables') }}</span>
+        </a>
+    </div>
+
     <!-- Laundry Section -->
     <div class="pt-4">
         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{{ __('general.nav.laundry') }}</p>
@@ -58,9 +98,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
             <span>{{ __('laundry.laundry_orders') }}</span>
-            @php
-                $pendingLaundry = \App\Models\LaundryOrder::whereIn('status', ['pending', 'in_progress'])->count();
-            @endphp
             @if($pendingLaundry > 0)
                 <span class="ml-auto bg-purple-100 text-purple-600 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingLaundry }}</span>
             @endif

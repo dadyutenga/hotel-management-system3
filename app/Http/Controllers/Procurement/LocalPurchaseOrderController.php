@@ -90,7 +90,7 @@ class LocalPurchaseOrderController extends Controller
 
     public function show(LocalPurchaseOrder $localPurchaseOrder): View
     {
-        $localPurchaseOrder->load(['supplier', 'items.product', 'creator', 'approver', 'goodsReceivedNotes.accountingEntry']);
+        $localPurchaseOrder->load(['supplier', 'items.product', 'creator', 'approver', 'rejector', 'goodsReceivedNotes.accountingEntry']);
 
         return view('procurement.lpo.show', compact('localPurchaseOrder'));
     }
@@ -200,7 +200,8 @@ class LocalPurchaseOrderController extends Controller
         $localPurchaseOrder->update([
             'status' => 'rejected',
             'rejection_reason' => $validated['rejection_reason'],
-            'approved_by' => auth()->id(),
+            'approved_by' => null,
+            'rejected_by' => auth()->id(),
         ]);
 
         return back()->with('success', 'LPO rejected.');

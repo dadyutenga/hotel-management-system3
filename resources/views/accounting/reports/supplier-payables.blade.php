@@ -4,6 +4,7 @@
 @section('page-title', 'Supplier Payables')
 
 @section('content')
+@php($journalRoute = auth()->user()->hasRole('manager') ? 'manager.accounting.journal.show' : 'accounting.journal.show')
 <div class="space-y-6">
     <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
@@ -59,7 +60,7 @@
                     <td class="px-6 py-4">
                         <div class="space-y-1">
                             @foreach($row['entries']->take(3) as $entry)
-                            <a href="{{ route('accounting.journal.show', $entry) }}" class="block text-xs font-semibold text-primary hover:text-blue-700">
+                            <a href="{{ route($journalRoute, $entry) }}" class="block text-xs font-semibold text-primary hover:text-blue-700">
                                 {{ $entry->entry_no }} - {{ $entry->reference ?? 'No ref' }}
                             </a>
                             @endforeach
@@ -103,7 +104,7 @@
                     <td class="px-6 py-4 text-sm text-secondary">{{ $entry->reference ?? '—' }}</td>
                     <td class="px-6 py-4 text-sm font-bold text-secondary"><x-money :amount="$entry->total_debit" /></td>
                     <td class="px-6 py-4 text-sm">
-                        <a href="{{ route('accounting.journal.show', $entry) }}" class="font-semibold text-primary hover:text-blue-700">Open Entry</a>
+                        <a href="{{ route($journalRoute, $entry) }}" class="font-semibold text-primary hover:text-blue-700">Open Entry</a>
                     </td>
                 </tr>
                 @empty

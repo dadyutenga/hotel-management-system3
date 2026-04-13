@@ -83,6 +83,134 @@
     </div>
 </div>
 
+<!-- Procurement & Stock Oversight -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+    <div class="xl:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-extrabold text-secondary">Procurement Oversight</h3>
+                <p class="text-sm text-gray-500 mt-1">Manager-only approval and supplier control snapshot</p>
+            </div>
+            <a href="{{ route('manager.procurement.approvals') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">Open dashboard</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-yellow-700">Pending LPOs</p>
+                <p class="mt-2 text-3xl font-extrabold text-yellow-600">{{ $stats['pending_lpo_approvals'] ?? 0 }}</p>
+            </div>
+            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-blue-700">Active Suppliers</p>
+                <p class="mt-2 text-3xl font-extrabold text-blue-600">{{ $stats['supplier_count'] ?? 0 }}</p>
+            </div>
+            <div class="rounded-xl border border-green-200 bg-green-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-green-700">Internal Approvals</p>
+                <p class="mt-2 text-3xl font-extrabold text-green-600">{{ $stats['pending_approvals'] ?? 0 }}</p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            @forelse($pendingLpoApprovals as $lpo)
+            <div class="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <div>
+                    <div class="text-sm font-semibold text-secondary">{{ $lpo->lpo_number }}</div>
+                    <div class="text-xs text-gray-500">{{ $lpo->supplierName }} - {{ $lpo->creator->name }}</div>
+                </div>
+                <div class="text-right">
+                    <div>@include('components.lpo-status-badge', ['status' => $lpo->status])</div>
+                    <a href="{{ route('procurement.lpo.show', $lpo) }}" class="mt-2 inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-700">Review now</a>
+                </div>
+            </div>
+            @empty
+            <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">No LPOs are waiting for approval.</div>
+            @endforelse
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-extrabold text-secondary">Stock Health</h3>
+                <p class="text-sm text-gray-500 mt-1">Quick oversight of critical inventory positions</p>
+            </div>
+            <a href="{{ route('manager.stock.overview') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">View stock</a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
+                <p class="text-3xl font-extrabold text-amber-600">{{ $stats['low_stock_items'] ?? 0 }}</p>
+                <p class="text-xs font-medium text-amber-700">Low stock</p>
+            </div>
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-center">
+                <p class="text-3xl font-extrabold text-red-600">{{ $stats['out_of_stock_items'] ?? 0 }}</p>
+                <p class="text-xs font-medium text-red-700">Out of stock</p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            @forelse($stockAlerts as $level)
+            @php($isOut = $level->quantity <= 0)
+            <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-semibold text-secondary">{{ $level->product->name }}</div>
+                        <div class="text-xs text-gray-500">{{ $level->location->name }} - {{ $level->product->category ?: 'Uncategorized' }}</div>
+                    </div>
+                    <span class="text-sm font-bold {{ $isOut ? 'text-red-600' : 'text-amber-600' }}">{{ number_format($level->quantity, 2) }}</span>
+                </div>
+            </div>
+            @empty
+            <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">No critical stock alerts right now.</div>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<!-- Stock Movement Audit -->
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h3 class="text-lg font-extrabold text-secondary">Recent Stock Movements</h3>
+            <p class="text-sm text-gray-500 mt-1">Latest incoming and outgoing inventory actions across the business</p>
+        </div>
+        <a href="{{ route('manager.stock.movements') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">Open audit trail</a>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                    <th class="pb-3 pr-4">Item</th>
+                    <th class="pb-3 pr-4">Location</th>
+                    <th class="pb-3 pr-4">Type</th>
+                    <th class="pb-3 pr-4">Qty</th>
+                    <th class="pb-3 pr-4">Source</th>
+                    <th class="pb-3">When</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentStockMovements as $movement)
+                <tr class="border-b border-gray-50 last:border-0">
+                    <td class="py-3 pr-4">
+                        <div class="font-semibold text-secondary">{{ $movement->product->name }}</div>
+                        <div class="text-xs text-gray-500">{{ $movement->actor->name ?? 'System' }}</div>
+                    </td>
+                    <td class="py-3 pr-4 text-sm text-gray-600">{{ $movement->location->name }}</td>
+                    <td class="py-3 pr-4 text-sm text-gray-600">{{ str_replace('_', ' ', ucfirst($movement->type)) }}</td>
+                    <td class="py-3 pr-4 text-sm font-bold {{ in_array($movement->type, ['restock', 'transfer_in']) ? 'text-green-600' : 'text-red-600' }}">{{ in_array($movement->type, ['restock', 'transfer_in']) ? '+' : '-' }}{{ number_format($movement->quantity, 2) }}</td>
+                    <td class="py-3 pr-4 text-sm text-gray-500">{{ $movement->reference_type ? str_replace('_', ' ', ucfirst($movement->reference_type)) : 'Manual' }}</td>
+                    <td class="py-3 text-sm text-gray-500">{{ $movement->created_at->format('M d, H:i') }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6" class="py-8 text-center text-sm text-gray-500">No recent stock movements recorded.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Laundry & Conference Overview -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- Laundry Overview -->

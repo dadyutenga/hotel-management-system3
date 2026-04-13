@@ -24,7 +24,7 @@ class ProcurementIntegrationTest extends TestCase
 
     public function test_confirming_a_grn_updates_stock_and_posts_accounting(): void
     {
-        [$user, $supplier, $product] = $this->bootstrapProcurementContext();
+        [$user, $manager, $supplier, $product] = $this->bootstrapProcurementContext();
 
         $lpo = LocalPurchaseOrder::create([
             'supplier_id' => $supplier->id,
@@ -46,7 +46,7 @@ class ProcurementIntegrationTest extends TestCase
         $lpo->load('items');
         $lpo->recalculate();
 
-        $this->actingAs($user)
+        $this->actingAs($manager)
             ->post(route('procurement.lpo.approve', $lpo))
             ->assertRedirect()
             ->assertSessionHas('success');
@@ -80,7 +80,7 @@ class ProcurementIntegrationTest extends TestCase
 
     public function test_partial_grns_keep_lpo_in_sync_until_fully_received(): void
     {
-        [$user, $supplier, $product] = $this->bootstrapProcurementContext();
+        [$user, $manager, $supplier, $product] = $this->bootstrapProcurementContext();
 
         $lpo = LocalPurchaseOrder::create([
             'supplier_id' => $supplier->id,
@@ -132,9 +132,15 @@ class ProcurementIntegrationTest extends TestCase
         Artisan::call('db:seed', ['class' => 'StockLocationSeeder']);
 
         $role = Role::where('name', 'store_manager')->firstOrFail();
+        $managerRole = Role::where('name', 'manager')->firstOrFail();
 
         $user = User::factory()->create([
             'role_id' => $role->id,
+            'is_active' => true,
+        ]);
+
+        $manager = User::factory()->create([
+            'role_id' => $managerRole->id,
             'is_active' => true,
         ]);
 
@@ -156,7 +162,7 @@ class ProcurementIntegrationTest extends TestCase
             'created_by' => $user->id,
         ]);
 
-        return [$user, $supplier, $product];
+        return [$user, $manager, $supplier, $product];
     }
 
     private function createGrn(

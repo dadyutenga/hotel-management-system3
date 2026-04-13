@@ -70,6 +70,17 @@ class DashboardController extends Controller {
             'total_reservations' => Reservation::count(),
             'pending_reservations' => Reservation::where('status', 'pending')->count(),
             'active_bookings' => Booking::where('status', 'checked_in')->count(),
+            'pending_lpo_approvals' => LocalPurchaseOrder::where('status', 'pending_approval')->count(),
+            'supplier_count' => Supplier::where('is_active', true)->count(),
+            'low_stock_items' => StockLevel::join('products', 'stock_levels.product_id', '=', 'products.id')
+                ->where('products.is_active', true)
+                ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level')
+                ->where('stock_levels.quantity', '>', 0)
+                ->count(),
+            'out_of_stock_items' => StockLevel::join('products', 'stock_levels.product_id', '=', 'products.id')
+                ->where('products.is_active', true)
+                ->where('stock_levels.quantity', '<=', 0)
+                ->count(),
         ];
 
         $roomStatusCounts = Room::where('is_active', true)
@@ -186,6 +197,29 @@ class DashboardController extends Controller {
             ->limit(10)
             ->get();
 
+        $pendingLpoApprovals = LocalPurchaseOrder::with(['supplier', 'creator'])
+            ->where('status', 'pending_approval')
+            ->latest('order_date')
+            ->limit(6)
+            ->get();
+
+        $stockAlerts = StockLevel::with(['product', 'location'])
+            ->join('products', 'stock_levels.product_id', '=', 'products.id')
+            ->where('products.is_active', true)
+            ->where(function ($query) {
+                $query->where('stock_levels.quantity', '<=', 0)
+                    ->orWhereColumn('stock_levels.quantity', '<=', 'products.reorder_level');
+            })
+            ->select('stock_levels.*')
+            ->orderBy('stock_levels.quantity')
+            ->limit(8)
+            ->get();
+
+        $recentStockMovements = StockMovement::with(['product', 'location', 'actor'])
+            ->latest('created_at')
+            ->limit(8)
+            ->get();
+
         return view('dashboards.manager', compact(
             'stats',
             'roomStatusCounts',
@@ -193,7 +227,10 @@ class DashboardController extends Controller {
             'recentReservations',
             'buildingStats',
             'staffByRole',
-            'pendingApprovals'
+            'pendingApprovals',
+            'pendingLpoApprovals',
+            'stockAlerts',
+            'recentStockMovements'
         ));
     }
 

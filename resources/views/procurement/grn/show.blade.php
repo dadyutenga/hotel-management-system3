@@ -5,6 +5,7 @@
 @section('page-title', 'Goods Received Notes')
 
 @section('content')
+@php($journalRoute = auth()->user()->hasRole('manager') ? 'manager.accounting.journal.show' : 'accounting.journal.show')
 <div class="max-w-6xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -299,7 +300,7 @@
                     <div class="flex items-center justify-between">
                         <span class="text-gray-500">Accounting journal</span>
                         @if($goodsReceivedNote->accountingEntry)
-                            <a href="{{ route('accounting.journal.show', $goodsReceivedNote->accountingEntry) }}" class="font-semibold text-primary hover:text-blue-700">{{ $goodsReceivedNote->accountingEntry->entry_no }}</a>
+                            <a href="{{ route($journalRoute, $goodsReceivedNote->accountingEntry) }}" class="font-semibold text-primary hover:text-blue-700">{{ $goodsReceivedNote->accountingEntry->entry_no }}</a>
                         @else
                             <span class="font-semibold text-amber-600">Not posted</span>
                         @endif
