@@ -149,7 +149,9 @@
 
         <div class="space-y-3">
             @forelse($stockAlerts as $level)
-            @php($isOut = $level->quantity <= 0)
+            @php
+                $isOut = $level->quantity <= 0;
+            @endphp
             <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
                 <div class="flex items-center justify-between gap-3">
                     <div>
