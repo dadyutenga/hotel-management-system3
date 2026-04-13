@@ -14,7 +14,7 @@ class JournalEntryController extends Controller
 {
     public function index(): View
     {
-        $entries = JournalEntry::with(['creator', 'poster'])
+        $entries = JournalEntry::with(['creator', 'poster', 'supplier', 'lines.account'])
             ->orderBy('entry_date', 'desc')
             ->paginate(20);
         return view('accounting.journal.index', compact('entries'));
@@ -78,7 +78,7 @@ class JournalEntryController extends Controller
 
     public function show(JournalEntry $journalEntry): View
     {
-        $journalEntry->load(['lines.account', 'creator', 'poster']);
+        $journalEntry->load(['lines.account', 'creator', 'poster', 'supplier']);
         return view('accounting.journal.show', compact('journalEntry'));
     }
 }

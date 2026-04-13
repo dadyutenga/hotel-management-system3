@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\JournalLine;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -160,5 +162,63 @@ class AccountingReportController extends Controller
         }
 
         return view('accounting.ledger.index', compact('accounts', 'account', 'lines'));
+    }
+
+    public function supplierPayables(Request $request): View
+    {
+        $dateFrom = $request->date_from ?? now()->startOfMonth()->toDateString();
+        $dateTo   = $request->date_to ?? now()->toDateString();
+        $apAccount = Account::findByCode('2100');
+
+        $lines = JournalLine::with(['entry.supplier', 'account'])
+            ->where('account_id', $apAccount->id)
+            ->whereHas('entry', fn ($q) => $q
+                ->where('status', 'posted')
+                ->whereNotNull('supplier_id')
+                ->whereDate('entry_date', '>=', $dateFrom)
+                ->whereDate('entry_date', '<=', $dateTo)
+            )
+            ->get();
+
+        $supplierRows = Supplier::whereIn('id', $lines->pluck('entry.supplier_id')->filter()->unique())
+            ->get()
+            ->map(function ($supplier) use ($lines) {
+                $supplierLines = $lines->filter(fn ($line) => $line->entry?->supplier_id === $supplier->id);
+                $credits = (float) $supplierLines->where('type', 'credit')->sum('amount');
+                $debits = (float) $supplierLines->where('type', 'debit')->sum('amount');
+
+                return [
+                    'supplier' => $supplier,
+                    'invoiced' => $credits,
+                    'paid' => $debits,
+                    'balance' => $credits - $debits,
+                    'entries' => $supplierLines->pluck('entry')->filter()->unique('id')->sortByDesc('entry_date')->values(),
+                ];
+            })
+            ->sortByDesc('balance')
+            ->values();
+
+        $recentProcurementEntries = JournalEntry::with(['supplier', 'lines.account'])
+            ->where('source', 'procurement')
+            ->whereNotNull('supplier_id')
+            ->whereDate('entry_date', '>=', $dateFrom)
+            ->whereDate('entry_date', '<=', $dateTo)
+            ->latest('entry_date')
+            ->limit(10)
+            ->get();
+
+        $totalOutstanding = (float) $supplierRows->sum('balance');
+        $totalInvoiced = (float) $supplierRows->sum('invoiced');
+        $totalPaid = (float) $supplierRows->sum('paid');
+
+        return view('accounting.reports.supplier-payables', compact(
+            'supplierRows',
+            'recentProcurementEntries',
+            'totalOutstanding',
+            'totalInvoiced',
+            'totalPaid',
+            'dateFrom',
+            'dateTo'
+        ));
     }
 }

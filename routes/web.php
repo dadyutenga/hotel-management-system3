@@ -654,5 +654,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/balance-sheet',       [AccountingReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
         Route::get('reports/trial-balance',       [AccountingReportController::class, 'trialBalance'])->name('reports.trial-balance');
         Route::get('reports/vat',                 [AccountingReportController::class, 'vatReport'])->name('reports.vat');
+        Route::get('reports/supplier-payables',   [AccountingReportController::class, 'supplierPayables'])->name('reports.supplier-payables');
     });
 });
