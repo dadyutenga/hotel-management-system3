@@ -9,6 +9,7 @@ use App\Models\StockLocation;
 use App\Models\StockMovement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class StockController extends Controller
@@ -90,6 +91,17 @@ class StockController extends Controller
         $this->assertLocationAccess(auth()->user(), $data['location_id']);
 
         $product = Product::findOrFail($data['product_id']);
+        $level = StockLevel::where('product_id', $data['product_id'])
+            ->where('location_id', $data['location_id'])
+            ->first();
+
+        $available = (float) ($level?->quantity ?? 0);
+
+        if (! $level || $available < (float) $data['quantity']) {
+            throw ValidationException::withMessages([
+                'quantity' => "Insufficient stock for damage entry. Available: {$available}, requested: {$data['quantity']}.",
+            ]);
+        }
 
         StockMovement::record([
             'product_id'  => $data['product_id'],
