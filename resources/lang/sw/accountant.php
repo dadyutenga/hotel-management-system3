@@ -1,0 +1,71 @@
+<?php
+
+return [
+    'dashboard_title' => 'Dashibodi ya Mhasibu',
+    'hero' => [
+        'title' => 'Kituo cha usimamizi wa fedha',
+        'subtitle' => 'Fuatilia faida, madeni ya malipo, na shughuli za uhasibu bila kuchanganya na UI ya mapokezi.',
+    ],
+    'sidebar' => [
+        'dashboard' => 'Dashibodi',
+        'financial_overview' => 'Muhtasari wa Fedha',
+        'transactions' => 'Miamala',
+        'journal_entries' => 'Maingizo ya Jarida',
+        'accounts_payable' => 'Madeni ya Kulipa',
+        'accounts_receivable' => 'Madeni ya Kukusanya',
+        'expense_management' => 'Usimamizi wa Gharama',
+        'reports' => 'Ripoti',
+        'audit_logs' => 'Kumbukumbu za Ukaguzi',
+    ],
+    'metrics' => [
+        'total_revenue' => 'Jumla ya Mapato',
+        'total_expenses' => 'Jumla ya Gharama',
+        'net_profit' => 'Faida Halisi',
+        'pending_payments' => 'Malipo Yanayosubiri',
+        'cash_position' => 'Nafasi ya Fedha Taslimu',
+        'accounts_payable' => 'Madeni ya Kulipa',
+        'accounts_receivable' => 'Madeni ya Kukusanya',
+        'open_payrolls' => 'Mishahara Iliyo Wazi',
+        'month_revenue' => 'Mapato ya Mwezi',
+        'month_expenses' => 'Gharama za Mwezi',
+    ],
+    'sections' => [
+        'recent_transactions' => 'Miamala ya Hivi Karibuni',
+        'quick_insights' => 'Taarifa za Haraka za Fedha',
+        'accounts_payable' => 'Malipo ya Wasambazaji Yanayosubiri',
+        'accounts_receivable' => 'Madeni Yanayosubiri Kukusanywa',
+        'month_to_date' => 'Muhtasari wa Mwezi Hadi Sasa',
+        'recent_payrolls' => 'Mizunguko ya Mishahara ya Hivi Karibuni',
+        'bank_reconciliation' => 'Usawazishaji wa Benki wa Hivi Karibuni',
+        'expense_accounts' => 'Akaunti za Gharama',
+        'recent_expense_activity' => 'Shughuli za Gharama za Hivi Karibuni',
+        'financial_reports' => 'Ripoti za Fedha',
+        'journal_audit_trail' => 'Mfuatano wa Ukaguzi wa Jarida',
+        'system_alerts' => 'Tahadhari za Mfumo',
+    ],
+    'table' => [
+        'reference' => 'Rejea',
+    ],
+    'labels' => [
+        'invoiced' => 'Kilichodaiwa',
+        'paid' => 'Kilicholipwa',
+        'balance' => 'Salio',
+        'difference' => 'Tofauti',
+        'open_report' => 'Fungua ripoti ya fedha',
+    ],
+    'actions' => [
+        'open_journal' => 'Fungua maingizo ya jarida',
+    ],
+    'insights' => [
+        'cash_position' => 'Nafasi ya sasa ya fedha taslimu',
+        'payables_exposure' => 'Mzigo wa madeni ya kulipa',
+        'outstanding_receivables' => 'Madeni yanayosubiri kukusanywa',
+    ],
+    'reports' => [
+        'profit_loss' => 'Faida / Hasara',
+        'balance_sheet' => 'Mizania',
+        'trial_balance' => 'Trial Balance',
+        'vat' => 'Ripoti ya VAT',
+        'supplier_payables' => 'Madeni ya Wasambazaji',
+    ],
+];

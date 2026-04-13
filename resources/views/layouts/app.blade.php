@@ -48,29 +48,7 @@
             </div>
 
             <!-- Navigation -->
-            @php($roleName = auth()->user()->role->name ?? null)
-
-            @if($roleName === \App\Models\Role::ADMIN)
-                @include('shared.sidebar.admin')
-            @elseif($roleName === \App\Models\Role::MANAGER)
-                @include('shared.sidebar.manager')
-            @elseif($roleName === \App\Models\Role::STORE_MANAGER)
-                @include('shared.sidebar.store-manager')
-            @elseif($roleName === \App\Models\Role::SUPERVISOR)
-                @include('shared.sidebar.supervisor')
-            @elseif($roleName === \App\Models\Role::HOUSE_HELP)
-                @include('shared.sidebar.house-help')
-            @elseif($roleName === \App\Models\Role::STORE_KEEPER)
-                @include('shared.sidebar.store-keeper')
-            @elseif($roleName === \App\Models\Role::RESTAURANT_MANAGER)
-                @include('shared.sidebar.restaurant-manager')
-            @elseif($roleName === \App\Models\Role::BAR_TENDER)
-                @include('shared.sidebar.bar-tender')
-            @elseif($roleName === \App\Models\Role::CASHIER)
-                @include('shared.sidebar.cashier')
-            @else
-                @include('shared.sidebar.front-desk')
-            @endif
+            @include(auth()->user()->sidebarView())
 
             <!-- Logout -->
             <div class="p-3 border-t border-gray-100 bg-gray-50">

@@ -1,0 +1,71 @@
+<?php
+
+return [
+    'dashboard_title' => 'Accountant Dashboard',
+    'hero' => [
+        'title' => 'Finance command center',
+        'subtitle' => 'Track profitability, payment exposure, and accounting activity without front desk shortcuts.',
+    ],
+    'sidebar' => [
+        'dashboard' => 'Dashboard',
+        'financial_overview' => 'Financial Overview',
+        'transactions' => 'Transactions',
+        'journal_entries' => 'Journal Entries',
+        'accounts_payable' => 'Accounts Payable',
+        'accounts_receivable' => 'Accounts Receivable',
+        'expense_management' => 'Expense Management',
+        'reports' => 'Reports',
+        'audit_logs' => 'Audit Logs',
+    ],
+    'metrics' => [
+        'total_revenue' => 'Total Revenue',
+        'total_expenses' => 'Total Expenses',
+        'net_profit' => 'Net Profit',
+        'pending_payments' => 'Pending Payments',
+        'cash_position' => 'Cash Position',
+        'accounts_payable' => 'Accounts Payable',
+        'accounts_receivable' => 'Accounts Receivable',
+        'open_payrolls' => 'Open Payroll Runs',
+        'month_revenue' => 'Month Revenue',
+        'month_expenses' => 'Month Expenses',
+    ],
+    'sections' => [
+        'recent_transactions' => 'Recent Transactions',
+        'quick_insights' => 'Quick Financial Insights',
+        'accounts_payable' => 'Pending Supplier Payments',
+        'accounts_receivable' => 'Pending Receivables',
+        'month_to_date' => 'Month-to-Date Snapshot',
+        'recent_payrolls' => 'Recent Payroll Runs',
+        'bank_reconciliation' => 'Recent Bank Reconciliations',
+        'expense_accounts' => 'Expense Accounts',
+        'recent_expense_activity' => 'Recent Expense Activity',
+        'financial_reports' => 'Financial Reports',
+        'journal_audit_trail' => 'Journal Audit Trail',
+        'system_alerts' => 'System Alerts',
+    ],
+    'table' => [
+        'reference' => 'Reference',
+    ],
+    'labels' => [
+        'invoiced' => 'Invoiced',
+        'paid' => 'Paid',
+        'balance' => 'Balance',
+        'difference' => 'Difference',
+        'open_report' => 'Open financial report',
+    ],
+    'actions' => [
+        'open_journal' => 'Open journal entries',
+    ],
+    'insights' => [
+        'cash_position' => 'Current cash position',
+        'payables_exposure' => 'Payables exposure',
+        'outstanding_receivables' => 'Outstanding receivables',
+    ],
+    'reports' => [
+        'profit_loss' => 'Profit / Loss',
+        'balance_sheet' => 'Balance Sheet',
+        'trial_balance' => 'Trial Balance',
+        'vat' => 'VAT Report',
+        'supplier_payables' => 'Supplier Payables',
+    ],
+];

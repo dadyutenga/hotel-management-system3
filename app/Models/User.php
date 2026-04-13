@@ -42,7 +42,7 @@ class User extends Authenticatable
      */
     public function hasRole(string $role): bool
     {
-        return $this->role && strtoupper($this->role->name) === strtoupper($role);
+        return Role::matches($this->role?->name, $role);
     }
 
     /**
@@ -50,37 +50,54 @@ class User extends Authenticatable
      */
     public function hasAnyRole(array $roles): bool
     {
-        return $this->role && in_array(strtoupper($this->role->name), array_map('strtoupper', $roles));
+        $roleName = $this->roleName();
+
+        if ($roleName === null) {
+            return false;
+        }
+
+        foreach ($roles as $role) {
+            if (Role::matches($roleName, $role)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function roleName(): ?string
+    {
+        return Role::normalizeName($this->role?->name);
     }
 
     public function isAdmin(): bool
     {
-        return $this->role && $this->role->name === Role::ADMIN;
+        return $this->hasRole(Role::ADMIN);
     }
 
     public function isSupervisor(): bool
     {
-        return $this->role && $this->role->name === Role::SUPERVISOR;
+        return $this->hasRole(Role::SUPERVISOR);
     }
 
     public function isGeneralManager(): bool
     {
-        return $this->role && $this->role->name === Role::MANAGER;
+        return $this->hasRole(Role::MANAGER);
     }
 
     public function isFrontDesk(): bool
     {
-        return $this->role && $this->role->name === Role::FRONT_DESK;
+        return $this->hasRole(Role::FRONT_DESK);
     }
 
     public function isHouseHelp(): bool
     {
-        return $this->role && $this->role->name === Role::HOUSE_HELP;
+        return $this->hasRole(Role::HOUSE_HELP);
     }
 
     public function isStoreManager(): bool
     {
-        return $this->role && $this->role->name === Role::STORE_MANAGER;
+        return $this->hasRole(Role::STORE_MANAGER);
     }
 
     // Keep backward compat — old code may call isManager()
@@ -91,22 +108,57 @@ class User extends Authenticatable
 
     public function isStoreKeeper(): bool
     {
-        return $this->role && $this->role->name === Role::STORE_KEEPER;
+        return $this->hasRole(Role::STORE_KEEPER);
     }
 
     public function isRestaurantManager(): bool
     {
-        return $this->role && $this->role->name === Role::RESTAURANT_MANAGER;
+        return $this->hasRole(Role::RESTAURANT_MANAGER);
     }
 
     public function isBarTender(): bool
     {
-        return $this->role && $this->role->name === Role::BAR_TENDER;
+        return $this->hasRole(Role::BAR_TENDER);
     }
 
     public function isCashier(): bool
     {
-        return $this->role && $this->role->name === Role::CASHIER;
+        return $this->hasRole(Role::CASHIER);
+    }
+
+    public function isAccountant(): bool
+    {
+        return $this->hasRole(Role::ACCOUNTANT);
+    }
+
+    public function dashboardRouteName(): string
+    {
+        return match ($this->roleName()) {
+            Role::normalizeName(Role::ACCOUNTANT) => 'accountant.dashboard',
+            default => 'dashboard',
+        };
+    }
+
+    public function sidebarView(): string
+    {
+        return match ($this->roleName()) {
+            Role::normalizeName(Role::ADMIN) => 'shared.sidebar.admin',
+            Role::normalizeName(Role::MANAGER) => 'shared.sidebar.manager',
+            Role::normalizeName(Role::STORE_MANAGER) => 'shared.sidebar.store-manager',
+            Role::normalizeName(Role::SUPERVISOR) => 'shared.sidebar.supervisor',
+            Role::normalizeName(Role::HOUSE_HELP) => 'shared.sidebar.house-help',
+            Role::normalizeName(Role::STORE_KEEPER) => 'shared.sidebar.store-keeper',
+            Role::normalizeName(Role::RESTAURANT_MANAGER) => 'shared.sidebar.restaurant-manager',
+            Role::normalizeName(Role::BAR_TENDER) => 'shared.sidebar.bar-tender',
+            Role::normalizeName(Role::CASHIER) => 'shared.sidebar.cashier',
+            Role::normalizeName(Role::ACCOUNTANT) => 'shared.sidebar.accountant',
+            default => 'shared.sidebar.front-desk',
+        };
+    }
+
+    public function displayRoleName(): string
+    {
+        return str_replace('_', ' ', (string) $this->roleName());
     }
 
     public function laundryTasks(): HasMany

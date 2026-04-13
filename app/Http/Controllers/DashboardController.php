@@ -33,6 +33,8 @@ class DashboardController extends Controller {
         
         if ($user->isAdmin()) {
             return $this->adminDashboard();
+        } elseif ($user->isAccountant()) {
+            return redirect()->route('accountant.dashboard');
         } elseif ($user->isGeneralManager()) {
             return $this->managerDashboard();
         } elseif ($user->isStoreManager()) {

@@ -47,6 +47,7 @@ use App\Http\Controllers\Procurement\SupplierController;
 use App\Http\Controllers\Procurement\LocalPurchaseOrderController;
 use App\Http\Controllers\Procurement\GoodsReceivedNoteController;
 use App\Http\Controllers\Accounting\AccountingReportController;
+use App\Http\Controllers\Accounting\AccountantDashboardController;
 use App\Http\Controllers\Accounting\ChartOfAccountsController;
 use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\InvoiceController;
@@ -612,6 +613,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('settings',                         [SettingsController::class, 'index'])->name('settings.index');
         Route::post('settings',                        [SettingsController::class, 'updateSettings'])->name('settings.update');
         Route::post('settings/password',               [SettingsController::class, 'updatePassword'])->name('settings.password');
+    });
+
+    Route::middleware(['role:ACCOUNTANT'])->prefix('accountant')->name('accountant.')->group(function () {
+        Route::get('dashboard', [AccountantDashboardController::class, 'dashboard'])->name('dashboard');
+        Route::get('financial-overview', [AccountantDashboardController::class, 'overview'])->name('overview');
+        Route::get('transactions', [AccountantDashboardController::class, 'transactions'])->name('transactions');
+        Route::get('journal-entries', [JournalEntryController::class, 'index'])->name('journal.index');
+        Route::get('accounts-payable', [AccountantDashboardController::class, 'accountsPayable'])->name('accounts-payable');
+        Route::get('accounts-receivable', [AccountantDashboardController::class, 'accountsReceivable'])->name('accounts-receivable');
+        Route::get('expenses', [AccountantDashboardController::class, 'expenses'])->name('expenses');
+        Route::get('reports', [AccountantDashboardController::class, 'reports'])->name('reports');
+        Route::get('audit-logs', [AccountantDashboardController::class, 'auditLogs'])->name('audit-logs');
     });
 
     // ═══ ACCOUNTING MODULE ═══

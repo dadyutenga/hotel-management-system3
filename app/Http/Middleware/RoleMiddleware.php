@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Middleware;
 
+use App\Models\Role;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -20,8 +21,10 @@ class RoleMiddleware {
         }
 
         $userRole = $user->role->name;
-        
-        if (!in_array($userRole, $roles)) {
+
+        $isAuthorized = collect($roles)->contains(fn (string $role) => Role::matches($userRole, $role));
+
+        if (!$isAuthorized) {
             Log::warning('Unauthorized role access attempt', [
                 'user_id' => $user->id,
                 'user_role' => $userRole,

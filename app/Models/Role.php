@@ -52,6 +52,16 @@ class Role extends Model {
         }
     }
 
+    public static function normalizeName(?string $name): ?string
+    {
+        return $name === null ? null : strtolower($name);
+    }
+
+    public static function matches(?string $actual, ?string $expected): bool
+    {
+        return self::normalizeName($actual) === self::normalizeName($expected);
+    }
+
     public function users(): HasMany {
         return $this->hasMany(User::class);
     }
