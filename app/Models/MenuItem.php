@@ -11,7 +11,7 @@ class MenuItem extends Model
 
     protected $fillable = [
         'category_id', 'name', 'description',
-        'selling_price', 'is_available', 'is_active', 'created_by',
+        'selling_price', 'is_available', 'service_location_tag', 'is_active', 'created_by',
     ];
 
     protected $casts = [
@@ -22,6 +22,13 @@ class MenuItem extends Model
 
     public function category()    { return $this->belongsTo(MenuCategory::class, 'category_id'); }
     public function ingredients() { return $this->hasMany(MenuItemIngredient::class); }
+    public function optionGroups()
+    {
+        return $this->belongsToMany(MenuOptionGroup::class, 'menu_item_option_group')
+            ->withPivot('sort_order')
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
+    }
     public function createdBy()   { return $this->belongsTo(User::class, 'created_by'); }
 
     /**

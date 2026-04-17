@@ -302,7 +302,7 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-gray-500">Confirmed GRNs</span>
-                        <span class="font-semibold text-secondary">{{ $localPurchaseOrder->goodsReceivedNotes->where('status', 'confirmed')->count() }}</span>
+                        <span class="font-semibold text-secondary">{{ $localPurchaseOrder->goodsReceivedNotes->where('status', \App\Models\GoodsReceivedNote::STATUS_APPROVED)->count() }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-gray-500">Accounting Linked GRNs</span>

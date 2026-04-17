@@ -29,6 +29,17 @@
     </div>
     @endif
 
+    @if(session('info'))
+    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div class="flex items-center gap-2 text-blue-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-medium">{{ session('info') }}</span>
+        </div>
+    </div>
+    @endif
+
     <!-- Profile Information Card -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
         <div class="flex items-center gap-3 mb-6">
@@ -54,6 +65,12 @@
                 <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.email') }}</label>
                 <input type="email" name="email" value="{{ old('email', auth()->user()->email) }}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
                 @error('email')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-secondary mb-2">{{ __('profile.fields.phone') }}</label>
+                <input type="text" name="phone" value="{{ old('phone', auth()->user()->phone) }}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
+                @error('phone')<p class="text-red-500 text-sm mt-1.5">{{ $message }}</p>@enderror
             </div>
 
             <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-blue-600 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">

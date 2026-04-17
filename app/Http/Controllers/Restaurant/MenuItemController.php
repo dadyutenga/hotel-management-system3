@@ -20,10 +20,14 @@ class MenuItemController extends Controller
     public function index(Request $request): View
     {
         $categories = MenuCategory::with(['menuItems' => function ($q) {
-            $q->where('is_active', true)->with('ingredients.product');
+            $q->where('is_active', true)
+                ->with(['ingredients.product', 'optionGroups.values'])
+                ->orderBy('name');
         }, 'location'])
             ->where('is_active', true)
             ->when($request->location_id, fn($q) => $q->where('location_id', $request->location_id))
+            ->orderBy('sort_order')
+            ->orderBy('name')
             ->get();
 
         return view('restaurant.menu.items.index', compact('categories'));
@@ -36,8 +40,13 @@ class MenuItemController extends Controller
     {
         $categories = MenuCategory::with('location')->where('is_active', true)->get();
         $products   = Product::where('is_active', true)->orderBy('name')->get();
+        $optionGroups = \App\Models\MenuOptionGroup::with('values')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
-        return view('restaurant.menu.items.create', compact('categories', 'products'));
+        return view('restaurant.menu.items.create', compact('categories', 'products', 'optionGroups'));
     }
 
     /**
@@ -50,6 +59,9 @@ class MenuItemController extends Controller
             'name'                     => 'required|string|max:150',
             'description'              => 'nullable|string',
             'selling_price'            => 'required|numeric|min:0.01',
+            'service_location_tag'     => 'nullable|string|max:50',
+            'option_group_ids'         => 'nullable|array',
+            'option_group_ids.*'       => 'uuid|exists:menu_option_groups,id',
             'ingredients'              => 'nullable|array',
             'ingredients.*.product_id' => 'required_with:ingredients|uuid|exists:products,id',
             'ingredients.*.quantity'   => 'required_with:ingredients|numeric|min:0.0001',
@@ -63,6 +75,7 @@ class MenuItemController extends Controller
                 'description'   => $data['description'] ?? null,
                 'selling_price' => $data['selling_price'],
                 'is_available'  => true,
+                'service_location_tag' => $data['service_location_tag'] ?? null,
                 'is_active'     => true,
                 'created_by'    => auth()->id(),
             ]);
@@ -77,6 +90,13 @@ class MenuItemController extends Controller
                     ]);
                 }
             }
+
+            $item->optionGroups()->sync(
+                collect($data['option_group_ids'] ?? [])
+                    ->values()
+                    ->mapWithKeys(fn($id, $index) => [$id => ['sort_order' => $index]])
+                    ->toArray()
+            );
         });
 
         return redirect()
@@ -91,9 +111,14 @@ class MenuItemController extends Controller
     {
         $categories = MenuCategory::with('location')->where('is_active', true)->get();
         $products   = Product::where('is_active', true)->orderBy('name')->get();
-        $menuItem->load('ingredients.product');
+        $optionGroups = \App\Models\MenuOptionGroup::with('values')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+        $menuItem->load(['ingredients.product', 'optionGroups']);
 
-        return view('restaurant.menu.items.edit', compact('menuItem', 'categories', 'products'));
+        return view('restaurant.menu.items.edit', compact('menuItem', 'categories', 'products', 'optionGroups'));
     }
 
     /**
@@ -106,6 +131,9 @@ class MenuItemController extends Controller
             'description'              => 'sometimes|nullable|string',
             'selling_price'            => 'sometimes|numeric|min:0.01',
             'is_available'             => 'sometimes|boolean',
+            'service_location_tag'     => 'sometimes|nullable|string|max:50',
+            'option_group_ids'         => 'nullable|array',
+            'option_group_ids.*'       => 'uuid|exists:menu_option_groups,id',
             'ingredients'              => 'nullable|array',
             'ingredients.*.product_id' => 'required_with:ingredients|uuid|exists:products,id',
             'ingredients.*.quantity'   => 'required_with:ingredients|numeric|min:0.0001',
@@ -118,6 +146,7 @@ class MenuItemController extends Controller
                 'description'   => $data['description']   ?? $menuItem->description,
                 'selling_price' => $data['selling_price'] ?? $menuItem->selling_price,
                 'is_available'  => $data['is_available']  ?? $menuItem->is_available,
+                'service_location_tag' => $data['service_location_tag'] ?? $menuItem->service_location_tag,
             ]);
 
             // Replace ingredients entirely if provided
@@ -131,6 +160,15 @@ class MenuItemController extends Controller
                         'unit'         => $ing['unit'],
                     ]);
                 }
+            }
+
+            if (array_key_exists('option_group_ids', $data)) {
+                $menuItem->optionGroups()->sync(
+                    collect($data['option_group_ids'] ?? [])
+                        ->values()
+                        ->mapWithKeys(fn($id, $index) => [$id => ['sort_order' => $index]])
+                        ->toArray()
+                );
             }
         });
 

@@ -7,11 +7,11 @@
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Stock Levels</h1>
     <div class="flex gap-2">
-        @if(auth()->user()->hasAnyRole(['STORE_KEEPER', 'STORE_MANAGER']))
+        @if(auth()->user()->hasAnyRole(['STORE_KEEPER']))
         <a href="{{ route('store.stock.restock-form') }}"
            class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 font-medium">+ Restock</a>
         @endif
-        @if(auth()->user()->hasAnyRole(['STORE_KEEPER', 'STORE_MANAGER', 'RESTAURANT_MANAGER']))
+        @if(auth()->user()->hasAnyRole(['STORE_KEEPER', 'RESTAURANT_MANAGER']))
         <a href="{{ route('store.stock.damage-form') }}"
            class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-600 font-medium">Record Damage</a>
         @endif

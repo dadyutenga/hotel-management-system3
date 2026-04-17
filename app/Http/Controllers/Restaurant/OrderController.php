@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BookingCharge;
 use App\Models\MenuCategory;
 use App\Models\MenuItem;
+use App\Models\MenuOptionValue;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StockLocation;
@@ -17,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use App\Services\AccountingService;
 
 class OrderController extends Controller
 {
@@ -47,9 +47,15 @@ class OrderController extends Controller
         $tables     = Table::where('is_active', true)
                           ->when($request->location_id, fn($q) => $q->where('location_id', $request->location_id))
                           ->get();
-        $categories = MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->where('is_available', true)])
+        $categories = MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->with([
+            'optionGroups' => fn($g) => $g->where('is_active', true)->with([
+                'values' => fn($v) => $v->where('is_active', true),
+            ]),
+        ])])
                           ->where('is_active', true)
                           ->when($request->location_id, fn($q) => $q->where('location_id', $request->location_id))
+                          ->orderBy('sort_order')
+                          ->orderBy('name')
                           ->get();
 
         return view('restaurant.orders.create', compact('locations', 'tables', 'categories'));
@@ -71,6 +77,8 @@ class OrderController extends Controller
             'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
             'items.*.quantity'     => 'required|integer|min:1',
             'items.*.notes'        => 'nullable|string|max:255',
+            'items.*.selected_option_value_ids' => 'nullable|array',
+            'items.*.selected_option_value_ids.*' => 'uuid|exists:menu_option_values,id',
         ]);
 
         $order = DB::transaction(function () use ($data) {
@@ -92,16 +100,7 @@ class OrderController extends Controller
             ]);
 
             foreach ($data['items'] as $item) {
-                $menuItem = MenuItem::findOrFail($item['menu_item_id']);
-                OrderItem::create([
-                    'order_id'     => $order->id,
-                    'menu_item_id' => $menuItem->id,
-                    'quantity'     => $item['quantity'],
-                    'unit_price'   => $menuItem->selling_price,
-                    'subtotal'     => $menuItem->selling_price * $item['quantity'],
-                    'notes'        => $item['notes'] ?? null,
-                    'status'       => 'pending',
-                ]);
+                OrderItem::create($this->buildOrderItemPayload($order, $item));
             }
 
             // Mark table as occupied
@@ -125,8 +124,18 @@ class OrderController extends Controller
     public function show(Order $order): View
     {
         $order->load(['items.menuItem.ingredients.product', 'table', 'location', 'creator', 'settler']);
+        $menuCategories = MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->with([
+            'optionGroups' => fn($g) => $g->where('is_active', true)->with([
+                'values' => fn($v) => $v->where('is_active', true),
+            ]),
+        ])])
+            ->where('is_active', true)
+            ->where('location_id', $order->location_id)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
-        return view('restaurant.orders.show', compact('order'));
+        return view('restaurant.orders.show', compact('order', 'menuCategories'));
     }
 
     /**
@@ -299,30 +308,34 @@ class OrderController extends Controller
             'menu_item_id' => 'required|uuid|exists:menu_items,id',
             'quantity'     => 'required|integer|min:1',
             'notes'        => 'nullable|string|max:255',
+            'selected_option_value_ids' => 'nullable|array',
+            'selected_option_value_ids.*' => 'uuid|exists:menu_option_values,id',
         ]);
 
-        $menuItem = MenuItem::findOrFail($request->menu_item_id);
+        DB::transaction(function () use ($request, $order) {
+            $payload = $this->buildOrderItemPayload($order, [
+                'menu_item_id' => $request->menu_item_id,
+                'quantity' => $request->quantity,
+                'notes' => $request->notes,
+                'selected_option_value_ids' => $request->selected_option_value_ids ?? [],
+            ]);
 
-        DB::transaction(function () use ($request, $order, $menuItem) {
-            // If item already in order, increase quantity
-            $existing = $order->items()->where('menu_item_id', $menuItem->id)->first();
+            // If item already in order with same options, increase quantity
+            $existing = $order->items()
+                ->where('menu_item_id', $payload['menu_item_id'])
+                ->where('options_signature', $payload['options_signature'])
+                ->where('status', '!=', 'cancelled')
+                ->first();
 
             if ($existing) {
+                $newQty = $existing->quantity + $request->quantity;
                 $existing->update([
-                    'quantity' => $existing->quantity + $request->quantity,
-                    'subtotal' => ($existing->quantity + $request->quantity) * $existing->unit_price,
+                    'quantity' => $newQty,
+                    'subtotal' => $newQty * $existing->unit_price,
                     'notes'    => $request->notes ?? $existing->notes,
                 ]);
             } else {
-                OrderItem::create([
-                    'order_id'     => $order->id,
-                    'menu_item_id' => $menuItem->id,
-                    'quantity'     => $request->quantity,
-                    'unit_price'   => $menuItem->selling_price,
-                    'subtotal'     => $menuItem->selling_price * $request->quantity,
-                    'notes'        => $request->notes,
-                    'status'       => 'pending',
-                ]);
+                OrderItem::create($payload);
             }
 
             $order->recalculate();
@@ -330,7 +343,7 @@ class OrderController extends Controller
 
         return redirect()
             ->route('restaurant.orders.show', $order)
-            ->with('success', "{$menuItem->name} added to order.");
+            ->with('success', __('general.restaurant.messages.order_item_added'));
     }
 
     /**
@@ -355,5 +368,80 @@ class OrderController extends Controller
     {
         return $order->order_source === 'restaurant'
             && str_contains(strtolower($order->location?->code ?? ''), 'bar');
+    }
+
+    protected function buildOrderItemPayload(Order $order, array $item): array
+    {
+        $menuItem = MenuItem::with([
+            'category',
+            'optionGroups' => fn($q) => $q->where('is_active', true)->with([
+                'values' => fn($v) => $v->where('is_active', true),
+            ]),
+        ])->where('is_active', true)->findOrFail($item['menu_item_id']);
+
+        abort_if(!$menuItem->is_available, 422, __('general.restaurant.messages.item_unavailable'));
+        abort_if((string) $menuItem->category?->location_id !== (string) $order->location_id, 422, __('general.restaurant.messages.item_wrong_section'));
+
+        $selectedIds = collect($item['selected_option_value_ids'] ?? [])->filter()->unique()->values();
+        $selectedValues = MenuOptionValue::with('group')
+            ->whereIn('id', $selectedIds)
+            ->where('is_active', true)
+            ->get();
+
+        $selectedByGroup = $selectedValues->groupBy('menu_option_group_id');
+        $allowedValueIds = $menuItem->optionGroups->flatMap(fn($group) => $group->values->pluck('id'))->map(fn($id) => (string) $id)->values();
+        $invalidSelections = $selectedIds->diff($allowedValueIds);
+        abort_if($invalidSelections->isNotEmpty(), 422, __('general.restaurant.messages.invalid_option_selection'));
+
+        $selectedSnapshots = [];
+
+        foreach ($menuItem->optionGroups as $group) {
+            $groupSelections = $selectedByGroup->get($group->id, collect())->values();
+
+            if ($group->is_required && $groupSelections->isEmpty()) {
+                abort(422, __('general.restaurant.messages.required_option_missing', ['group' => $group->name]));
+            }
+
+            if ($group->selection_type === 'single' && $groupSelections->count() > 1) {
+                abort(422, __('general.restaurant.messages.single_option_multiple_selected', ['group' => $group->name]));
+            }
+
+            if ($groupSelections->isNotEmpty()) {
+                $selectedSnapshots[] = [
+                    'group_id' => $group->id,
+                    'group_name' => $group->name,
+                    'selection_type' => $group->selection_type,
+                    'required' => (bool) $group->is_required,
+                    'values' => $groupSelections->map(fn($value) => [
+                        'id' => $value->id,
+                        'label' => $value->label,
+                        'price_delta' => (float) $value->price_delta,
+                    ])->values()->all(),
+                ];
+            }
+        }
+
+        $optionsUnitPrice = (float) $selectedValues->sum(fn($value) => (float) $value->price_delta);
+        $basePrice = (float) $menuItem->selling_price;
+        $unitPrice = $basePrice + $optionsUnitPrice;
+        $quantity = (int) $item['quantity'];
+        $signature = $selectedIds->isEmpty()
+            ? 'none'
+            : sha1($selectedIds->map(fn($id) => (string) $id)->sort()->implode(','));
+
+        return [
+            'order_id' => $order->id,
+            'menu_item_id' => $menuItem->id,
+            'item_name_snapshot' => $menuItem->name,
+            'quantity' => $quantity,
+            'base_unit_price' => $basePrice,
+            'options_unit_price' => $optionsUnitPrice,
+            'unit_price' => $unitPrice,
+            'subtotal' => $unitPrice * $quantity,
+            'selected_options_snapshot' => $selectedSnapshots,
+            'options_signature' => $signature,
+            'notes' => $item['notes'] ?? null,
+            'status' => 'pending',
+        ];
     }
 }

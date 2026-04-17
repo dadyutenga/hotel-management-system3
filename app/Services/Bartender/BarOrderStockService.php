@@ -20,6 +20,8 @@ class BarOrderStockService
                 continue;
             }
 
+            $menuItemName = $orderItem->item_name_snapshot ?? $orderItem->menuItem->name;
+
             foreach ($orderItem->menuItem->ingredients as $ingredient) {
                 $level = StockLevel::query()
                     ->where('product_id', $ingredient->product_id)
@@ -31,7 +33,7 @@ class BarOrderStockService
 
                 if ($available < $required) {
                     $errors[] = [
-                        'menu_item' => $orderItem->menuItem->name,
+                        'menu_item' => $menuItemName,
                         'product' => $ingredient->product->name,
                         'required' => $required,
                         'available' => $available,
@@ -68,6 +70,8 @@ class BarOrderStockService
                     continue;
                 }
 
+                $menuItemName = $orderItem->item_name_snapshot ?? $orderItem->menuItem->name;
+
                 foreach ($orderItem->menuItem->ingredients as $ingredient) {
                     StockMovement::record([
                         'product_id' => $ingredient->product_id,
@@ -76,7 +80,7 @@ class BarOrderStockService
                         'quantity' => $ingredient->quantity * $orderItem->quantity,
                         'reference_type' => 'order',
                         'reference_id' => $locked->id,
-                        'notes' => "Order {$locked->order_number} stock deduction",
+                            'notes' => "Order {$locked->order_number} stock deduction ({$menuItemName})",
                     ], $actorId);
                 }
             }
@@ -105,6 +109,8 @@ class BarOrderStockService
                     continue;
                 }
 
+                $menuItemName = $orderItem->item_name_snapshot ?? $orderItem->menuItem->name;
+
                 foreach ($orderItem->menuItem->ingredients as $ingredient) {
                     StockMovement::record([
                         'product_id' => $ingredient->product_id,
@@ -113,7 +119,7 @@ class BarOrderStockService
                         'quantity' => $ingredient->quantity * $orderItem->quantity,
                         'reference_type' => 'order_reversal',
                         'reference_id' => $locked->id,
-                        'notes' => "Order {$locked->order_number} stock reversal",
+                            'notes' => "Order {$locked->order_number} stock reversal ({$menuItemName})",
                     ], $actorId);
                 }
             }

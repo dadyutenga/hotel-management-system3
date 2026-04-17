@@ -61,6 +61,7 @@ return [
     'fields' => [
         'full_name' => 'Full Name',
         'email_address' => 'Email Address',
+        'phone' => 'Phone Number',
         'password' => 'Password',
         'new_password' => 'New Password',
         'confirm_password' => 'Confirm Password',
@@ -72,6 +73,7 @@ return [
     'placeholders' => [
         'enter_full_name' => 'Enter full name',
         'email' => 'user@example.com',
+        'phone' => '+255712345678',
         'password' => '••••••••',
         'select_role' => 'Select a role',
     ],

@@ -6,7 +6,7 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Stock Adjustments</h1>
-    @if(auth()->user()->hasAnyRole(['STORE_MANAGER', 'SUPERVISOR', 'RESTAURANT_MANAGER']))
+    @if(auth()->user()->hasAnyRole(['SUPERVISOR', 'RESTAURANT_MANAGER']))
     <a href="{{ route('store.adjustments.create') }}"
        class="bg-primary text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 font-medium">
         + New Adjustment
@@ -63,7 +63,7 @@
                 </td>
                 <td class="px-4 py-3 text-gray-500 text-xs">{{ $adj->creator->name ?? '—' }}</td>
                 <td class="px-4 py-3 text-center space-x-1">
-                    @if($adj->status === 'pending' && auth()->user()->hasRole('STORE_MANAGER'))
+                    @if($adj->status === 'pending' && auth()->user()->hasRole('MANAGER'))
                     <form method="POST" action="{{ route('store.adjustments.approve', $adj) }}" class="inline">
                         @csrf
                         <button class="text-xs bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600">Approve</button>

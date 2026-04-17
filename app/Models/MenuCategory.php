@@ -9,10 +9,10 @@ class MenuCategory extends Model
 {
     use HasUuid;
 
-    protected $fillable = ['name', 'location_id', 'description', 'is_active'];
+    protected $fillable = ['name', 'location_id', 'description', 'sort_order', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'sort_order' => 'integer'];
 
     public function location()  { return $this->belongsTo(StockLocation::class, 'location_id'); }
-    public function menuItems() { return $this->hasMany(MenuItem::class, 'category_id'); }
+    public function menuItems() { return $this->hasMany(MenuItem::class, 'category_id')->orderBy('name'); }
 }

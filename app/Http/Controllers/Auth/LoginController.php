@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller {
@@ -32,6 +33,17 @@ class LoginController extends Controller {
         }
 
         $request->session()->regenerate();
+
+        if (Auth::user()->must_change_password) {
+            Log::info('User logged in with temporary password and must rotate password.', [
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
+            ]);
+
+            return redirect()
+                ->route('profile.edit')
+                ->with('info', __('auth.reset.must_change_password_notice'));
+        }
 
         return redirect()->intended(route(Auth::user()->dashboardRouteName()));
     }

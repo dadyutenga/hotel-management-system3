@@ -13,9 +13,9 @@ class Order extends Model implements ReceiptPrintable
 
     protected $fillable = [
         'order_number', 'location_id', 'table_id', 'order_type',
-        'booking_id', 'customer_name', 'status',
+        'booking_id', 'customer_name', 'customer_phone', 'status',
         'subtotal', 'discount', 'tax', 'total',
-        'payment_method', 'notes', 'created_by', 'settled_by', 'settled_at',
+        'payment_method', 'payment_reference', 'notes', 'created_by', 'settled_by', 'settled_at',
         'order_source', 'bartender_status', 'bartender_status_updated_at',
         'stock_deducted_at', 'stock_reversed_at', 'billed_to_folio_at', 'billing_error',
     ];
@@ -80,9 +80,21 @@ class Order extends Model implements ReceiptPrintable
         $this->loadMissing(['items.menuItem', 'settler', 'location', 'table', 'booking']);
 
         $items = $this->items->where('status', '!=', 'cancelled')->map(function ($item) {
+            $optionDetails = collect($item->selected_options_snapshot ?? [])
+                ->map(function ($group) {
+                    $values = collect($group['values'] ?? [])->pluck('label')->filter()->implode(', ');
+                    if ($values === '') {
+                        return null;
+                    }
+
+                    return ($group['group_name'] ?? 'Option') . ': ' . $values;
+                })
+                ->filter()
+                ->implode(' | ');
+
             return [
-                'name'       => $item->menuItem?->name ?? 'Item',
-                'details'    => null,
+                'name'       => $item->item_name_snapshot ?? $item->menuItem?->name ?? 'Item',
+                'details'    => $optionDetails !== '' ? $optionDetails : null,
                 'quantity'   => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'amount'     => $item->subtotal,
@@ -97,7 +109,7 @@ class Order extends Model implements ReceiptPrintable
             'issued_at'             => $this->settled_at ?? $this->created_at,
             'module'                => $module,
             'customer_name'         => $customerName,
-            'customer_phone'        => $this->booking?->guest?->phone ?? null,
+            'customer_phone'        => $this->customer_phone ?? $this->booking?->guest?->phone ?? null,
             'items'                 => $items,
             'subtotal'              => (float) $this->subtotal,
             'discount'              => (float) $this->discount,
@@ -108,7 +120,7 @@ class Order extends Model implements ReceiptPrintable
             'currency'              => 'TZS',
             'payment_method'        => $this->payment_method,
             'payment_status'        => $this->getPaymentStatus(),
-            'transaction_reference' => null,
+            'transaction_reference' => $this->payment_reference,
             'cashier'               => $this->settler?->name,
             'notes'                 => $this->notes,
         ];

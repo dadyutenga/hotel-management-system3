@@ -47,7 +47,11 @@
             </svg>
             <span>{{ __('general.nav.goods_received') }}</span>
             @php
-                $pendingGRNs = \App\Models\GoodsReceivedNote::where('status', 'pending_confirmation')->count();
+                $pendingGRNs = \App\Models\GoodsReceivedNote::whereIn('status', [
+                    \App\Models\GoodsReceivedNote::STATUS_SUBMITTED,
+                    \App\Models\GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+                    \App\Models\GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+                ])->count();
             @endphp
             @if($pendingGRNs > 0)
                 <span class="ml-auto bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingGRNs }}</span>
@@ -72,27 +76,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
             <span>{{ __('general.nav.stock_levels') }}</span>
-        </a>
-
-        <a href="{{ route('store.stock.restock-form') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('store.stock.restock-form') || request()->routeIs('store.stock.restock') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span>Restock</span>
-        </a>
-
-        <a href="{{ route('store.stock.damage-form') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('store.stock.damage-form') || request()->routeIs('store.stock.damage') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <span>{{ __('general.nav.report_damage') }}</span>
-        </a>
-
-        <a href="{{ route('store.adjustments.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('store.adjustments.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-            </svg>
-            <span>{{ __('general.nav.adjustments') }}</span>
         </a>
 
         <a href="{{ route('store.internal-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('store.internal-requests.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">

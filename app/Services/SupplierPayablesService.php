@@ -9,7 +9,9 @@ use App\Models\SupplierPayable;
 use App\Models\SupplierPayment;
 use App\Models\SupplierPaymentAllocation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class SupplierPayablesService
 {
@@ -50,131 +52,224 @@ class SupplierPayablesService
 
     public function allocatePayment(SupplierPayment $payment, array $allocations, string $actorId): SupplierPayment
     {
-        return DB::transaction(function () use ($payment, $allocations, $actorId) {
-            $payment = SupplierPayment::with('allocations')->lockForUpdate()->findOrFail($payment->id);
+        try {
+            return DB::transaction(function () use ($payment, $allocations, $actorId) {
+                $payment = SupplierPayment::with('allocations')->lockForUpdate()->findOrFail($payment->id);
 
-            if (in_array($payment->status, ['posted', 'cancelled'], true)) {
-                throw ValidationException::withMessages([
-                    'payment' => 'Posted or cancelled supplier payments cannot be changed.',
-                ]);
-            }
-
-            foreach ($payment->allocations as $existingAllocation) {
-                $payable = SupplierPayable::lockForUpdate()->findOrFail($existingAllocation->supplier_payable_id);
-                $payable->amount_paid = max(round((float) $payable->amount_paid - (float) $existingAllocation->allocated_amount, 2), 0);
-                $payable->recalculateStatus();
-            }
-
-            $payment->allocations()->delete();
-
-            $normalizedAllocations = collect($allocations)
-                ->map(fn ($value, $payableId) => [
-                    'payable_id' => $payableId,
-                    'amount' => round((float) $value, 2),
-                ])
-                ->filter(fn (array $row) => $row['amount'] > 0)
-                ->values();
-
-            $totalAllocated = round((float) $normalizedAllocations->sum('amount'), 2);
-
-            if ($totalAllocated - (float) $payment->amount > 0.01) {
-                throw ValidationException::withMessages([
-                    'allocations' => 'Allocated total cannot exceed the payment amount.',
-                ]);
-            }
-
-            foreach ($normalizedAllocations as $row) {
-                $payable = SupplierPayable::lockForUpdate()->findOrFail($row['payable_id']);
-
-                if ($payable->supplier_id !== $payment->supplier_id) {
+                if (in_array($payment->status, ['posted', 'cancelled'], true)) {
                     throw ValidationException::withMessages([
-                        'allocations' => 'All allocations must belong to the same supplier payment.',
+                        'payment' => 'Posted or cancelled supplier payments cannot be changed.',
                     ]);
                 }
 
-                if ($row['amount'] - (float) $payable->balance > 0.01) {
+                foreach ($payment->allocations as $existingAllocation) {
+                    $payable = SupplierPayable::lockForUpdate()->findOrFail($existingAllocation->supplier_payable_id);
+                    $payable->amount_paid = max(round((float) $payable->amount_paid - (float) $existingAllocation->allocated_amount, 2), 0);
+                    $payable->recalculateStatus();
+                }
+
+                $payment->allocations()->delete();
+
+                $normalizedAllocations = collect($allocations)
+                    ->map(fn ($value, $payableId) => [
+                        'payable_id' => $payableId,
+                        'amount' => round((float) $value, 2),
+                    ])
+                    ->filter(fn (array $row) => $row['amount'] > 0)
+                    ->values();
+
+                $totalAllocated = round((float) $normalizedAllocations->sum('amount'), 2);
+
+                if ($totalAllocated - (float) $payment->amount > 0.01) {
                     throw ValidationException::withMessages([
-                        'allocations' => "Allocation exceeds balance for payable {$payable->reference}.",
+                        'allocations' => 'Allocated total cannot exceed the payment amount.',
                     ]);
                 }
 
-                SupplierPaymentAllocation::create([
-                    'supplier_payment_id' => $payment->id,
-                    'supplier_payable_id' => $payable->id,
-                    'allocated_amount' => $row['amount'],
-                    'created_by' => $actorId,
-                ]);
+                foreach ($normalizedAllocations as $row) {
+                    $payable = SupplierPayable::lockForUpdate()->findOrFail($row['payable_id']);
 
-                $payable->amount_paid = round((float) $payable->amount_paid + $row['amount'], 2);
-                $payable->recalculateStatus();
-            }
+                    if ($payable->supplier_id !== $payment->supplier_id) {
+                        throw ValidationException::withMessages([
+                            'allocations' => 'All allocations must belong to the same supplier payment.',
+                        ]);
+                    }
 
-            return $payment->fresh(['supplier', 'allocations.payable']);
-        });
+                    if ($row['amount'] - (float) $payable->balance > 0.01) {
+                        throw ValidationException::withMessages([
+                            'allocations' => "Allocation exceeds balance for payable {$payable->reference}.",
+                        ]);
+                    }
+
+                    SupplierPaymentAllocation::create([
+                        'supplier_payment_id' => $payment->id,
+                        'supplier_payable_id' => $payable->id,
+                        'allocated_amount' => $row['amount'],
+                        'created_by' => $actorId,
+                    ]);
+
+                    $payable->amount_paid = round((float) $payable->amount_paid + $row['amount'], 2);
+                    $payable->recalculateStatus();
+                }
+
+                return $payment->fresh(['supplier', 'allocations.payable']);
+            }, 3);
+        } catch (ValidationException $e) {
+            Log::warning('Supplier payment allocation failed validation', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => collect($e->errors())->flatten()->first(),
+            ]);
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Supplier payment allocation failed', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     public function postPayment(SupplierPayment $payment, string $actorId): SupplierPayment
     {
-        return DB::transaction(function () use ($payment, $actorId) {
-            $payment = SupplierPayment::with(['allocations.payable', 'supplier'])->lockForUpdate()->findOrFail($payment->id);
+        try {
+            return DB::transaction(function () use ($payment, $actorId) {
+                $payment = SupplierPayment::with(['allocations.payable', 'supplier'])->lockForUpdate()->findOrFail($payment->id);
 
-            if (in_array($payment->status, ['posted', 'cancelled'], true)) {
-                throw ValidationException::withMessages([
-                    'payment' => 'This supplier payment can no longer be posted.',
+                if (in_array($payment->status, ['posted', 'cancelled'], true)) {
+                    throw ValidationException::withMessages([
+                        'payment' => 'This supplier payment can no longer be posted.',
+                    ]);
+                }
+
+                $allocated = round((float) $payment->allocations->sum('allocated_amount'), 2);
+
+                if ($allocated <= 0) {
+                    throw ValidationException::withMessages([
+                        'allocations' => 'Allocate this payment before posting it.',
+                    ]);
+                }
+
+                if (abs($allocated - (float) $payment->amount) > 0.01) {
+                    throw ValidationException::withMessages([
+                        'allocations' => 'Allocated amount must equal the supplier payment amount before posting.',
+                    ]);
+                }
+
+                $journalEntry = app(AccountingService::class)->postSupplierPayment(
+                    reference: $payment->reference ?: ('SUPPAY-' . $payment->id),
+                    sourceId: $payment->id,
+                    supplierId: $payment->supplier_id,
+                    amount: (float) $payment->amount,
+                    paymentMethod: $payment->method,
+                    actorId: $actorId,
+                    paymentDate: $payment->payment_date?->toDateString() ?? now()->toDateString(),
+                );
+
+                $exchangeRate = CurrencyHelper::getExchangeRate();
+                $amount = (float) $payment->amount;
+                $amountUsd = $payment->currency === 'TZS'
+                    ? round(CurrencyHelper::convert($amount, 'TZS', 'USD'), 2)
+                    : $amount;
+
+                $financialTransaction = FinancialTransaction::record([
+                    'type' => 'adjustment',
+                    'source_module' => 'other',
+                    'currency' => $payment->currency,
+                    'amount' => $amount,
+                    'amount_usd' => $amountUsd,
+                    'exchange_rate' => $payment->currency === 'TZS' ? $exchangeRate : 1,
+                    'payment_method' => $this->mapFinancialMethod($payment->method),
+                    'description' => 'Supplier payment posted - ' . ($payment->reference ?: $payment->id),
+                ], $actorId);
+
+                $payment->update([
+                    'status' => 'posted',
+                    'journal_entry_id' => $journalEntry->id,
+                    'financial_transaction_id' => $financialTransaction->id,
+                    'posted_by' => $actorId,
+                    'posted_at' => now(),
                 ]);
-            }
 
-            $allocated = round((float) $payment->allocations->sum('allocated_amount'), 2);
-
-            if ($allocated <= 0) {
-                throw ValidationException::withMessages([
-                    'allocations' => 'Allocate this payment before posting it.',
-                ]);
-            }
-
-            if (abs($allocated - (float) $payment->amount) > 0.01) {
-                throw ValidationException::withMessages([
-                    'allocations' => 'Allocated amount must equal the supplier payment amount before posting.',
-                ]);
-            }
-
-            $journalEntry = app(AccountingService::class)->postSupplierPayment(
-                reference: $payment->reference ?: ('SUPPAY-' . $payment->id),
-                sourceId: $payment->id,
-                supplierId: $payment->supplier_id,
-                amount: (float) $payment->amount,
-                paymentMethod: $payment->method,
-                actorId: $actorId,
-                paymentDate: $payment->payment_date?->toDateString() ?? now()->toDateString(),
-            );
-
-            $exchangeRate = CurrencyHelper::getExchangeRate();
-            $amount = (float) $payment->amount;
-            $amountUsd = $payment->currency === 'TZS'
-                ? round(CurrencyHelper::convert($amount, 'TZS', 'USD'), 2)
-                : $amount;
-
-            $financialTransaction = FinancialTransaction::record([
-                'type' => 'adjustment',
-                'source_module' => 'other',
-                'currency' => $payment->currency,
-                'amount' => $amount,
-                'amount_usd' => $amountUsd,
-                'exchange_rate' => $payment->currency === 'TZS' ? $exchangeRate : 1,
-                'payment_method' => $this->mapFinancialMethod($payment->method),
-                'description' => 'Supplier payment posted - ' . ($payment->reference ?: $payment->id),
-            ], $actorId);
-
-            $payment->update([
-                'status' => 'posted',
-                'journal_entry_id' => $journalEntry->id,
-                'financial_transaction_id' => $financialTransaction->id,
-                'posted_by' => $actorId,
-                'posted_at' => now(),
+                return $payment->fresh(['supplier', 'allocations.payable', 'journalEntry', 'financialTransaction']);
+            }, 3);
+        } catch (ValidationException $e) {
+            Log::warning('Supplier payment posting failed validation', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => collect($e->errors())->flatten()->first(),
             ]);
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Supplier payment posting failed', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
 
-            return $payment->fresh(['supplier', 'allocations.payable', 'journalEntry', 'financialTransaction']);
-        });
+    public function cancelPayment(SupplierPayment $payment, string $actorId, string $reason): SupplierPayment
+    {
+        try {
+            return DB::transaction(function () use ($payment, $actorId, $reason) {
+                $payment = SupplierPayment::with('allocations.payable')->lockForUpdate()->findOrFail($payment->id);
+
+                if ($payment->status === 'cancelled') {
+                    throw ValidationException::withMessages([
+                        'payment' => 'This supplier payment is already cancelled.',
+                    ]);
+                }
+
+                if ($payment->status !== 'posted') {
+                    throw ValidationException::withMessages([
+                        'payment' => 'Only posted supplier payments can be cancelled.',
+                    ]);
+                }
+
+                foreach ($payment->allocations as $allocation) {
+                    $payable = SupplierPayable::lockForUpdate()->findOrFail($allocation->supplier_payable_id);
+                    $payable->amount_paid = max(round((float) $payable->amount_paid - (float) $allocation->allocated_amount, 2), 0);
+                    $payable->recalculateStatus();
+                }
+
+                $reversalReference = ($payment->reference ?: ('SUPPAY-' . $payment->id)) . '-REV';
+                $journalEntry = app(AccountingService::class)->reverseSupplierPayment(
+                    reference: $reversalReference,
+                    sourceId: $payment->id,
+                    supplierId: $payment->supplier_id,
+                    amount: (float) $payment->amount,
+                    paymentMethod: $payment->method,
+                    actorId: $actorId,
+                    paymentDate: now()->toDateString(),
+                );
+
+                $payment->update([
+                    'status' => 'cancelled',
+                    'cancellation_reason' => $reason,
+                    'cancelled_by' => $actorId,
+                    'cancelled_at' => now(),
+                ]);
+
+                return $payment->fresh(['supplier', 'allocations.payable', 'canceller']);
+            }, 3);
+        } catch (ValidationException $e) {
+            Log::warning('Supplier payment cancellation validation failed', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => collect($e->errors())->flatten()->first(),
+            ]);
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Supplier payment cancellation failed', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     private function mapFinancialMethod(string $method): string

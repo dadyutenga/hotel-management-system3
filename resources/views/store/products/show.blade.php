@@ -14,7 +14,7 @@
         <a href="{{ route('store.products.edit', $product) }}"
            class="bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-yellow-600 font-medium">Edit</a>
         @endif
-        @if(auth()->user()->hasAnyRole(['STORE_KEEPER', 'STORE_MANAGER']))
+        @if(auth()->user()->hasAnyRole(['STORE_KEEPER']))
         <a href="{{ route('store.stock.restock-form') }}"
            class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 font-medium">Restock</a>
         @endif

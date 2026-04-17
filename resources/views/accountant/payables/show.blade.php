@@ -25,17 +25,18 @@
         </div>
         <div class="mt-4 overflow-x-auto">
             <table class="w-full text-sm">
-                <thead><tr class="border-b border-gray-100 text-left text-gray-500"><th class="pb-3">{{ __('accountant.ap.payment_reference') }}</th><th class="pb-3">{{ __('general.date') }}</th><th class="pb-3">{{ __('general.status') }}</th><th class="pb-3 text-right">{{ __('general.amount') }}</th></tr></thead>
+                <thead><tr class="border-b border-gray-100 text-left text-gray-500"><th class="pb-3">{{ __('accountant.ap.payment_reference') }}</th><th class="pb-3">{{ __('general.date') }}</th><th class="pb-3">{{ __('general.status') }}</th><th class="pb-3">{{ __('general.created_by') }}</th><th class="pb-3 text-right">{{ __('general.amount') }}</th></tr></thead>
                 <tbody>
                     @forelse($supplierPayable->allocations as $allocation)
                         <tr class="border-b border-gray-50 last:border-0">
                             <td class="py-3"><a href="{{ route('accountant.payments.apply', $allocation->payment) }}" class="font-semibold text-indigo-600 hover:text-indigo-700">{{ $allocation->payment?->reference ?: $allocation->payment?->id }}</a></td>
                             <td class="py-3 text-gray-600">{{ $allocation->payment?->payment_date?->format('M d, Y') }}</td>
                             <td class="py-3 text-gray-600">{{ ucfirst(str_replace('_', ' ', $allocation->payment?->status ?? 'draft')) }}</td>
+                            <td class="py-3 text-gray-600">{{ $allocation->creator?->name ?: '-' }}</td>
                             <td class="py-3 text-right font-bold text-secondary"><x-money :amount="$allocation->allocated_amount" /></td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="py-6 text-center text-gray-500">{{ __('general.no_data') }}</td></tr>
+                        <tr><td colspan="5" class="py-6 text-center text-gray-500">{{ __('general.no_data') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

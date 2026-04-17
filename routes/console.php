@@ -88,7 +88,7 @@ Artisan::command('translations:verify', function () {
 
 Artisan::command('procurement:audit-links {--fix-statuses}', function () {
     $confirmedGrns = GoodsReceivedNote::with(['items.lpoItem', 'lpo.items'])
-        ->where('status', 'confirmed')
+        ->where('status', GoodsReceivedNote::STATUS_APPROVED)
         ->get();
 
     $missingAccounting = $confirmedGrns->filter(fn ($grn) => ! $grn->accounting_journal_entry_id);
@@ -100,7 +100,7 @@ Artisan::command('procurement:audit-links {--fix-statuses}', function () {
         ->get()
         ->filter(function ($item) {
             $confirmedQty = $item->grnItems()
-                ->whereHas('grn', fn ($q) => $q->where('status', 'confirmed'))
+                ->whereHas('grn', fn ($q) => $q->where('status', GoodsReceivedNote::STATUS_APPROVED))
                 ->sum('quantity_received');
 
             return abs((float) $item->received_quantity - (float) $confirmedQty) > 0.0001;
@@ -117,7 +117,7 @@ Artisan::command('procurement:audit-links {--fix-statuses}', function () {
 
         LocalPurchaseOrderItem::query()->each(function ($item) {
             $confirmedQty = $item->grnItems()
-                ->whereHas('grn', fn ($q) => $q->where('status', 'confirmed'))
+                ->whereHas('grn', fn ($q) => $q->where('status', GoodsReceivedNote::STATUS_APPROVED))
                 ->sum('quantity_received');
 
             $item->update(['received_quantity' => round((float) $confirmedQty, 3)]);

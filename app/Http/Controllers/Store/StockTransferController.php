@@ -13,6 +13,7 @@ use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class StockTransferController extends Controller
@@ -24,7 +25,7 @@ class StockTransferController extends Controller
     // GET /store/transfers
     public function index(Request $request): View
     {
-        $transfers = StockTransfer::with(['product', 'fromLocation', 'toLocation', 'requester'])
+        $transfers = StockTransfer::with(['product', 'fromLocation', 'toLocation', 'requester', 'approver', 'rejecter', 'fulfiller'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
@@ -53,6 +54,17 @@ class StockTransferController extends Controller
 
         $fromLocation = StockLocation::mainStore();
         $toLocation   = StockLocation::where('code', $data['to_location_code'])->firstOrFail();
+        $sourceLevel = StockLevel::where('product_id', $data['product_id'])
+            ->where('location_id', $fromLocation->id)
+            ->first();
+
+        $available = (float) ($sourceLevel?->available_qty ?? 0);
+
+        if (! $sourceLevel || $available < (float) $data['quantity']) {
+            throw ValidationException::withMessages([
+                'quantity' => "Insufficient stock at main store. Available: {$available}, requested: {$data['quantity']}.",
+            ]);
+        }
 
         $transfer = StockTransfer::create([
             'product_id'       => $data['product_id'],
@@ -83,13 +95,42 @@ class StockTransferController extends Controller
             ->with('success', 'Transfer request submitted.');
     }
 
+    // POST /store/transfers/{stockTransfer}/approve
+    public function approve(StockTransfer $stockTransfer): RedirectResponse
+    {
+        abort_if($stockTransfer->status !== 'pending', 422, 'Only pending transfers can be approved.');
+
+        $sourceLevel = StockLevel::where('product_id', $stockTransfer->product_id)
+            ->where('location_id', $stockTransfer->from_location_id)
+            ->first();
+
+        abort_if(
+            ! $sourceLevel || $sourceLevel->available_qty < $stockTransfer->quantity,
+            422,
+            'Insufficient stock at main store. Available: ' . ($sourceLevel?->available_qty ?? 0)
+        );
+
+        $stockTransfer->update([
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+        ]);
+
+        return redirect()
+            ->route('store.transfers.index')
+            ->with('success', 'Transfer approved and ready for fulfillment.');
+    }
+
     // POST /store/transfers/{stockTransfer}/fulfill
     public function fulfill(StockTransfer $stockTransfer): RedirectResponse
     {
         abort_if(
-            ! in_array($stockTransfer->status, ['pending', 'approved']),
+            $stockTransfer->status !== 'approved',
             422,
-            'Only pending or approved transfers can be fulfilled.'
+            'Only approved transfers can be fulfilled.'
         );
 
         $sourceLevel = StockLevel::where('product_id', $stockTransfer->product_id)
@@ -103,6 +144,17 @@ class StockTransferController extends Controller
         );
 
         DB::transaction(function () use ($stockTransfer) {
+            StockLevel::firstOrCreate(
+                [
+                    'product_id' => $stockTransfer->product_id,
+                    'location_id' => $stockTransfer->to_location_id,
+                ],
+                [
+                    'quantity' => 0,
+                    'reserved_qty' => 0,
+                ]
+            );
+
             StockMovement::record([
                 'product_id'     => $stockTransfer->product_id,
                 'location_id'    => $stockTransfer->from_location_id,
@@ -136,11 +188,20 @@ class StockTransferController extends Controller
     }
 
     // POST /store/transfers/{stockTransfer}/reject
-    public function reject(StockTransfer $stockTransfer): RedirectResponse
+    public function reject(Request $request, StockTransfer $stockTransfer): RedirectResponse
     {
-        abort_if($stockTransfer->status !== 'pending', 422, 'Only pending transfers can be rejected.');
+        abort_if(! in_array($stockTransfer->status, ['pending', 'approved']), 422, 'Only pending or approved transfers can be rejected.');
 
-        $stockTransfer->update(['status' => 'rejected']);
+        $data = $request->validate([
+            'rejection_reason' => 'required|string|min:5|max:500',
+        ]);
+
+        $stockTransfer->update([
+            'status' => 'rejected',
+            'rejected_by' => auth()->id(),
+            'rejected_at' => now(),
+            'rejection_reason' => $data['rejection_reason'],
+        ]);
 
         return redirect()
             ->route('store.transfers.index')

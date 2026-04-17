@@ -11,11 +11,14 @@ class StockTransfer extends Model
 
     protected $fillable = [
         'from_location_id', 'to_location_id', 'product_id', 'quantity',
-        'status', 'reason', 'requested_by', 'approved_by', 'fulfilled_by', 'completed_at',
+        'status', 'reason', 'requested_by', 'approved_by', 'approved_at',
+        'rejected_by', 'rejected_at', 'rejection_reason', 'fulfilled_by', 'completed_at',
     ];
 
     protected $casts = [
         'quantity'     => 'decimal:3',
+        'approved_at'  => 'datetime',
+        'rejected_at'  => 'datetime',
         'completed_at' => 'datetime',
     ];
 
@@ -42,5 +45,15 @@ class StockTransfer extends Model
     public function fulfiller()
     {
         return $this->belongsTo(User::class, 'fulfilled_by');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejecter()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 }

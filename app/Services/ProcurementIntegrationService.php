@@ -34,9 +34,33 @@ class ProcurementIntegrationService
 
     public function confirmGrn(GoodsReceivedNote $grn, string $actorId): GoodsReceivedNote
     {
-        if ($grn->status !== 'pending_confirmation') {
+        if ($grn->status !== GoodsReceivedNote::STATUS_SUBMITTED) {
             throw ValidationException::withMessages([
-                'status' => 'GRN is not pending confirmation.',
+                'status' => 'GRN is not ready for storekeeper confirmation.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($grn, $actorId) {
+            $grn = GoodsReceivedNote::lockForUpdate()->findOrFail($grn->id);
+
+            $grn->update([
+                'status' => GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+                'confirmed_by' => $actorId,
+                'confirmed_at' => now(),
+            ]);
+
+            return $grn->fresh();
+        });
+    }
+
+    public function approveGrn(GoodsReceivedNote $grn, string $actorId): GoodsReceivedNote
+    {
+        if (! in_array($grn->status, [
+            GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+            GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+        ], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'GRN is not pending manager approval.',
             ]);
         }
 
@@ -46,11 +70,10 @@ class ProcurementIntegrationService
                     ->lockForUpdate()
                     ->findOrFail($grn->id);
 
-                $grn->update([
-                    'status' => 'confirmed',
-                    'confirmed_by' => $actorId,
-                    'confirmed_at' => now(),
-                ]);
+                if ($grn->status === GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER) {
+                    $grn->update(['status' => GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL]);
+                    $grn->refresh();
+                }
 
                 foreach ($grn->items as $item) {
                     if (! $item->product_id) {
@@ -103,17 +126,25 @@ class ProcurementIntegrationService
                         $actorId,
                     );
 
-                    $grn->update(['accounting_journal_entry_id' => $entry->id]);
+                    $grn->accounting_journal_entry_id = $entry->id;
                 }
 
-                app(SupplierPayablesService::class)->ensurePayableFromGrn($grn->fresh(), $actorId);
+                app(SupplierPayablesService::class)->ensurePayableFromGrn($grn, $actorId);
+
+                $grn->status = GoodsReceivedNote::STATUS_APPROVED;
+                $grn->approved_by = $actorId;
+                $grn->approved_at = now();
+                $grn->rejected_by = null;
+                $grn->rejected_at = null;
+                $grn->rejection_reason = null;
+                $grn->save();
 
                 $this->syncLpoReceivingStatus($grn->lpo->fresh('items'));
 
                 return $grn->fresh(['items.lpoItem', 'lpo.items']);
             });
         } catch (Throwable $e) {
-            Log::error('Procurement integration failed during GRN confirmation', [
+            Log::error('Procurement integration failed during GRN approval', [
                 'grn_id' => $grn->id,
                 'grn_number' => $grn->grn_number,
                 'actor_id' => $actorId,
@@ -122,6 +153,32 @@ class ProcurementIntegrationService
 
             throw $e;
         }
+    }
+
+    public function rejectGrn(GoodsReceivedNote $grn, string $actorId, string $reason): GoodsReceivedNote
+    {
+        if (! in_array($grn->status, [
+            GoodsReceivedNote::STATUS_SUBMITTED,
+            GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+            GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+        ], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'GRN cannot be rejected in its current status.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($grn, $actorId, $reason) {
+            $grn = GoodsReceivedNote::lockForUpdate()->findOrFail($grn->id);
+
+            $grn->update([
+                'status' => GoodsReceivedNote::STATUS_REJECTED,
+                'rejection_reason' => $reason,
+                'rejected_by' => $actorId,
+                'rejected_at' => now(),
+            ]);
+
+            return $grn->fresh();
+        });
     }
 
     public function syncLpoReceivingStatus(LocalPurchaseOrder $lpo): void

@@ -22,15 +22,15 @@ class ProcurementIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_confirming_a_grn_updates_stock_and_posts_accounting(): void
+    public function test_manager_approval_after_storekeeper_confirmation_updates_stock_and_posts_accounting(): void
     {
-        [$user, $manager, $supplier, $product] = $this->bootstrapProcurementContext();
+        [$storeKeeper, $manager, $supplier, $product] = $this->bootstrapProcurementContext();
 
         $lpo = LocalPurchaseOrder::create([
             'supplier_id' => $supplier->id,
             'order_date' => now()->toDateString(),
             'status' => 'pending_approval',
-            'created_by' => $user->id,
+            'created_by' => $storeKeeper->id,
         ]);
 
         $lpoItem = LocalPurchaseOrderItem::create([
@@ -51,10 +51,15 @@ class ProcurementIntegrationTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success');
 
-        $grn = $this->createGrn($lpo, $supplier, $user, $lpoItem, $product, 10, 1000);
+        $grn = $this->createGrn($lpo, $supplier, $storeKeeper, $lpoItem, $product, 10, 1000);
 
-        $this->actingAs($user)
+        $this->actingAs($storeKeeper)
             ->post(route('procurement.grn.confirm', $grn))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->actingAs($manager)
+            ->post(route('procurement.grn.approve', $grn))
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -69,7 +74,7 @@ class ProcurementIntegrationTest extends TestCase
 
         $this->assertNotNull($movement);
         $this->assertNotNull($entry);
-        $this->assertSame('confirmed', $grn->status);
+        $this->assertSame(GoodsReceivedNote::STATUS_APPROVED, $grn->status);
         $this->assertSame($entry->id, $grn->accounting_journal_entry_id);
         $this->assertSame($supplier->id, $entry->supplier_id);
         $this->assertEquals(10.0, (float) $lpoItem->received_quantity);
@@ -80,14 +85,14 @@ class ProcurementIntegrationTest extends TestCase
 
     public function test_partial_grns_keep_lpo_in_sync_until_fully_received(): void
     {
-        [$user, $manager, $supplier, $product] = $this->bootstrapProcurementContext();
+        [$storeKeeper, $manager, $supplier, $product] = $this->bootstrapProcurementContext();
 
         $lpo = LocalPurchaseOrder::create([
             'supplier_id' => $supplier->id,
             'order_date' => now()->toDateString(),
             'status' => 'approved',
-            'created_by' => $user->id,
-            'approved_by' => $user->id,
+            'created_by' => $storeKeeper->id,
+            'approved_by' => $storeKeeper->id,
             'approved_at' => now(),
         ]);
 
@@ -101,17 +106,19 @@ class ProcurementIntegrationTest extends TestCase
             'subtotal' => 10000,
         ]);
 
-        $firstGrn = $this->createGrn($lpo, $supplier, $user, $lpoItem, $product, 4, 1000);
-        $secondGrn = $this->createGrn($lpo, $supplier, $user, $lpoItem, $product, 6, 1000);
+        $firstGrn = $this->createGrn($lpo, $supplier, $storeKeeper, $lpoItem, $product, 4, 1000);
+        $secondGrn = $this->createGrn($lpo, $supplier, $storeKeeper, $lpoItem, $product, 6, 1000);
 
-        $this->actingAs($user)->post(route('procurement.grn.confirm', $firstGrn))->assertRedirect();
+        $this->actingAs($storeKeeper)->post(route('procurement.grn.confirm', $firstGrn))->assertRedirect();
+        $this->actingAs($manager)->post(route('procurement.grn.approve', $firstGrn))->assertRedirect();
         $lpo->refresh();
         $lpoItem->refresh();
 
         $this->assertSame('partially_received', $lpo->status);
         $this->assertEquals(4.0, (float) $lpoItem->received_quantity);
 
-        $this->actingAs($user)->post(route('procurement.grn.confirm', $secondGrn))->assertRedirect();
+        $this->actingAs($storeKeeper)->post(route('procurement.grn.confirm', $secondGrn))->assertRedirect();
+        $this->actingAs($manager)->post(route('procurement.grn.approve', $secondGrn))->assertRedirect();
 
         $lpo->refresh();
         $lpoItem->refresh();
@@ -131,7 +138,7 @@ class ProcurementIntegrationTest extends TestCase
         Artisan::call('db:seed', ['class' => 'ChartOfAccountsSeeder']);
         Artisan::call('db:seed', ['class' => 'StockLocationSeeder']);
 
-        $role = Role::where('name', 'store_manager')->firstOrFail();
+        $role = Role::where('name', 'store_keeper')->firstOrFail();
         $managerRole = Role::where('name', 'manager')->firstOrFail();
 
         $user = User::factory()->create([
@@ -178,7 +185,7 @@ class ProcurementIntegrationTest extends TestCase
             'lpo_id' => $lpo->id,
             'supplier_id' => $supplier->id,
             'received_date' => now()->toDateString(),
-            'status' => 'pending_confirmation',
+            'status' => GoodsReceivedNote::STATUS_SUBMITTED,
             'received_by' => $user->id,
         ]);
 

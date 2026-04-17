@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-3">
             <!-- Status-based Actions -->
-            @if($goodsReceivedNote->status === 'draft' && auth()->user()->hasAnyRole(['store_manager', 'store_keeper', 'admin']))
+            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_DRAFT && auth()->user()->hasAnyRole(['store_manager', 'store_keeper', 'admin']))
             <form method="POST" action="{{ route('procurement.grn.submit', $goodsReceivedNote) }}" class="inline">
                 @csrf
                 <button type="submit" class="px-4 py-2 bg-yellow-600 text-white text-sm font-semibold rounded-lg hover:bg-yellow-700 transition-colors">
@@ -24,11 +24,20 @@
             </form>
             @endif
 
-            @if($goodsReceivedNote->status === 'pending_confirmation' && auth()->user()->hasAnyRole(['store_manager', 'supervisor', 'admin']))
-            <form method="POST" action="{{ route('procurement.grn.confirm', $goodsReceivedNote) }}" class="inline" onsubmit="return confirm('This will update stock levels. Are you sure?');">
+            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_SUBMITTED && auth()->user()->hasRole('store_keeper'))
+            <form method="POST" action="{{ route('procurement.grn.confirm', $goodsReceivedNote) }}" class="inline" onsubmit="return confirm('This confirms physical receipt and sends GRN for manager approval. Continue?');">
                 @csrf
                 <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
-                    ✓ Confirm & Update Stock
+                    ✓ Confirm Receipt
+                </button>
+            </form>
+            @endif
+
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER, \App\Models\GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL], true) && auth()->user()->hasRole('manager'))
+            <form method="POST" action="{{ route('procurement.grn.approve', $goodsReceivedNote) }}" class="inline" onsubmit="return confirm('Approve this GRN and post stock/accounting updates?');">
+                @csrf
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                    ✓ Approve GRN
                 </button>
             </form>
             <button 
@@ -39,7 +48,7 @@
             </button>
             @endif
 
-            @if($goodsReceivedNote->status === 'draft' && auth()->user()->hasAnyRole(['store_manager', 'store_keeper', 'admin']))
+            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_DRAFT && auth()->user()->hasAnyRole(['store_manager', 'store_keeper', 'admin']))
             <button 
                 type="button"
                 onclick="document.getElementById('upload-modal').classList.remove('hidden')"
@@ -115,6 +124,18 @@
                     <div class="flex items-center justify-between py-2 border-b border-gray-100">
                         <span class="text-sm text-gray-500">Confirmed By</span>
                         <span class="text-sm font-semibold text-secondary">{{ $goodsReceivedNote->confirmer->name }}</span>
+                    </div>
+                    @endif
+                    @if($goodsReceivedNote->approver)
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="text-sm text-gray-500">Approved By</span>
+                        <span class="text-sm font-semibold text-secondary">{{ $goodsReceivedNote->approver->name }}</span>
+                    </div>
+                    @endif
+                    @if($goodsReceivedNote->rejector)
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="text-sm text-gray-500">Rejected By</span>
+                        <span class="text-sm font-semibold text-secondary">{{ $goodsReceivedNote->rejector->name }}</span>
                     </div>
                     @endif
                 </div>
@@ -227,7 +248,7 @@
                 </div>
             </div>
 
-            @if($goodsReceivedNote->status === 'confirmed')
+            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_APPROVED)
             <div class="bg-green-50 border border-green-200 rounded-xl p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -237,7 +258,7 @@
                     </div>
                     <div>
                         <div class="text-sm font-semibold text-green-800">Stock Updated Successfully</div>
-                        <div class="text-xs text-green-700">All items have been added to main store inventory on {{ $goodsReceivedNote->confirmed_at->format('M d, Y \a\t H:i') }}</div>
+                        <div class="text-xs text-green-700">All items have been added to main store inventory on {{ optional($goodsReceivedNote->approved_at)->format('M d, Y \a\t H:i') }}</div>
                     </div>
                 </div>
             </div>
@@ -341,6 +362,36 @@
                             <div class="text-sm font-semibold text-secondary">Confirmed</div>
                             <div class="text-xs text-gray-500">{{ $goodsReceivedNote->confirmed_at->format('M d, Y H:i') }}</div>
                             <div class="text-xs text-gray-600">by {{ $goodsReceivedNote->confirmer->name }}</div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($goodsReceivedNote->approved_at && $goodsReceivedNote->approver)
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-secondary">Approved</div>
+                            <div class="text-xs text-gray-500">{{ $goodsReceivedNote->approved_at->format('M d, Y H:i') }}</div>
+                            <div class="text-xs text-gray-600">by {{ $goodsReceivedNote->approver->name }}</div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($goodsReceivedNote->rejected_at && $goodsReceivedNote->rejector)
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-secondary">Rejected</div>
+                            <div class="text-xs text-gray-500">{{ $goodsReceivedNote->rejected_at->format('M d, Y H:i') }}</div>
+                            <div class="text-xs text-gray-600">by {{ $goodsReceivedNote->rejector->name }}</div>
                         </div>
                     </div>
                     @endif

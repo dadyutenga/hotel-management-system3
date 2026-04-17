@@ -61,6 +61,7 @@ return [
     'fields' => [
         'full_name' => 'Jina Kamili',
         'email_address' => 'Anwani ya Barua Pepe',
+        'phone' => 'Nambari ya Simu',
         'password' => 'Nenosiri',
         'new_password' => 'Nenosiri Jipya',
         'confirm_password' => 'Thibitisha Nenosiri',
@@ -72,6 +73,7 @@ return [
     'placeholders' => [
         'enter_full_name' => 'Ingiza jina kamili',
         'email' => 'mtumiaji@mfano.com',
+        'phone' => '+255712345678',
         'password' => '••••••••',
         'select_role' => 'Chagua nafasi',
     ],

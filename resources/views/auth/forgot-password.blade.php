@@ -104,9 +104,22 @@
                             @enderror
                         </div>
 
+                        <div class="text-center text-sm text-gray-500">{{ __('auth.reset.or') }}</div>
+
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">{{ __('auth.reset.phone') }}</label>
+                            <input id="phone" name="phone" type="text" value="{{ old('phone') }}"
+                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-gray-900 placeholder-gray-400"
+                                   placeholder="{{ __('auth.reset.phone_placeholder') }}">
+                            @error('phone')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-2 text-xs text-gray-500">{{ __('auth.reset.phone_help') }}</p>
+                        </div>
+
                         <button type="submit" 
                                 class="w-full px-6 py-3 text-base font-semibold rounded-lg bg-primary hover:bg-primary-light text-white transition-colors">
-                            {{ __('auth.reset.send_link') }}
+                            {{ __('auth.reset.send_instructions') }}
                         </button>
                     </form>
                 </div>

@@ -33,13 +33,25 @@
            class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'draft' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
             Draft
         </a>
-        <a href="{{ route('procurement.grn.index', ['status' => 'pending_confirmation']) }}" 
-           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'pending_confirmation' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
-            Pending Confirmation
+        <a href="{{ route('procurement.grn.index', ['status' => 'submitted']) }}" 
+           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'submitted' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
+            Submitted
         </a>
-        <a href="{{ route('procurement.grn.index', ['status' => 'confirmed']) }}" 
-           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'confirmed' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
-            Confirmed
+        <a href="{{ route('procurement.grn.index', ['status' => 'confirmed_by_storekeeper']) }}" 
+           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'confirmed_by_storekeeper' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
+            Storekeeper Confirmed
+        </a>
+        <a href="{{ route('procurement.grn.index', ['status' => 'pending_manager_approval']) }}" 
+           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'pending_manager_approval' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
+            Pending Manager Approval
+        </a>
+        <a href="{{ route('procurement.grn.index', ['status' => 'rejected']) }}" 
+           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'rejected' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
+            Rejected
+        </a>
+        <a href="{{ route('procurement.grn.index', ['status' => 'approved']) }}" 
+           class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap {{ request('status') === 'approved' ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }} transition-colors">
+            Approved
         </a>
     </div>
 
@@ -67,7 +79,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $grns->where('status', 'pending_confirmation')->count() }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $grns->where('status', 'pending_manager_approval')->count() }}</div>
                     <div class="text-xs text-gray-500 font-medium">Pending</div>
                 </div>
             </div>
@@ -81,8 +93,8 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $grns->where('status', 'confirmed')->count() }}</div>
-                    <div class="text-xs text-gray-500 font-medium">Confirmed</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $grns->where('status', 'approved')->count() }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Approved</div>
                 </div>
             </div>
         </div>

@@ -1,9 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller {
@@ -17,12 +19,34 @@ class ProfileController extends Controller {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.Auth::id()],
+            'phone' => ['required', 'string', 'max:30', 'unique:users,phone,'.Auth::id()],
         ]);
 
-        $request->user()->fill($validated);
-        $request->user()->save();
+        $validated['phone'] = PhoneNumber::normalize($validated['phone']);
 
-        return back()->with('success', 'Profile updated successfully.');
+        if (!PhoneNumber::isValid($validated['phone'])) {
+            return back()->withErrors(['phone' => __('auth.reset.invalid_phone')])->withInput();
+        }
+
+        $user = $request->user();
+        $previousPhone = $user->phone;
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        if ($previousPhone !== $user->phone) {
+            Log::info('User updated profile phone number.', [
+                'actor_user_id' => $user->id,
+                'previous_phone_hash' => $previousPhone ? hash('sha256', $previousPhone) : null,
+                'new_phone_hash' => $user->phone ? hash('sha256', $user->phone) : null,
+            ]);
+        }
+
+        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 
     public function updatePassword(Request $request) {
@@ -36,8 +60,9 @@ class ProfileController extends Controller {
 
         $user = Auth::user();
         $user->password = Hash::make($validated['password']);
+        $user->must_change_password = false;
         $user->save();
 
-        return back()->with('password_success', 'Password changed successfully.');
+        return redirect()->route('profile.edit')->with('password_success', 'Password changed successfully.');
     }
 }

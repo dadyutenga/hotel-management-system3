@@ -6,6 +6,7 @@
 @section('content')
 @php($sourceLabel = __('bartender.sources.' . ($order->order_source ?? 'unknown')))
 @php($statusLabel = __('bartender.statuses.' . ($order->bartender_status ?? 'pending')))
+@php($order->loadMissing('receipt'))
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 space-y-4">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -97,7 +98,7 @@
                     :order-number="$order->order_number"
                     module="bar"
                     :customer-name="$order->customer_name ?? ''"
-                    :customer-phone="$order->booking?->guest_phone ?? ''"
+                    :customer-phone="$order->customer_phone ?? ''"
                 />
             </div>
         @elseif($order->order_source === 'walkin' && !in_array($order->status, ['settled', 'cancelled']))
@@ -107,6 +108,19 @@
         @elseif($order->order_source === 'walkin' && $order->status === 'settled')
             <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700">
                 {{ __('bartender.messages.walkin_payment_completed') }}
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <h3 class="font-semibold text-gray-800 mb-3">{{ __('bartender.actions.receipt') }}</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('receipts.order', $order) }}" target="_blank" class="px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm">
+                        {{ __('bartender.actions.print_receipt') }}
+                    </a>
+                    @if($order->receipt)
+                        <a href="{{ route('receipts.reprint', $order->receipt->receipt_number) }}" target="_blank" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
+                            {{ __('bartender.actions.reprint_receipt') }} ({{ $order->receipt->receipt_number }})
+                        </a>
+                    @endif
+                </div>
             </div>
         @elseif($order->order_source === 'restaurant')
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">

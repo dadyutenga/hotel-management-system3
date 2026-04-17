@@ -40,6 +40,27 @@
             <span>{{ __('general.nav.menu') }}</span>
         </a>
 
+        <a href="{{ route('restaurant.menu.categories.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('restaurant.menu.categories.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <span>{{ __('general.restaurant.categories.title') }}</span>
+        </a>
+
+        <a href="{{ route('restaurant.menu.options.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('restaurant.menu.options.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m-6 4h10M4 6h.01M4 10h.01M4 14h.01M4 18h.01"/>
+            </svg>
+            <span>{{ __('general.restaurant.options.title') }}</span>
+        </a>
+
+        <a href="{{ route('restaurant.buffet.packages') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('restaurant.buffet.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16M7 7v10m10-10v10"/>
+            </svg>
+            <span>{{ __('general.restaurant.buffet.nav') }}</span>
+        </a>
+
         <a href="{{ route('restaurant.reports.dailySales') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('restaurant.reports.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>

@@ -136,9 +136,9 @@ class AccountantDashboardController extends Controller
         $reportLinks = [
             ['label' => __('accountant.reports.profit_loss'), 'route' => 'accounting.reports.profit-loss'],
             ['label' => __('accountant.reports.balance_sheet'), 'route' => 'accounting.reports.balance-sheet'],
-            ['label' => __('accountant.reports.trial_balance'), 'route' => 'accounting.reports.trial-balance'],
-            ['label' => __('accountant.reports.vat'), 'route' => 'accounting.reports.vat'],
-            ['label' => __('accountant.reports.supplier_payables'), 'route' => 'accounting.reports.supplier-payables'],
+            ['label' => __('accountant.reports.cashflow_summary'), 'route' => 'accounting.reports.cashflow-summary'],
+            ['label' => __('accountant.reports.ap_aging'), 'route' => 'accounting.reports.ap-aging'],
+            ['label' => __('accountant.reports.receipts_summary'), 'route' => 'accounting.reports.receipts-summary'],
         ];
 
         return view('accountant.reports', compact('snapshot', 'reportLinks'));

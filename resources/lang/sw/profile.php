@@ -27,6 +27,7 @@ return [
     'fields' => [
         'name' => 'Jina',
         'email' => 'Barua Pepe',
+        'phone' => 'Nambari ya Simu',
         'current_password' => 'Nenosiri la Sasa',
         'new_password' => 'Nenosiri Jipya',
         'confirm_password' => 'Thibitisha Nenosiri',

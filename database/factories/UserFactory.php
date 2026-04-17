@@ -24,12 +24,17 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $frontDeskRole = Role::firstOrCreate(
+            ['name' => Role::FRONT_DESK],
+            ['description' => 'Front desk role for testing']
+        );
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'role_id' => Role::where('name', Role::FRONT_DESK)->first()?->id ?? Str::uuid(),
+            'role_id' => $frontDeskRole->id,
             'is_active' => true,
             'remember_token' => Str::random(10),
         ];

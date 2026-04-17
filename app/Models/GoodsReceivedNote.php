@@ -13,6 +13,13 @@ class GoodsReceivedNote extends Model
 {
     use HasUuid;
 
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_SUBMITTED = 'submitted';
+    public const STATUS_CONFIRMED_BY_STOREKEEPER = 'confirmed_by_storekeeper';
+    public const STATUS_PENDING_MANAGER_APPROVAL = 'pending_manager_approval';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+
     protected $fillable = [
         'grn_number',
         'lpo_id',
@@ -32,11 +39,17 @@ class GoodsReceivedNote extends Model
         'received_by',
         'confirmed_by',
         'confirmed_at',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
     ];
 
     protected $casts = [
         'received_date' => 'date',
         'confirmed_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'grand_total' => 'decimal:2',
@@ -117,6 +130,16 @@ class GoodsReceivedNote extends Model
     public function confirmer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     public function accountingEntry(): BelongsTo

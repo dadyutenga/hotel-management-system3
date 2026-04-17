@@ -128,6 +128,16 @@
                                    placeholder="+255 7XX XXX XXX">
                             <p x-show="errors.customer_phone" x-text="errors.customer_phone" class="mt-1 text-xs text-red-500"></p>
                         </div>
+
+                        <div x-show="form.payment_method !== 'mobile'">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ __('Payment Reference (optional)') }}</label>
+                            <input type="text"
+                                   x-model="form.payment_reference"
+                                   :class="{'border-red-300 ring-red-100': errors.payment_reference}"
+                                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                   placeholder="{{ __('Receipt ref / transaction ref') }}">
+                            <p x-show="errors.payment_reference" x-text="errors.payment_reference" class="mt-1 text-xs text-red-500"></p>
+                        </div>
                     </div>
 
                     {{-- Payment Method --}}
@@ -284,6 +294,7 @@ function walkinPayment(config) {
             customer_phone: config.customerPhone || '',
             payment_method: 'cash',
             mobile_phone: config.customerPhone || '',
+            payment_reference: '',
         },
         
         openModal() {
@@ -331,6 +342,10 @@ function walkinPayment(config) {
             if (this.form.payment_method === 'mobile' && !this.form.mobile_phone.trim()) {
                 this.errors.mobile_phone = '{{ __('Mobile money number is required') }}';
             }
+
+            if ((this.form.payment_method === 'card' || this.form.payment_method === 'cash') && this.form.payment_reference && this.form.payment_reference.length > 100) {
+                this.errors.payment_reference = '{{ __('Reference must be 100 characters or less') }}';
+            }
             
             return Object.keys(this.errors).length === 0;
         },
@@ -358,6 +373,7 @@ function walkinPayment(config) {
                         customer_phone: this.form.customer_phone || this.form.mobile_phone,
                         payment_method: this.form.payment_method,
                         mobile_phone: this.form.payment_method === 'mobile' ? this.form.mobile_phone : null,
+                        payment_reference: this.form.payment_reference || null,
                     }),
                 });
                 

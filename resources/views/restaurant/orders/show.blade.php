@@ -79,7 +79,15 @@
                         @foreach($order->items as $item)
                         <tr class="{{ $item->status === 'cancelled' ? 'opacity-40 line-through' : '' }}">
                             <td class="px-4 py-3">
-                                <span class="font-medium">{{ $item->menuItem->name }}</span>
+                                <span class="font-medium">{{ $item->item_name_snapshot ?? $item->menuItem->name }}</span>
+                                @if(!empty($item->selected_options_snapshot))
+                                <span class="block text-xs text-gray-500 mt-1">
+                                    @foreach($item->selected_options_snapshot as $group)
+                                        <span class="inline-block mr-2">{{ $group['group_name'] ?? 'Option' }}:
+                                            {{ collect($group['values'] ?? [])->pluck('label')->implode(', ') }}</span>
+                                    @endforeach
+                                </span>
+                                @endif
                                 @if($item->notes)
                                 <span class="block text-xs text-gray-400">{{ $item->notes }}</span>
                                 @endif
@@ -123,31 +131,47 @@
 
             {{-- Add item form (open orders only) --}}
             @if($order->status === 'open')
-            <div class="bg-white rounded-lg shadow p-5" x-data="{ showAdd: false }">
+            <div class="bg-white rounded-lg shadow p-5" x-data="addItemForm(@js($menuCategories))">
                 <button @click="showAdd = !showAdd" class="text-sm text-primary hover:underline font-medium">
                     + Add Item to Order
                 </button>
                 <form method="POST" action="{{ route('restaurant.orders.addItem', $order) }}"
                       x-show="showAdd" x-cloak class="mt-4 space-y-3">
                     @csrf
-                    <select name="menu_item_id" required class="w-full border-gray-300 rounded px-3 py-2 text-sm">
+                    <select name="menu_item_id" x-model="menu_item_id" @change="onItemChanged" required class="w-full border-gray-300 rounded px-3 py-2 text-sm">
                         <option value="">— Select menu item —</option>
-                        @php
-                            $menuCategories = \App\Models\MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->where('is_available', true)])
-                                ->where('is_active', true)
-                                ->where('location_id', $order->location_id)
-                                ->get();
-                        @endphp
                         @foreach($menuCategories as $cat)
                             @if($cat->menuItems->count())
                             <optgroup label="{{ $cat->name }}">
                                 @foreach($cat->menuItems as $mi)
-                                <option value="{{ $mi->id }}">{{ $mi->name }} — {{ number_format($mi->selling_price, 0) }} TZS</option>
+                                 <option value="{{ $mi->id }}" {{ !$mi->is_available ? 'disabled' : '' }}>
+                                     {{ $mi->name }} — {{ number_format($mi->selling_price, 0) }} TZS{{ !$mi->is_available ? ' ('.__('general.restaurant.status.unavailable').')' : '' }}
+                                 </option>
                                 @endforeach
                             </optgroup>
                             @endif
                         @endforeach
                     </select>
+                    <template x-for="group in option_groups" :key="group.id">
+                        <div class="border rounded p-2 bg-gray-50">
+                            <p class="text-xs font-medium mb-1"><span x-text="group.name"></span><span x-show="group.is_required" class="text-red-600">*</span></p>
+                            <div class="space-y-1">
+                                <template x-for="value in group.values" :key="value.id">
+                                    <label class="inline-flex items-center gap-2 text-xs mr-3">
+                                        <input :type="group.selection_type === 'single' ? 'radio' : 'checkbox'"
+                                               :name="'group_ui_'+group.id"
+                                               :value="value.id"
+                                               :checked="selected_option_value_ids.includes(value.id)"
+                                               @change="toggleOption(group, value.id, $event.target.checked)">
+                                        <span x-text="value.label + ' (+' + Number(value.price_delta).toLocaleString() + ')'"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-for="(optionId, optionIndex) in selected_option_value_ids" :key="optionId + '_' + optionIndex">
+                        <input type="hidden" :name="'selected_option_value_ids[' + optionIndex + ']'" :value="optionId">
+                    </template>
                     <div class="flex gap-2">
                         <input type="number" name="quantity" value="1" min="1" required class="w-20 border-gray-300 rounded px-3 py-2 text-sm">
                         <input type="text" name="notes" placeholder="Notes (optional)" class="flex-1 border-gray-300 rounded px-3 py-2 text-sm">
@@ -307,4 +331,40 @@
         </div>
     </div>
 </div>
+<script>
+function addItemForm(categories) {
+    return {
+        showAdd: false,
+        menu_item_id: '',
+        option_groups: [],
+        selected_option_value_ids: [],
+        onItemChanged() {
+            this.selected_option_value_ids = [];
+            let selected = null;
+            categories.forEach((category) => {
+                (category.menu_items || []).forEach((menuItem) => {
+                    if (menuItem.id === this.menu_item_id) {
+                        selected = menuItem;
+                    }
+                });
+            });
+            this.option_groups = selected?.option_groups ?? [];
+        },
+        toggleOption(group, valueId, checked) {
+            const groupValueIds = (group.values || []).map(v => v.id);
+            let selected = this.selected_option_value_ids.filter(id => !groupValueIds.includes(id));
+
+            if (group.selection_type === 'single') {
+                if (checked) selected.push(valueId);
+            } else {
+                const existingGroupSelections = this.selected_option_value_ids.filter(id => groupValueIds.includes(id) && id !== valueId);
+                selected = selected.concat(existingGroupSelections);
+                if (checked) selected.push(valueId);
+            }
+
+            this.selected_option_value_ids = [...new Set(selected)];
+        }
+    }
+}
+</script>
 @endsection

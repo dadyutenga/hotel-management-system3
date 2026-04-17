@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
 
 class SmsService
@@ -93,18 +94,6 @@ class SmsService
      */
     private function normalizePhone(string $phone): string
     {
-        $phone = preg_replace('/\s+/', '', $phone);
-
-        if (str_starts_with($phone, '0')) {
-            return '+255' . substr($phone, 1);
-        }
-        if (str_starts_with($phone, '255')) {
-            return '+' . $phone;
-        }
-        if (!str_starts_with($phone, '+')) {
-            return '+' . $phone;
-        }
-
-        return $phone;
+        return PhoneNumber::normalize($phone) ?? $phone;
     }
 }

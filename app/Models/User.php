@@ -14,7 +14,7 @@ class User extends Authenticatable
 {
     use HasFactory, HasUuid, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password'];
+    protected $fillable = ['name', 'email', 'password', 'phone'];
 
     /**
      * Guarded attributes — role_id and is_active must be set explicitly,
@@ -28,7 +28,10 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+            'password_reset_requested_at' => 'datetime',
+            'password_reset_completed_at' => 'datetime',
         ];
     }
 
@@ -116,6 +119,11 @@ class User extends Authenticatable
         return $this->hasRole(Role::RESTAURANT_MANAGER);
     }
 
+    public function isWaiter(): bool
+    {
+        return $this->hasRole(Role::WAITER);
+    }
+
     public function isBarTender(): bool
     {
         return $this->hasRole(Role::BAR_TENDER);
@@ -150,6 +158,7 @@ class User extends Authenticatable
             Role::normalizeName(Role::STORE_KEEPER) => 'shared.sidebar.store-keeper',
             Role::normalizeName(Role::RESTAURANT_MANAGER) => 'shared.sidebar.restaurant-manager',
             Role::normalizeName(Role::BAR_TENDER) => 'shared.sidebar.bar-tender',
+            Role::normalizeName(Role::WAITER) => 'shared.sidebar.front-desk',
             Role::normalizeName(Role::CASHIER) => 'shared.sidebar.cashier',
             Role::normalizeName(Role::ACCOUNTANT) => 'shared.sidebar.accountant',
             default => 'shared.sidebar.front-desk',

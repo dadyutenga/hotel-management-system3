@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Restaurant') — Hotel Management</title>
+    <title>@yield('title', __('general.nav.restaurant')) — Hotel Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -17,17 +17,20 @@
 
 <nav class="bg-white shadow px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-        <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600 text-sm">&larr; Back to Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600 text-sm">&larr; {{ __('general.back') }} {{ __('general.nav.dashboard') }}</a>
         <span class="text-gray-300">|</span>
-        <div class="font-bold text-lg text-gray-800">🍸🍽️ Bar & Restaurant</div>
+        <div class="font-bold text-lg text-gray-800">🍸🍽️ {{ __('general.nav.bar_restaurant') }}</div>
     </div>
     <div class="flex gap-4 text-sm">
-        <a href="{{ route('restaurant.orders.index') }}"  class="{{ request()->routeIs('restaurant.orders.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">Orders</a>
-        <a href="{{ route('restaurant.orders.create') }}" class="{{ request()->routeIs('restaurant.orders.create') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">New Order</a>
-        <a href="{{ route('restaurant.tables.index') }}"  class="{{ request()->routeIs('restaurant.tables.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">Tables</a>
-        @if(auth()->user()->hasRole('RESTAURANT_MANAGER'))
-        <a href="{{ route('restaurant.menu.index') }}"    class="{{ request()->routeIs('restaurant.menu.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">Menu</a>
-        <a href="{{ route('restaurant.reports.daily-sales') }}" class="{{ request()->routeIs('restaurant.reports.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">Reports</a>
+        <a href="{{ route('restaurant.orders.index') }}"  class="{{ request()->routeIs('restaurant.orders.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.orders') }}</a>
+        <a href="{{ route('restaurant.orders.create') }}" class="{{ request()->routeIs('restaurant.orders.create') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.new_order') }}</a>
+        <a href="{{ route('restaurant.tables.index') }}"  class="{{ request()->routeIs('restaurant.tables.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.tables') }}</a>
+        @if(auth()->user()->hasAnyRole(['restaurant_manager', 'manager', 'admin']))
+        <a href="{{ route('restaurant.menu.index') }}" class="{{ request()->routeIs('restaurant.menu.index') || request()->routeIs('restaurant.menu.create') || request()->routeIs('restaurant.menu.edit') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.menu') }}</a>
+        <a href="{{ route('restaurant.menu.categories.index') }}" class="{{ request()->routeIs('restaurant.menu.categories.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.restaurant.categories.title') }}</a>
+        <a href="{{ route('restaurant.menu.options.index') }}" class="{{ request()->routeIs('restaurant.menu.options.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.restaurant.options.title') }}</a>
+        <a href="{{ route('restaurant.buffet.packages') }}" class="{{ request()->routeIs('restaurant.buffet.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.restaurant.buffet.nav') }}</a>
+        <a href="{{ route('restaurant.reports.dailySales') }}" class="{{ request()->routeIs('restaurant.reports.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.reports') }}</a>
         @endif
     </div>
     <div class="flex items-center gap-3">

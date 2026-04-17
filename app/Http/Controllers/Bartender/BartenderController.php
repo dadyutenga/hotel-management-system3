@@ -108,6 +108,7 @@ class BartenderController extends Controller
 
         $data = $request->validate([
             'customer_name' => 'nullable|string|max:150',
+            'customer_phone' => 'nullable|string|max:30',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
@@ -124,6 +125,7 @@ class BartenderController extends Controller
                 'bartender_status_updated_at' => now(),
                 'status' => 'open',
                 'customer_name' => $data['customer_name'] ?: 'Walk-in Guest',
+                'customer_phone' => $data['customer_phone'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $this->actorId(),
             ]);
@@ -148,6 +150,38 @@ class BartenderController extends Controller
 
         return redirect()->route('bartender.orders.show', $order)
             ->with('success', "Walk-in drink order {$order->order_number} created.");
+    }
+
+    public function walkinSalesReport(Request $request): View
+    {
+        $bar = StockLocation::bar();
+
+        $orders = Order::with(['items.menuItem', 'settler'])
+            ->where('location_id', $bar->id)
+            ->where('order_source', 'walkin')
+            ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->payment_method, fn ($q) => $q->where('payment_method', $request->payment_method))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $baseSummary = Order::query()
+            ->where('location_id', $bar->id)
+            ->where('order_source', 'walkin')
+            ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->payment_method, fn ($q) => $q->where('payment_method', $request->payment_method));
+
+        $summary = [
+            'count' => (clone $baseSummary)->count(),
+            'total' => (float) (clone $baseSummary)->sum('total'),
+            'paid' => (float) (clone $baseSummary)->where('status', 'settled')->sum('total'),
+        ];
+
+        return view('bartender.walkin-sales', compact('orders', 'summary'));
     }
 
     public function createRoomServiceOrder(): View

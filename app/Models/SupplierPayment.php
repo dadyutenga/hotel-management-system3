@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 class SupplierPayment extends Model
 {
@@ -24,6 +25,8 @@ class SupplierPayment extends Model
         'created_by',
         'posted_by',
         'posted_at',
+        'cancelled_by',
+        'cancelled_at',
         'notes',
         'cancellation_reason',
     ];
@@ -31,8 +34,18 @@ class SupplierPayment extends Model
     protected $casts = [
         'payment_date' => 'date',
         'posted_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'amount' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $payment): void {
+            if ($payment->status === 'posted') {
+                throw new LogicException('Posted supplier payments cannot be deleted. Cancel the payment instead.');
+            }
+        });
+    }
 
     public function supplier(): BelongsTo
     {
@@ -47,6 +60,11 @@ class SupplierPayment extends Model
     public function poster(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    public function canceller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     public function journalEntry(): BelongsTo

@@ -23,6 +23,7 @@ class Role extends Model {
 
     // New roles for Bar / Restaurant / Cashier modules
     public const RESTAURANT_MANAGER = 'restaurant_manager';
+    public const WAITER = 'waiter';
     public const BAR_TENDER = 'bar_tender';
     public const CASHIER = 'cashier';
     public const LAUNDRY_MANAGER = 'laundry_manager';
@@ -37,6 +38,7 @@ class Role extends Model {
         self::STORE_MANAGER      => 'Full store control, pricing, all reports',
         self::STORE_KEEPER       => 'Stock operations, restock, fulfillments',
         self::RESTAURANT_MANAGER => 'Bar and restaurant inventory, menus, transfers, damage',
+        self::WAITER             => 'Can view menus and create restaurant orders',
         self::BAR_TENDER         => 'Bar order taking and stock view',
         self::CASHIER            => 'Payment settlement and shift reports',
         self::LAUNDRY_MANAGER    => 'Manages laundry pricing, reports, and full order oversight',

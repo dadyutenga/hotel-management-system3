@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GoodsReceivedNote;
 use App\Models\GoodsReceivedNoteItem;
 use App\Models\LocalPurchaseOrder;
+use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +74,7 @@ class GoodsReceivedNoteController extends Controller
                 'delivery_vehicle' => $validated['delivery_vehicle'] ?? null,
                 'driver_name' => $validated['driver_name'] ?? null,
                 'notes' => $validated['notes'] ?? null,
-                'status' => 'draft',
+                'status' => GoodsReceivedNote::STATUS_DRAFT,
                 'received_by' => auth()->id(),
             ]);
 
@@ -114,6 +115,8 @@ class GoodsReceivedNoteController extends Controller
             'receiver',
             'confirmer',
             'accountingEntry'
+            ,'approver'
+            ,'rejector'
         ]);
 
         return view('procurement.grn.show', compact('goodsReceivedNote'));
@@ -138,48 +141,70 @@ class GoodsReceivedNoteController extends Controller
 
     public function submitForConfirmation(GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
-        if ($goodsReceivedNote->status !== 'draft') {
+        if ($goodsReceivedNote->status !== GoodsReceivedNote::STATUS_DRAFT) {
             return back()->with('error', 'Only draft GRNs can be submitted for confirmation.');
         }
 
-        $goodsReceivedNote->update(['status' => 'pending_confirmation']);
+        $goodsReceivedNote->update(['status' => GoodsReceivedNote::STATUS_SUBMITTED]);
 
         return back()->with('success', 'GRN submitted for confirmation.');
     }
 
     public function confirm(GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
+        abort_unless(auth()->user()?->hasRole(Role::STORE_KEEPER), 403);
+
         try {
             app(ProcurementIntegrationService::class)->confirmGrn($goodsReceivedNote, (string) auth()->id());
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         }
 
-        return back()->with('success', "GRN {$goodsReceivedNote->grn_number} confirmed. Stock levels updated successfully.");
+        return back()->with('success', "GRN {$goodsReceivedNote->grn_number} confirmed by storekeeper and submitted for manager approval.");
+    }
+
+    public function approve(GoodsReceivedNote $goodsReceivedNote): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole(Role::MANAGER), 403);
+
+        if ($goodsReceivedNote->status === GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER) {
+            $goodsReceivedNote->update(['status' => GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL]);
+            $goodsReceivedNote->refresh();
+        }
+
+        try {
+            app(ProcurementIntegrationService::class)->approveGrn($goodsReceivedNote, (string) auth()->id());
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        }
+
+        return back()->with('success', "GRN {$goodsReceivedNote->grn_number} approved. Stock and accounting updates completed.");
     }
 
     public function reject(Request $request, GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
-        if ($goodsReceivedNote->status !== 'pending_confirmation') {
-            return back()->with('error', 'GRN is not pending confirmation.');
-        }
+        abort_unless(auth()->user()?->hasRole(Role::MANAGER), 403);
 
         $validated = $request->validate([
             'rejection_reason' => 'required|string|min:5',
         ]);
 
-        $goodsReceivedNote->update([
-            'status' => 'rejected',
-            'rejection_reason' => $validated['rejection_reason'],
-            'confirmed_by' => auth()->id(),
-        ]);
+        try {
+            app(ProcurementIntegrationService::class)->rejectGrn(
+                $goodsReceivedNote,
+                (string) auth()->id(),
+                $validated['rejection_reason']
+            );
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        }
 
         return back()->with('success', 'GRN rejected.');
     }
 
     public function destroy(GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
-        if ($goodsReceivedNote->status === 'confirmed') {
+        if ($goodsReceivedNote->status === GoodsReceivedNote::STATUS_APPROVED) {
             return back()->with('error', 'Cannot delete confirmed GRN.');
         }
 

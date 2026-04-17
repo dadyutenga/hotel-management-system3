@@ -419,8 +419,12 @@ class DashboardController extends Controller {
             
             // GRN stats
             'total_grns' => GoodsReceivedNote::count(),
-            'pending_grns' => GoodsReceivedNote::where('status', 'pending')->count(),
-            'confirmed_grns' => GoodsReceivedNote::where('status', 'confirmed')->count(),
+            'pending_grns' => GoodsReceivedNote::whereIn('status', [
+                GoodsReceivedNote::STATUS_SUBMITTED,
+                GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+                GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+            ])->count(),
+            'confirmed_grns' => GoodsReceivedNote::where('status', GoodsReceivedNote::STATUS_APPROVED)->count(),
             
             // Product & Stock stats
             'total_products' => Product::count(),
@@ -433,7 +437,7 @@ class DashboardController extends Controller {
             // Financial summary (procurement spending)
             'month_spending' => GoodsReceivedNote::whereMonth('received_date', now()->month)
                 ->whereYear('received_date', now()->year)
-                ->where('status', 'confirmed')
+                ->where('status', GoodsReceivedNote::STATUS_APPROVED)
                 ->sum('grand_total'),
             'pending_orders_value' => LocalPurchaseOrder::whereIn('status', ['pending', 'approved', 'sent'])
                 ->sum('grand_total'),
@@ -472,7 +476,11 @@ class DashboardController extends Controller {
 
         // Pending GRN confirmations
         $pendingGrnConfirmations = GoodsReceivedNote::with(['supplier', 'lpo', 'receiver'])
-            ->where('status', 'pending')
+            ->whereIn('status', [
+                GoodsReceivedNote::STATUS_SUBMITTED,
+                GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+                GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+            ])
             ->latest()
             ->limit(10)
             ->get();

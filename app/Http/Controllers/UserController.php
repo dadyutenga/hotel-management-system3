@@ -1,10 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Support\PhoneNumber;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller {
     public function index() {
@@ -21,6 +23,7 @@ class UserController extends Controller {
         $validated = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users|max:255',
+            'phone' => 'required|string|max:30|unique:users,phone',
             'password' => [
                 'required',
                 'confirmed',
@@ -34,6 +37,12 @@ class UserController extends Controller {
             'is_active' => 'boolean',
         ]);
 
+        $validated['phone'] = PhoneNumber::normalize($validated['phone']);
+
+        if (!PhoneNumber::isValid($validated['phone'])) {
+            return back()->withErrors(['phone' => __('auth.reset.invalid_phone')])->withInput();
+        }
+
         $validated['password'] = Hash::make($validated['password']);
         
         $user = new User();
@@ -41,6 +50,12 @@ class UserController extends Controller {
         $user->role_id = $validated['role_id'];  // Explicitly set (not mass-assignable)
         $user->is_active = $validated['is_active'] ?? true;  // Explicitly set
         $user->save();
+
+        Log::info('Admin created user with phone number.', [
+            'actor_user_id' => auth()->id(),
+            'created_user_id' => $user->id,
+            'phone_hash' => hash('sha256', (string) $user->phone),
+        ]);
         
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
@@ -54,6 +69,7 @@ class UserController extends Controller {
         $validated = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id.'|max:255',
+            'phone' => 'required|string|max:30|unique:users,phone,'.$user->id,
             'password' => [
                 'nullable',
                 'confirmed',
@@ -66,6 +82,14 @@ class UserController extends Controller {
             'role_id' => 'required|uuid|exists:roles,id',
             'is_active' => 'boolean',
         ]);
+
+        $validated['phone'] = PhoneNumber::normalize($validated['phone']);
+
+        if (!PhoneNumber::isValid($validated['phone'])) {
+            return back()->withErrors(['phone' => __('auth.reset.invalid_phone')])->withInput();
+        }
+
+        $previousPhone = $user->phone;
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -82,6 +106,15 @@ class UserController extends Controller {
         $user->role_id = $roleId;  // Explicitly set
         $user->is_active = $isActive;  // Explicitly set
         $user->save();
+
+        if ($previousPhone !== $user->phone) {
+            Log::info('Admin updated user phone number.', [
+                'actor_user_id' => auth()->id(),
+                'target_user_id' => $user->id,
+                'previous_phone_hash' => $previousPhone ? hash('sha256', $previousPhone) : null,
+                'new_phone_hash' => $user->phone ? hash('sha256', $user->phone) : null,
+            ]);
+        }
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }

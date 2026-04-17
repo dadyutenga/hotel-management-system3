@@ -16,15 +16,16 @@
         </div>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div class="rounded-2xl bg-white p-5 shadow-sm xl:col-span-2">
-            <div class="text-sm text-gray-500">{{ __('accountant.ap.total_outstanding') }}</div>
-            <div class="mt-2 text-3xl font-extrabold text-amber-600"><x-money :amount="$totalOutstanding" /></div>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <div class="rounded-2xl bg-white p-5 shadow-sm xl:col-span-2">
+                <div class="text-sm text-gray-500">{{ __('accountant.ap.total_outstanding') }}</div>
+                <div class="mt-2 text-3xl font-extrabold text-amber-600"><x-money :amount="$totalOutstanding" /></div>
+            </div>
+            <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.ap.aging_0_30') }}</div><div class="mt-2 text-2xl font-extrabold text-emerald-600"><x-money :amount="$aging['0_30']" /></div></div>
+            <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.ap.aging_31_60') }}</div><div class="mt-2 text-2xl font-extrabold text-yellow-600"><x-money :amount="$aging['31_60']" /></div></div>
+            <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.ap.aging_61_90') }}</div><div class="mt-2 text-2xl font-extrabold text-orange-600"><x-money :amount="$aging['61_90']" /></div></div>
+            <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.ap.aging_90_plus') }}</div><div class="mt-2 text-2xl font-extrabold text-rose-600"><x-money :amount="$aging['90_plus']" /></div></div>
         </div>
-        <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">0-30</div><div class="mt-2 text-2xl font-extrabold text-emerald-600"><x-money :amount="$aging['0_30']" /></div></div>
-        <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">31-60</div><div class="mt-2 text-2xl font-extrabold text-yellow-600"><x-money :amount="$aging['31_60']" /></div></div>
-        <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">61+</div><div class="mt-2 text-2xl font-extrabold text-rose-600"><x-money :amount="$aging['61_90'] + $aging['90_plus']" /></div></div>
-    </div>
 
     <div class="grid gap-6 xl:grid-cols-3">
         <div class="rounded-2xl bg-white p-6 shadow-sm xl:col-span-2">

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -8,15 +9,18 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
-class ResetPasswordController extends Controller {
-    public function showResetForm(Request $request, $token) {
+class ResetPasswordController extends Controller
+{
+    public function showResetForm(Request $request, $token)
+    {
         return view('auth.reset-password', [
             'token' => $token,
-            'email' => $request->email
+            'email' => $request->email,
         ]);
     }
 
-    public function reset(Request $request) {
+    public function reset(Request $request)
+    {
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
@@ -27,7 +31,8 @@ class ResetPasswordController extends Controller {
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
+                    'must_change_password' => false,
                 ])->save();
             }
         );
@@ -41,3 +46,4 @@ class ResetPasswordController extends Controller {
         ]);
     }
 }
+

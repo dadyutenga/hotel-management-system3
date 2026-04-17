@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 class SupplierPayable extends Model
 {
@@ -34,6 +35,15 @@ class SupplierPayable extends Model
         'amount_paid' => 'decimal:2',
         'balance' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $payable): void {
+            if ($payable->status === 'paid' || $payable->amount_paid > 0) {
+                throw new LogicException('Supplier payables with posted allocations cannot be deleted.');
+            }
+        });
+    }
 
     public function supplier(): BelongsTo
     {

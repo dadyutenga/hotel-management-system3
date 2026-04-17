@@ -215,6 +215,35 @@ class AccountingService
     }
 
     /**
+     * POST: Supplier payment reversal/cancellation
+     * DR Bank/Cash  CR Accounts Payable
+     */
+    public function reverseSupplierPayment(
+        string $reference,
+        string $sourceId,
+        ?string $supplierId,
+        float $amount,
+        string $paymentMethod,
+        string $actorId,
+        ?string $paymentDate = null
+    ): JournalEntry {
+        $cashAccountCode = $paymentMethod === 'cash' ? '1100' : '1200';
+
+        return $this->post([
+            'date'        => $paymentDate ?? now()->toDateString(),
+            'description' => "Supplier payment reversal - {$reference}",
+            'source'      => 'procurement',
+            'source_id'   => $sourceId,
+            'supplier_id' => $supplierId,
+            'reference'   => $reference,
+            'lines' => [
+                ['account_code' => $cashAccountCode, 'type' => 'debit',  'amount' => $amount],
+                ['account_code' => '2100', 'type' => 'credit', 'amount' => $amount],
+            ],
+        ], $actorId);
+    }
+
+    /**
      * POST: Petty cash expense approved
      * DR Expense Account  CR Petty Cash (1100)
      */
