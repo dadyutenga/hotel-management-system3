@@ -8,6 +8,7 @@ use App\Models\GoodsReceivedNote;
 use App\Models\SupplierPayable;
 use App\Models\SupplierPayment;
 use App\Models\SupplierPaymentAllocation;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,31 @@ use Throwable;
 
 class SupplierPayablesService
 {
+    public function syncApprovedGrnPayables(string $actorId, ?string $supplierId = null): int
+    {
+        $created = 0;
+
+        GoodsReceivedNote::query()
+            ->where('status', GoodsReceivedNote::STATUS_APPROVED)
+            ->whereNotNull('supplier_id')
+            ->when($supplierId, fn ($query) => $query->where('supplier_id', $supplierId))
+            ->whereNotExists(function (Builder $query): void {
+                $query->select(DB::raw(1))
+                    ->from('supplier_payables')
+                    ->whereColumn('supplier_payables.source_reference_id', 'goods_received_notes.id')
+                    ->where('supplier_payables.source_module', 'procurement');
+            })
+            ->with('supplier')
+            ->chunk(50, function ($grns) use (&$created, $actorId): void {
+                foreach ($grns as $grn) {
+                    $this->ensurePayableFromGrn($grn, $actorId);
+                    $created++;
+                }
+            });
+
+        return $created;
+    }
+
     public function ensurePayableFromGrn(GoodsReceivedNote $grn, string $actorId): SupplierPayable
     {
         return DB::transaction(function () use ($grn, $actorId) {

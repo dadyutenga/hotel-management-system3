@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use App\Models\SupplierPayable;
 use App\Models\SupplierPayment;
 use App\Services\SupplierPayablesService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,8 @@ class SupplierPayableController extends Controller
     public function dashboard(): View
     {
         abort_unless($this->canViewAp(), 403, __('general.messages.unauthorized'));
+
+        $this->syncApprovedGrnPayablesSafely();
 
         $openPayables = SupplierPayable::with('supplier')
             ->whereIn('status', ['unpaid', 'partial'])
@@ -57,6 +60,8 @@ class SupplierPayableController extends Controller
     public function index(Request $request): View
     {
         abort_unless($this->canViewAp(), 403, __('general.messages.unauthorized'));
+
+        $this->syncApprovedGrnPayablesSafely();
 
         $query = SupplierPayable::with(['supplier', 'creator'])
             ->when($request->filled('supplier_id'), fn ($query) => $query->where('supplier_id', $request->string('supplier_id')))
@@ -100,12 +105,23 @@ class SupplierPayableController extends Controller
     {
         abort_unless($this->canManageAp(), 403, __('general.messages.unauthorized'));
 
+        $this->syncApprovedGrnPayablesSafely();
+
         $suppliers = Supplier::active()
             ->whereHas('payables', fn ($query) => $query->whereIn('status', ['unpaid', 'partial']))
             ->orderBy('name')
             ->get();
 
-        return view('accountant.payments.create', compact('suppliers'));
+        $grnPayables = SupplierPayable::query()
+            ->with('supplier')
+            ->where('source_module', 'procurement')
+            ->where('source_reference_type', 'grn')
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->orderBy('payable_date')
+            ->orderBy('reference')
+            ->get();
+
+        return view('accountant.payments.create', compact('suppliers', 'grnPayables'));
     }
 
     public function storePayment(Request $request): RedirectResponse
@@ -114,6 +130,7 @@ class SupplierPayableController extends Controller
 
         $data = $request->validate([
             'supplier_id' => ['required', 'uuid', 'exists:suppliers,id'],
+            'supplier_payable_id' => ['nullable', 'uuid', 'exists:supplier_payables,id'],
             'payment_date' => ['required', 'date'],
             'currency' => ['required', 'in:USD,TZS'],
             'amount' => ['required', 'numeric', 'min:0.01'],
@@ -121,6 +138,33 @@ class SupplierPayableController extends Controller
             'reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $this->syncApprovedGrnPayablesSafely((string) $data['supplier_id']);
+
+        if (! empty($data['supplier_payable_id'])) {
+            $selectedPayable = SupplierPayable::query()
+                ->where('id', $data['supplier_payable_id'])
+                ->whereIn('status', ['unpaid', 'partial'])
+                ->first();
+
+            if (! $selectedPayable) {
+                throw ValidationException::withMessages([
+                    'supplier_payable_id' => __('accountant.ap.selected_grn_payable_invalid'),
+                ]);
+            }
+
+            if ($selectedPayable->supplier_id !== $data['supplier_id']) {
+                throw ValidationException::withMessages([
+                    'supplier_payable_id' => __('accountant.ap.selected_grn_payable_supplier_mismatch'),
+                ]);
+            }
+
+            if ($selectedPayable->source_module !== 'procurement' || $selectedPayable->source_reference_type !== 'grn') {
+                throw ValidationException::withMessages([
+                    'supplier_payable_id' => __('accountant.ap.selected_grn_payable_invalid'),
+                ]);
+            }
+        }
 
         $hasOpenPayables = SupplierPayable::query()
             ->where('supplier_id', $data['supplier_id'])
@@ -137,6 +181,13 @@ class SupplierPayableController extends Controller
             'status' => 'draft',
             'created_by' => auth()->id(),
         ]);
+
+        if (! empty($data['supplier_payable_id'])) {
+            return redirect()
+                ->route('accountant.payments.apply', $payment)
+                ->with('prefill_payable_id', $data['supplier_payable_id'])
+                ->with('success', __('accountant.messages.payment_draft_saved'));
+        }
 
         return redirect()
             ->route('accountant.payments.apply', $payment)
@@ -163,9 +214,11 @@ class SupplierPayableController extends Controller
             ->orderBy('payable_date')
             ->get();
 
+        $prefillPayableId = session('prefill_payable_id');
+
         $canPostAp = $this->canPostAp();
 
-        return view('accountant.payments.apply', compact('supplierPayment', 'payables', 'allocatedAmount', 'remainingAmount', 'canPostAp'));
+        return view('accountant.payments.apply', compact('supplierPayment', 'payables', 'allocatedAmount', 'remainingAmount', 'canPostAp', 'prefillPayableId'));
     }
 
     public function allocatePayment(Request $request, SupplierPayment $supplierPayment, SupplierPayablesService $service): RedirectResponse
@@ -246,5 +299,21 @@ class SupplierPayableController extends Controller
     private function canPostAp(): bool
     {
         return auth()->check() && auth()->user()->hasAnyRole(['ACCOUNTANT', 'manager']);
+    }
+
+    private function syncApprovedGrnPayablesSafely(?string $supplierId = null): void
+    {
+        try {
+            app(SupplierPayablesService::class)->syncApprovedGrnPayables(
+                actorId: (string) auth()->id(),
+                supplierId: $supplierId,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Failed to sync approved GRN payables', [
+                'actor_id' => auth()->id(),
+                'supplier_id' => $supplierId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
