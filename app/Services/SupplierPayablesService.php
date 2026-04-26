@@ -78,6 +78,12 @@ class SupplierPayablesService
                     ->filter(fn (array $row) => $row['amount'] > 0)
                     ->values();
 
+                if ($normalizedAllocations->isEmpty()) {
+                    throw ValidationException::withMessages([
+                        'allocations' => __('accountant.ap.allocation_required'),
+                    ]);
+                }
+
                 $totalAllocated = round((float) $normalizedAllocations->sum('amount'), 2);
 
                 if ($totalAllocated - (float) $payment->amount > 0.01) {
@@ -112,6 +118,13 @@ class SupplierPayablesService
                     $payable->recalculateStatus();
                 }
 
+                // Move to pending approval only when the payment is fully allocated.
+                $payment->update([
+                    'status' => abs($totalAllocated - (float) $payment->amount) <= 0.01
+                        ? 'pending_approval'
+                        : 'draft',
+                ]);
+
                 return $payment->fresh(['supplier', 'allocations.payable']);
             }, 3);
         } catch (ValidationException $e) {
@@ -140,6 +153,12 @@ class SupplierPayablesService
                 if (in_array($payment->status, ['posted', 'cancelled'], true)) {
                     throw ValidationException::withMessages([
                         'payment' => 'This supplier payment can no longer be posted.',
+                    ]);
+                }
+
+                if (! in_array($payment->status, ['draft', 'pending_approval'], true)) {
+                    throw ValidationException::withMessages([
+                        'payment' => 'Only draft or pending-approval supplier payments can be posted.',
                     ]);
                 }
 

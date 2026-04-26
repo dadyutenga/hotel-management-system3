@@ -122,6 +122,104 @@ class GoodsReceivedNoteController extends Controller
         return view('procurement.grn.show', compact('goodsReceivedNote'));
     }
 
+    public function edit(GoodsReceivedNote $goodsReceivedNote): View
+    {
+        abort_unless(auth()->user()?->hasRole(Role::STORE_KEEPER), 403);
+
+        if (! in_array($goodsReceivedNote->status, [
+            GoodsReceivedNote::STATUS_DRAFT,
+            GoodsReceivedNote::STATUS_REJECTED,
+        ], true)) {
+            return redirect()
+                ->route('procurement.grn.show', $goodsReceivedNote)
+                ->with('error', 'Only draft or returned GRNs can be edited.');
+        }
+
+        $goodsReceivedNote->load([
+            'lpo',
+            'supplier',
+            'items.product',
+            'items.lpoItem',
+        ]);
+
+        return view('procurement.grn.edit', compact('goodsReceivedNote'));
+    }
+
+    public function update(Request $request, GoodsReceivedNote $goodsReceivedNote): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole(Role::STORE_KEEPER), 403);
+
+        if (! in_array($goodsReceivedNote->status, [
+            GoodsReceivedNote::STATUS_DRAFT,
+            GoodsReceivedNote::STATUS_REJECTED,
+        ], true)) {
+            return redirect()
+                ->route('procurement.grn.show', $goodsReceivedNote)
+                ->with('error', 'Only draft or returned GRNs can be updated.');
+        }
+
+        $validated = $request->validate([
+            'received_date' => 'required|date',
+            'delivery_vehicle' => 'nullable|string|max:100',
+            'driver_name' => 'nullable|string|max:100',
+            'notes' => 'nullable|string',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|uuid|exists:goods_received_note_items,id',
+            'items.*.quantity_received' => 'required|numeric|min:0.001',
+            'items.*.unit_price' => 'required|numeric|min:0.01',
+            'items.*.notes' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($goodsReceivedNote, $validated) {
+            $existingItemIds = $goodsReceivedNote->items()->pluck('id')->sort()->values()->all();
+            $submittedItemIds = collect($validated['items'])->pluck('id')->sort()->values()->all();
+
+            if ($existingItemIds !== $submittedItemIds) {
+                throw ValidationException::withMessages([
+                    'items' => 'Submitted GRN items do not match the current GRN.',
+                ]);
+            }
+
+            $goodsReceivedNote->update([
+                'received_date' => $validated['received_date'],
+                'delivery_vehicle' => $validated['delivery_vehicle'] ?? null,
+                'driver_name' => $validated['driver_name'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            foreach ($validated['items'] as $itemData) {
+                $item = GoodsReceivedNoteItem::findOrFail($itemData['id']);
+
+                $qty = (float) $itemData['quantity_received'];
+                $price = (float) $itemData['unit_price'];
+
+                $item->update([
+                    'quantity_received' => $qty,
+                    'unit_price' => $price,
+                    'subtotal' => $qty * $price,
+                    'notes' => $itemData['notes'] ?? null,
+                ]);
+            }
+
+            $goodsReceivedNote->load('items');
+            $goodsReceivedNote->recalculate();
+        });
+
+        if ($request->hasFile('receipt')) {
+            if ($goodsReceivedNote->receipt_path) {
+                Storage::disk('public')->delete($goodsReceivedNote->receipt_path);
+            }
+
+            $path = $request->file('receipt')->store('grn-receipts', 'public');
+            $goodsReceivedNote->update(['receipt_path' => $path]);
+        }
+
+        return redirect()
+            ->route('procurement.grn.show', $goodsReceivedNote)
+            ->with('success', "GRN {$goodsReceivedNote->grn_number} updated successfully.");
+    }
+
     public function uploadReceipt(Request $request, GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
         $request->validate([
@@ -141,11 +239,21 @@ class GoodsReceivedNoteController extends Controller
 
     public function submitForConfirmation(GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
-        if ($goodsReceivedNote->status !== GoodsReceivedNote::STATUS_DRAFT) {
-            return back()->with('error', 'Only draft GRNs can be submitted for confirmation.');
+        if (! in_array($goodsReceivedNote->status, [
+            GoodsReceivedNote::STATUS_DRAFT,
+            GoodsReceivedNote::STATUS_REJECTED,
+        ], true)) {
+            return back()->with('error', 'Only draft or returned GRNs can be submitted for confirmation.');
         }
 
-        $goodsReceivedNote->update(['status' => GoodsReceivedNote::STATUS_SUBMITTED]);
+        $goodsReceivedNote->update([
+            'status' => GoodsReceivedNote::STATUS_SUBMITTED,
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+            'confirmed_by' => null,
+            'confirmed_at' => null,
+        ]);
 
         return back()->with('success', 'GRN submitted for confirmation.');
     }
@@ -160,7 +268,7 @@ class GoodsReceivedNoteController extends Controller
             return back()->withErrors($e->errors())->withInput();
         }
 
-        return back()->with('success', "GRN {$goodsReceivedNote->grn_number} confirmed by storekeeper and submitted for manager approval.");
+        return back()->with('success', "GRN {$goodsReceivedNote->grn_number} confirmed and submitted for manager approval.");
     }
 
     public function approve(GoodsReceivedNote $goodsReceivedNote): RedirectResponse

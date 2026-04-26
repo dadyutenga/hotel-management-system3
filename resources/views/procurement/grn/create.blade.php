@@ -288,4 +288,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsectionclear
+@endsection

@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-3">
             <!-- Status-based Actions -->
-            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_DRAFT && auth()->user()->hasRole('store_keeper'))
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_keeper'))
             <form method="POST" action="{{ route('procurement.grn.submit', $goodsReceivedNote) }}" class="inline">
                 @csrf
                 <button type="submit" class="px-4 py-2 bg-yellow-600 text-white text-sm font-semibold rounded-lg hover:bg-yellow-700 transition-colors">
@@ -33,6 +33,12 @@
             </form>
             @endif
 
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_keeper'))
+            <a href="{{ route('procurement.grn.edit', $goodsReceivedNote) }}" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                Edit GRN
+            </a>
+            @endif
+
             @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER, \App\Models\GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL], true) && auth()->user()->hasRole('manager'))
             <form method="POST" action="{{ route('procurement.grn.approve', $goodsReceivedNote) }}" class="inline" onsubmit="return confirm('Approve this GRN and post stock/accounting updates?');">
                 @csrf
@@ -48,7 +54,7 @@
             </button>
             @endif
 
-            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_DRAFT && auth()->user()->hasRole('store_keeper'))
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_keeper'))
             <button 
                 type="button"
                 onclick="document.getElementById('upload-modal').classList.remove('hidden')"

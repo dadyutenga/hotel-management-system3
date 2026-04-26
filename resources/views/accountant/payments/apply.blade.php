@@ -39,7 +39,7 @@
                 <h3 class="text-lg font-extrabold text-secondary">{{ __('accountant.ap.allocate_payment') }}</h3>
                 <p class="mt-1 text-sm text-gray-500">{{ __('accountant.ap.allocate_help') }}</p>
             </div>
-            @if(! in_array($supplierPayment->status, ['posted', 'cancelled'], true))
+            @if(! in_array($supplierPayment->status, ['posted', 'cancelled'], true) && $payables->isNotEmpty())
                 <button class="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">{{ __('accountant.ap.save_allocations') }}</button>
             @endif
         </div>
@@ -62,13 +62,13 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="py-6 text-center text-gray-500">{{ __('general.no_data') }}</td></tr>
+                        <tr><td colspan="5" class="py-6 text-center text-gray-500">{{ __('accountant.ap.no_open_payables_help') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
-        @if(! in_array($supplierPayment->status, ['posted', 'cancelled'], true))
+        @if(! in_array($supplierPayment->status, ['posted', 'cancelled'], true) && $payables->isNotEmpty())
             <div class="mt-6 flex justify-end border-t border-gray-100 pt-5">
                 <button class="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">{{ __('accountant.ap.save_allocations') }}</button>
             </div>
@@ -79,10 +79,11 @@
         <div class="flex justify-end">
             <form method="POST" action="{{ route('accountant.payments.post', $supplierPayment) }}">
                 @csrf
-                <button class="rounded-xl px-5 py-3 text-sm font-semibold text-white {{ $remainingAmount == 0.0 ? 'bg-emerald-600' : 'bg-gray-400 cursor-not-allowed' }}" {{ $remainingAmount == 0.0 ? '' : 'disabled' }}>{{ __('accountant.ap.post_payment') }}</button>
+                @php($canFinalize = abs((float) $remainingAmount) <= 0.01)
+                <button class="rounded-xl px-5 py-3 text-sm font-semibold text-white {{ $canFinalize ? 'bg-emerald-600' : 'bg-gray-400 cursor-not-allowed' }}" {{ $canFinalize ? '' : 'disabled' }}>{{ __('accountant.ap.post_payment') }}</button>
             </form>
         </div>
-        @if($remainingAmount != 0.0)
+        @if(abs((float) $remainingAmount) > 0.01)
             <p class="text-right text-sm text-rose-600">{{ __('accountant.ap.finalize_hint') }}</p>
         @endif
     @endif

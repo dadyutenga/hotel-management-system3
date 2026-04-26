@@ -10,22 +10,22 @@
             <h2 class="text-2xl font-extrabold text-secondary">LPO Approval Dashboard</h2>
             <p class="mt-1 text-sm text-gray-500">Review submitted purchase orders and enforce approval controls</p>
         </div>
-        <form method="GET" class="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <select name="status" class="rounded-lg border border-gray-300 px-4 py-2.5">
+        <form method="GET" class="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:max-w-4xl xl:grid-cols-5">
+            <select name="status" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-secondary focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
                 <option value="">All Statuses</option>
                 @foreach(['draft', 'pending_approval', 'approved', 'rejected', 'sent', 'partially_received', 'fully_received'] as $status)
                 <option value="{{ $status }}" @selected(request('status') === $status)>{{ str_replace('_', ' ', ucfirst($status)) }}</option>
                 @endforeach
             </select>
-            <select name="supplier_id" class="rounded-lg border border-gray-300 px-4 py-2.5">
+            <select name="supplier_id" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-secondary focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
                 <option value="">All Suppliers</option>
                 @foreach($suppliers as $supplier)
                 <option value="{{ $supplier->id }}" @selected(request('supplier_id') === $supplier->id)>{{ $supplier->name }}</option>
                 @endforeach
             </select>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-lg border border-gray-300 px-4 py-2.5">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-lg border border-gray-300 px-4 py-2.5">
-            <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Filter</button>
+            <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-secondary focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+            <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-secondary focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">Filter</button>
         </form>
     </div>
 
@@ -91,14 +91,14 @@
                     </td>
                     <td class="px-6 py-4">@include('components.lpo-status-badge', ['status' => $lpo->status])</td>
                     <td class="px-6 py-4 text-sm">
-                        <div class="flex flex-wrap items-center gap-3">
-                            <a href="{{ route('procurement.lpo.show', $lpo) }}" class="font-semibold text-indigo-600 hover:text-indigo-700">View</a>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{{ route('procurement.lpo.show', $lpo) }}" class="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100">View</a>
                             @if($lpo->status === 'pending_approval')
                             <form method="POST" action="{{ route('procurement.lpo.approve', $lpo) }}">
                                 @csrf
-                                <button type="submit" class="font-semibold text-green-600 hover:text-green-700">Approve</button>
+                                <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100">Approve</button>
                             </form>
-                            <button type="button" onclick="document.getElementById('reject-modal-{{ $lpo->id }}').classList.remove('hidden')" class="font-semibold text-red-600 hover:text-red-700">Reject</button>
+                            <button type="button" onclick="document.getElementById('reject-modal-{{ $lpo->id }}').classList.remove('hidden')" class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100">Reject</button>
                             @endif
                         </div>
                     </td>

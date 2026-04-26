@@ -56,7 +56,7 @@
             </form>
             @endif
 
-            @if(in_array($localPurchaseOrder->status, ['sent', 'approved', 'partially_received']) && auth()->user()->hasAnyRole(['store_manager', 'store_keeper', 'admin']))
+            @if(in_array($localPurchaseOrder->status, ['sent', 'approved', 'partially_received']) && auth()->user()->hasRole('store_keeper'))
             <a href="{{ route('procurement.grn.create', ['lpo_id' => $localPurchaseOrder->id]) }}" class="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">
                 Create GRN
             </a>

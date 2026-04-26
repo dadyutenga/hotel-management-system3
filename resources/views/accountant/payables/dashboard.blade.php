@@ -5,15 +5,15 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="flex flex-col gap-4 rounded-3xl bg-gradient-to-r from-slate-900 via-teal-800 to-emerald-700 p-6 text-white shadow-xl lg:flex-row lg:items-center lg:justify-between">
+    <div class="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold">{{ __('accountant.ap.hero_title') }}</h2>
-            <p class="mt-2 text-sm text-emerald-100">{{ __('accountant.ap.hero_subtitle') }}</p>
+            <h2 class="text-xl font-extrabold text-secondary">{{ __('accountant.ap.hero_title') }}</h2>
+            <p class="mt-1 text-sm text-gray-600">{{ __('accountant.ap.hero_subtitle') }}</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('accountant.payables.index') }}" class="rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20">{{ __('accountant.ap.view_payables') }}</a>
+            <a href="{{ route('accountant.payables.index') }}" class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">{{ __('accountant.ap.view_payables') }}</a>
             @if($canManageAp)
-                <a href="{{ route('accountant.payments.create') }}" class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-emerald-50">{{ __('accountant.ap.new_payment') }}</a>
+                <a href="{{ route('accountant.payments.create') }}" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">{{ __('accountant.ap.new_payment') }}</a>
             @endif
         </div>
     </div>

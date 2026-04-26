@@ -100,7 +100,10 @@ class SupplierPayableController extends Controller
     {
         abort_unless($this->canManageAp(), 403, __('general.messages.unauthorized'));
 
-        $suppliers = Supplier::active()->orderBy('name')->get();
+        $suppliers = Supplier::active()
+            ->whereHas('payables', fn ($query) => $query->whereIn('status', ['unpaid', 'partial']))
+            ->orderBy('name')
+            ->get();
 
         return view('accountant.payments.create', compact('suppliers'));
     }
@@ -119,6 +122,17 @@ class SupplierPayableController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $hasOpenPayables = SupplierPayable::query()
+            ->where('supplier_id', $data['supplier_id'])
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->exists();
+
+        if (! $hasOpenPayables) {
+            throw ValidationException::withMessages([
+                'supplier_id' => __('accountant.ap.no_open_payables_for_supplier'),
+            ]);
+        }
+
         $payment = SupplierPayment::create($data + [
             'status' => 'draft',
             'created_by' => auth()->id(),
@@ -134,8 +148,11 @@ class SupplierPayableController extends Controller
         abort_unless($this->canViewAp() && $this->canManageAp(), 403, __('general.messages.unauthorized'));
 
         $supplierPayment->load(['supplier', 'allocations.payable']);
-        $allocatedAmount = (float) $supplierPayment->allocations->sum('allocated_amount');
+        $allocatedAmount = round((float) $supplierPayment->allocations->sum('allocated_amount'), 2);
         $remainingAmount = round((float) $supplierPayment->amount - $allocatedAmount, 2);
+        if (abs($remainingAmount) <= 0.01) {
+            $remainingAmount = 0.0;
+        }
 
         $payables = SupplierPayable::where('supplier_id', $supplierPayment->supplier_id)
             ->whereIn('status', ['unpaid', 'partial'])

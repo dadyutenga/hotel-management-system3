@@ -92,6 +92,12 @@ class SupplierPayablesWorkflowTest extends TestCase
 
         $this->actingAs($accountant)
             ->post(route('accountant.payments.allocate', $payment), [
+                'allocations' => [$payable->id => 0],
+            ])
+            ->assertSessionHasErrors('allocations');
+
+        $this->actingAs($accountant)
+            ->post(route('accountant.payments.allocate', $payment), [
                 'allocations' => [$payable->id => 400],
             ])
             ->assertRedirect();

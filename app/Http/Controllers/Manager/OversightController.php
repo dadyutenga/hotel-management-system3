@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Models\GoodsReceivedNote;
 use App\Models\LocalPurchaseOrder;
 use App\Models\StockLevel;
 use App\Models\StockLocation;
@@ -72,6 +73,30 @@ class OversightController extends Controller
             'lowStockCount',
             'outOfStockCount'
         ));
+    }
+
+    public function grnApprovals(Request $request): View
+    {
+        $suppliers = Supplier::active()->orderBy('name')->get();
+
+        $grns = GoodsReceivedNote::with(['lpo', 'supplier', 'receiver', 'confirmer', 'approver', 'rejector'])
+            ->when(
+                $request->filled('status'),
+                fn ($q) => $q->where('status', (string) $request->input('status')),
+                fn ($q) => $q->whereIn('status', [
+                    GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+                    GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+                ])
+            )
+            ->when($request->supplier_id, fn ($q) => $q->where('supplier_id', $request->supplier_id))
+            ->when($request->date_from, fn ($q) => $q->whereDate('received_date', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('received_date', '<=', $request->date_to))
+            ->latest('received_date')
+            ->latest('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('manager.procurement.grn-approvals', compact('grns', 'suppliers'));
     }
 
     public function stockMovements(Request $request): View

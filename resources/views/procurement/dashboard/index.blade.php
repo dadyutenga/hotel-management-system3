@@ -101,6 +101,7 @@
             </div>
         </a>
 
+        @if(auth()->user()->hasRole('store_keeper'))
         <a href="{{ route('procurement.grn.create') }}" class="block bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all group">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
@@ -114,6 +115,7 @@
                 </div>
             </div>
         </a>
+        @endif
     </div>
 
     <!-- Recent LPOs -->

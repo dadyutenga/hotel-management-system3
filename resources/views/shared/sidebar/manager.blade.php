@@ -5,6 +5,10 @@
 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
     @php
         $pendingApprovals = \App\Models\LocalPurchaseOrder::where('status', 'pending_approval')->count();
+        $pendingGrnApprovals = \App\Models\GoodsReceivedNote::whereIn('status', [
+            \App\Models\GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
+            \App\Models\GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
+        ])->count();
         $pendingLaundry = \App\Models\LaundryOrder::whereIn('status', ['pending', 'in_progress'])->count();
     @endphp
 
@@ -64,6 +68,16 @@
             <span>{{ __('general.nav.approval_dashboard') }}</span>
             @if($pendingApprovals > 0)
                 <span class="ml-auto bg-yellow-100 text-yellow-600 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingApprovals }}</span>
+            @endif
+        </a>
+
+        <a href="{{ route('manager.procurement.grn-approvals') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('manager.procurement.grn-approvals') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7l-2 2-1-1"/>
+            </svg>
+            <span>GRN Approvals</span>
+            @if($pendingGrnApprovals > 0)
+                <span class="ml-auto bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingGrnApprovals }}</span>
             @endif
         </a>
 

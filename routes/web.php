@@ -599,6 +599,10 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:store_keeper');
         Route::post('grn', [GoodsReceivedNoteController::class, 'store'])->name('grn.store')
              ->middleware('role:store_keeper');
+        Route::get('grn/{goodsReceivedNote}/edit', [GoodsReceivedNoteController::class, 'edit'])->name('grn.edit')
+             ->middleware('role:store_keeper');
+        Route::put('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'update'])->name('grn.update')
+             ->middleware('role:store_keeper');
         Route::get('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'show'])->name('grn.show')
              ->middleware('role:store_manager,store_keeper,manager');
         Route::delete('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'destroy'])->name('grn.destroy')
@@ -617,6 +621,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:manager'])->prefix('manager')->name('manager.')->group(function () {
         Route::get('procurement/approvals', [OversightController::class, 'lpoApprovals'])->name('procurement.approvals');
+          Route::get('procurement/grn-approvals', [OversightController::class, 'grnApprovals'])->name('procurement.grn-approvals');
         Route::get('stock/overview', [OversightController::class, 'stockOverview'])->name('stock.overview');
         Route::get('stock/movements', [OversightController::class, 'stockMovements'])->name('stock.movements');
         Route::get('accounting/journal/{journalEntry}', [JournalEntryController::class, 'show'])->name('accounting.journal.show');
