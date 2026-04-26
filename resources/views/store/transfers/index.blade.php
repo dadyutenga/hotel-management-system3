@@ -6,7 +6,7 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Stock Transfers</h1>
-    @if(auth()->user()->hasRole('STORE_MANAGER'))
+    @if(auth()->user()->hasRole('store_keeper'))
     <a href="{{ route('store.transfers.create') }}"
        class="bg-primary text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 font-medium">
         + New Transfer
@@ -48,7 +48,7 @@
                 </td>
                 <td class="px-4 py-3 text-gray-500 text-xs">{{ $t->requester->name }}</td>
                 <td class="px-4 py-3 text-center space-x-1">
-                    @if($t->status === 'pending' && auth()->user()->hasAnyRole(['manager', 'admin']))
+                    @if($t->status === 'pending' && auth()->user()->hasRole('store_manager'))
                     <form method="POST" action="{{ route('store.transfers.approve', $t) }}" class="inline">
                         @csrf
                         <button class="text-xs bg-blue-600 text-white px-2 py-1 rounded-lg hover:bg-blue-700">Approve</button>
@@ -65,7 +65,7 @@
                         <button class="text-xs bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600">Reject</button>
                     </form>
                     @endif
-                    @if(in_array($t->status, ['pending', 'approved'], true) && auth()->user()->hasRole('STORE_MANAGER'))
+                    @if($t->status === 'approved' && auth()->user()->hasRole('store_keeper'))
                     <form method="POST" action="{{ route('store.transfers.fulfill', $t) }}" class="inline">
                         @csrf
                         <button class="text-xs bg-green-600 text-white px-2 py-1 rounded-lg hover:bg-green-700">Complete</button>

@@ -26,15 +26,25 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Transfer To *</label>
-                    <select name="to_location_code" required class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                        <option value="">Select destination...</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Transfer From *</label>
+                    <select name="from_location_id" required class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none @error('from_location_id') border-red-400 @enderror">
+                        <option value="">Select source...</option>
                         @foreach($locations as $loc)
-                        <option value="{{ $loc->code }}" {{ old('to_location_code') === $loc->code ? 'selected' : '' }}>{{ $loc->name }}</option>
+                        <option value="{{ $loc->id }}" {{ old('from_location_id', optional(\App\Models\StockLocation::mainStore())->id) === $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
                         @endforeach
                     </select>
-                    <p class="text-xs text-gray-400 mt-1">Stock will be transferred from Main Store to the selected location.</p>
-                    @error('to_location_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    @error('from_location_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Transfer To *</label>
+                    <select name="to_location_id" required class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none @error('to_location_id') border-red-400 @enderror">
+                        <option value="">Select destination...</option>
+                        @foreach($locations as $loc)
+                        <option value="{{ $loc->id }}" {{ old('to_location_id') === $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('to_location_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
 
                 <div>

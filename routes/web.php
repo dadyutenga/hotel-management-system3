@@ -362,15 +362,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('transfers',                [StockTransferController::class, 'index'])->name('transfers.index')
              ->middleware('role:store_manager,store_keeper,manager,admin');
         Route::get('transfers/create',         [StockTransferController::class, 'create'])->name('transfers.create')
-             ->middleware('role:store_manager');
+             ->middleware('role:store_keeper');
         Route::post('transfers',               [StockTransferController::class, 'store'])->name('transfers.store')
-             ->middleware('role:store_manager');
+             ->middleware('role:store_keeper');
         Route::post('transfers/{stockTransfer}/approve', [StockTransferController::class, 'approve'])->name('transfers.approve')
-             ->middleware('role:manager,admin');
+             ->middleware('role:store_manager');
         Route::post('transfers/{stockTransfer}/fulfill', [StockTransferController::class, 'fulfill'])->name('transfers.fulfill')
-             ->middleware('role:store_manager,manager,admin');
+             ->middleware('role:store_keeper');
         Route::post('transfers/{stockTransfer}/reject',  [StockTransferController::class, 'reject'])->name('transfers.reject')
-             ->middleware('role:manager,admin');
+             ->middleware('role:store_manager');
 
         // ── Reports ───────────────────────────────────────────────────────
         Route::get('reports/stock-snapshot',   [ReportController::class, 'stockSnapshot'])->name('reports.stock-snapshot')
@@ -378,7 +378,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/movements',        [ReportController::class, 'movements'])->name('reports.movements')
              ->middleware('role:store_manager,store_keeper');
         Route::get('reports/damage',           [ReportController::class, 'damage'])->name('reports.damage')
-             ->middleware('role:store_manager,supervisor');
+             ->middleware('role:store_manager,store_keeper,supervisor');
     });
 
     // ═══ BAR & RESTAURANT MODULE ═══

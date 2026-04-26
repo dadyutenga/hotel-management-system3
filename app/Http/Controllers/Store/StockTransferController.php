@@ -37,7 +37,7 @@ class StockTransferController extends Controller
     public function create(): View
     {
         $products  = Product::where('is_active', true)->orderBy('name')->get();
-        $locations = StockLocation::where('code', '!=', 'main_store')->where('is_active', true)->get();
+        $locations = StockLocation::where('is_active', true)->orderBy('name')->get();
 
         return view('store.transfers.create', compact('products', 'locations'));
     }
@@ -46,14 +46,34 @@ class StockTransferController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'product_id'       => 'required|uuid|exists:products,id',
-            'to_location_code' => 'required|in:bar,kitchen',
-            'quantity'         => 'required|numeric|min:0.001',
-            'reason'           => 'nullable|string|max:500',
+            'product_id'        => 'required|uuid|exists:products,id',
+            'from_location_id'  => 'required|uuid|exists:stock_locations,id',
+            'to_location_id'    => 'required|uuid|exists:stock_locations,id|different:from_location_id',
+            'quantity'          => 'required|numeric|min:0.001',
+            'reason'            => 'nullable|string|max:500',
         ]);
 
-        $fromLocation = StockLocation::mainStore();
-        $toLocation   = StockLocation::where('code', $data['to_location_code'])->firstOrFail();
+        $fromLocation = StockLocation::where('id', $data['from_location_id'])->where('is_active', true)->first();
+        $toLocation = StockLocation::where('id', $data['to_location_id'])->where('is_active', true)->first();
+
+        if (! $fromLocation) {
+            throw ValidationException::withMessages([
+                'from_location_id' => 'Selected source location is invalid or inactive.',
+            ]);
+        }
+
+        if (! $toLocation) {
+            throw ValidationException::withMessages([
+                'to_location_id' => 'Selected destination location is invalid or inactive.',
+            ]);
+        }
+
+        if ($fromLocation->id === $toLocation->id) {
+            throw ValidationException::withMessages([
+                'to_location_id' => 'Source and destination locations must be different.',
+            ]);
+        }
+
         $sourceLevel = StockLevel::where('product_id', $data['product_id'])
             ->where('location_id', $fromLocation->id)
             ->first();
@@ -128,9 +148,9 @@ class StockTransferController extends Controller
     public function fulfill(StockTransfer $stockTransfer): RedirectResponse
     {
         abort_if(
-            ! in_array($stockTransfer->status, ['pending', 'approved'], true),
+            $stockTransfer->status !== 'approved',
             422,
-            'Only pending or approved transfers can be completed.'
+            'Only approved transfers can be completed.'
         );
 
         $sourceLevel = StockLevel::where('product_id', $stockTransfer->product_id)
@@ -192,7 +212,7 @@ class StockTransferController extends Controller
     // POST /store/transfers/{stockTransfer}/reject
     public function reject(Request $request, StockTransfer $stockTransfer): RedirectResponse
     {
-        abort_if(! in_array($stockTransfer->status, ['pending', 'approved']), 422, 'Only pending or approved transfers can be rejected.');
+        abort_if(! in_array($stockTransfer->status, ['pending', 'approved'], true), 422, 'Only pending or approved transfers can be rejected.');
 
         $data = $request->validate([
             'rejection_reason' => 'required|string|min:5|max:500',
