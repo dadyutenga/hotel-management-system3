@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use App\Models\SupplierPayable;
 use App\Models\SupplierPayment;
 use App\Services\SupplierPayablesService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -121,7 +122,9 @@ class SupplierPayableController extends Controller
             ->orderBy('reference')
             ->get();
 
-        return view('accountant.payments.create', compact('suppliers', 'grnPayables'));
+        $generatedReference = SupplierPayment::generateReference();
+
+        return view('accountant.payments.create', compact('suppliers', 'grnPayables', 'generatedReference'));
     }
 
     public function storePayment(Request $request): RedirectResponse
@@ -138,6 +141,20 @@ class SupplierPayableController extends Controller
             'reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $data['reference'] = filled($data['reference'] ?? null)
+            ? trim((string) $data['reference'])
+            : null;
+
+        if (filled($data['reference']) && SupplierPayment::query()->where('reference', $data['reference'])->exists()) {
+            if (str_starts_with($data['reference'], 'SUPPAY-')) {
+                $data['reference'] = null;
+            } else {
+                throw ValidationException::withMessages([
+                    'reference' => __('accountant.ap.payment_reference_taken'),
+                ]);
+            }
+        }
 
         $this->syncApprovedGrnPayablesSafely((string) $data['supplier_id']);
 
@@ -177,10 +194,35 @@ class SupplierPayableController extends Controller
             ]);
         }
 
-        $payment = SupplierPayment::create($data + [
+        $payload = $data + [
             'status' => 'draft',
             'created_by' => auth()->id(),
-        ]);
+        ];
+
+        $payment = null;
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $payment = SupplierPayment::create($payload);
+                break;
+            } catch (QueryException $exception) {
+                $message = strtolower($exception->getMessage());
+                $hasReferenceConflict = str_contains($message, 'supplier_payments_reference_unique')
+                    || str_contains($message, 'supplier_payments.reference');
+
+                if (! $hasReferenceConflict) {
+                    throw $exception;
+                }
+
+                $payload['reference'] = SupplierPayment::generateReference();
+            }
+        }
+
+        if (! $payment) {
+            throw ValidationException::withMessages([
+                'reference' => __('accountant.ap.payment_reference_regenerate_failed'),
+            ]);
+        }
 
         if (! empty($data['supplier_payable_id'])) {
             return redirect()
@@ -192,6 +234,23 @@ class SupplierPayableController extends Controller
         return redirect()
             ->route('accountant.payments.apply', $payment)
             ->with('success', __('accountant.messages.payment_draft_saved'));
+    }
+
+    public function destroyPayment(SupplierPayment $supplierPayment, SupplierPayablesService $service): RedirectResponse
+    {
+        abort_unless($this->canManageAp(), 403, __('general.messages.unauthorized'));
+
+        try {
+            $service->deletePayment($supplierPayment, (string) auth()->id());
+        } catch (ValidationException $exception) {
+            return back()
+                ->withErrors($exception->errors())
+                ->with('error', collect($exception->errors())->flatten()->first());
+        }
+
+        return redirect()
+            ->route('accountant.payables.dashboard')
+            ->with('success', __('accountant.messages.payment_deleted'));
     }
 
     public function applyPayment(SupplierPayment $supplierPayment): View

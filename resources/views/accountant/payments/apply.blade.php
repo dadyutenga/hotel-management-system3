@@ -80,13 +80,10 @@
         <div class="flex justify-end">
             <form method="POST" action="{{ route('accountant.payments.post', $supplierPayment) }}">
                 @csrf
-                @php($canFinalize = abs((float) $remainingAmount) <= 0.01)
-                <button class="rounded-xl px-5 py-3 text-sm font-semibold text-white {{ $canFinalize ? 'bg-emerald-600' : 'bg-gray-400 cursor-not-allowed' }}" {{ $canFinalize ? '' : 'disabled' }}>{{ __('accountant.ap.post_payment') }}</button>
+                <button class="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">{{ __('accountant.ap.post_payment') }}</button>
             </form>
         </div>
-        @if(abs((float) $remainingAmount) > 0.01)
-            <p class="text-right text-sm text-rose-600">{{ __('accountant.ap.finalize_hint') }}</p>
-        @endif
+        <p class="text-right text-sm text-gray-600">{{ __('accountant.ap.finalize_hint') }}</p>
     @endif
 
     @if($supplierPayment->status === 'posted' && $canPostAp)

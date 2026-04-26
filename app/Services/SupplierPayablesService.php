@@ -190,15 +190,9 @@ class SupplierPayablesService
 
                 $allocated = round((float) $payment->allocations->sum('allocated_amount'), 2);
 
-                if ($allocated <= 0) {
+                if ($allocated - (float) $payment->amount > 0.01) {
                     throw ValidationException::withMessages([
-                        'allocations' => 'Allocate this payment before posting it.',
-                    ]);
-                }
-
-                if (abs($allocated - (float) $payment->amount) > 0.01) {
-                    throw ValidationException::withMessages([
-                        'allocations' => 'Allocated amount must equal the supplier payment amount before posting.',
+                        'allocations' => 'Allocated total cannot exceed the payment amount.',
                     ]);
                 }
 
@@ -309,6 +303,49 @@ class SupplierPayablesService
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Supplier payment cancellation failed', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    public function deletePayment(SupplierPayment $payment, string $actorId): void
+    {
+        try {
+            DB::transaction(function () use ($payment, $actorId): void {
+                $payment = SupplierPayment::with('allocations')->lockForUpdate()->findOrFail($payment->id);
+
+                if ($payment->status !== 'draft') {
+                    throw ValidationException::withMessages([
+                        'payment' => __('accountant.ap.delete_only_draft_allowed'),
+                    ]);
+                }
+
+                foreach ($payment->allocations as $allocation) {
+                    $payable = SupplierPayable::lockForUpdate()->findOrFail($allocation->supplier_payable_id);
+                    $payable->amount_paid = max(round((float) $payable->amount_paid - (float) $allocation->allocated_amount, 2), 0);
+                    $payable->recalculateStatus();
+                }
+
+                $payment->allocations()->delete();
+                $payment->delete();
+
+                Log::info('Supplier payment deleted', [
+                    'supplier_payment_id' => $payment->id,
+                    'actor_id' => $actorId,
+                ]);
+            }, 3);
+        } catch (ValidationException $e) {
+            Log::warning('Supplier payment delete failed validation', [
+                'supplier_payment_id' => $payment->id,
+                'actor_id' => $actorId,
+                'error' => collect($e->errors())->flatten()->first(),
+            ]);
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('Supplier payment delete failed', [
                 'supplier_payment_id' => $payment->id,
                 'actor_id' => $actorId,
                 'error' => $e->getMessage(),

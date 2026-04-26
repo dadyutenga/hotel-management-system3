@@ -239,6 +239,92 @@ class SupplierPayablesWorkflowTest extends TestCase
             ->assertDontSee(__('accountant.ap.post_payment'));
     }
 
+    public function test_post_payment_allows_zero_or_partial_allocation(): void
+    {
+        [$accountant, $supplier, $payable] = $this->bootstrapSinglePayable(amountTotal: 900);
+
+        $payment = SupplierPayment::create([
+            'supplier_id' => $supplier->id,
+            'payment_date' => now()->toDateString(),
+            'currency' => 'USD',
+            'amount' => 900,
+            'method' => 'bank',
+            'status' => 'draft',
+            'created_by' => $accountant->id,
+        ]);
+
+        $this->actingAs($accountant)
+            ->post(route('accountant.payments.post', $payment))
+            ->assertRedirect(route('accountant.payables.dashboard'));
+
+        $payment->refresh();
+        $payable->refresh();
+
+        $this->assertSame('posted', $payment->status);
+        $this->assertEquals(0.0, (float) $payable->amount_paid);
+        $this->assertEquals(900.0, (float) $payable->balance);
+        $this->assertSame('unpaid', $payable->status);
+    }
+
+    public function test_store_payment_auto_generates_reference_when_missing(): void
+    {
+        [$accountant, $supplier, $payable] = $this->bootstrapSinglePayable(amountTotal: 300);
+
+        $this->actingAs($accountant)
+            ->post(route('accountant.payments.store'), [
+                'supplier_id' => $supplier->id,
+                'supplier_payable_id' => $payable->id,
+                'payment_date' => now()->toDateString(),
+                'currency' => 'USD',
+                'amount' => 150,
+                'method' => 'cash',
+                'reference' => '',
+            ])
+            ->assertRedirect();
+
+        $createdPayment = SupplierPayment::query()->latest('created_at')->firstOrFail();
+
+        $this->assertNotNull($createdPayment->reference);
+        $this->assertMatchesRegularExpression('/^SUPPAY-\d{8}-[A-Z0-9]{4,}$/', $createdPayment->reference);
+    }
+
+    public function test_accountant_can_delete_draft_payment_and_restore_allocations(): void
+    {
+        [$accountant, $supplier, $payable] = $this->bootstrapSinglePayable(amountTotal: 1200);
+
+        $payment = SupplierPayment::create([
+            'supplier_id' => $supplier->id,
+            'payment_date' => now()->toDateString(),
+            'currency' => 'USD',
+            'amount' => 1200,
+            'method' => 'bank',
+            'status' => 'draft',
+            'created_by' => $accountant->id,
+        ]);
+
+        $this->actingAs($accountant)->post(route('accountant.payments.allocate', $payment), [
+            'allocations' => [$payable->id => 300],
+        ])->assertRedirect();
+
+        $payment->refresh();
+        $payable->refresh();
+
+        $this->assertSame('draft', $payment->status);
+        $this->assertEquals(300.0, (float) $payable->amount_paid);
+
+        $this->actingAs($accountant)
+            ->delete(route('accountant.payments.destroy', $payment))
+            ->assertRedirect(route('accountant.payables.dashboard'));
+
+        $this->assertDatabaseMissing('supplier_payments', ['id' => $payment->id]);
+        $this->assertDatabaseMissing('supplier_payment_allocations', ['supplier_payment_id' => $payment->id]);
+
+        $payable->refresh();
+        $this->assertEquals(0.0, (float) $payable->amount_paid);
+        $this->assertEquals(1200.0, (float) $payable->balance);
+        $this->assertSame('unpaid', $payable->status);
+    }
+
     public function test_create_payment_view_lists_supplier_and_open_grn_payables(): void
     {
         [$accountant, $supplier, $payable] = $this->bootstrapSinglePayable(amountTotal: 500);

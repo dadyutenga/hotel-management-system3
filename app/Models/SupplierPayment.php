@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use LogicException;
 
 class SupplierPayment extends Model
@@ -40,6 +41,12 @@ class SupplierPayment extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $payment): void {
+            if (blank($payment->reference)) {
+                $payment->reference = self::generateReference();
+            }
+        });
+
         static::deleting(function (self $payment): void {
             if ($payment->status === 'posted') {
                 throw new LogicException('Posted supplier payments cannot be deleted. Cancel the payment instead.');
@@ -85,5 +92,21 @@ class SupplierPayment extends Model
     public function allocatedAmount(): float
     {
         return (float) $this->allocations()->sum('allocated_amount');
+    }
+
+    public static function generateReference(): string
+    {
+        $prefix = 'SUPPAY-' . now()->format('Ymd') . '-';
+        $baseCount = self::query()->where('reference', 'like', $prefix . '%')->count();
+
+        for ($attempt = 1; $attempt <= 50; $attempt++) {
+            $reference = $prefix . str_pad((string) ($baseCount + $attempt), 4, '0', STR_PAD_LEFT);
+
+            if (! self::query()->where('reference', $reference)->exists()) {
+                return $reference;
+            }
+        }
+
+        return $prefix . strtoupper(Str::random(6));
     }
 }

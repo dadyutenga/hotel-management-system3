@@ -4,7 +4,19 @@
 @section('page-title', __('accountant.ap.dashboard_title'))
 
 @section('content')
-<div class="space-y-6">
+<div
+    class="space-y-6"
+    x-data="{
+        isDeleteModalOpen: false,
+        deleteAction: '',
+        deleteReference: '',
+        openDeleteModal(action, reference) {
+            this.deleteAction = action;
+            this.deleteReference = reference;
+            this.isDeleteModalOpen = true;
+        }
+    }"
+>
     <div class="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
         <div>
             <h2 class="text-xl font-extrabold text-secondary">{{ __('accountant.ap.hero_title') }}</h2>
@@ -83,13 +95,64 @@
                         <div class="mt-3 flex items-center justify-between">
                             <div class="text-sm font-bold text-secondary"><x-money :amount="$payment->amount" /></div>
                             @if($canManageAp && ! in_array($payment->status, ['posted', 'cancelled'], true))
-                                <a href="{{ route('accountant.payments.apply', $payment) }}" class="text-sm font-semibold text-indigo-600">{{ __('accountant.ap.allocate_now') }}</a>
+                                <div class="flex items-center gap-3">
+                                    <a href="{{ route('accountant.payments.apply', $payment) }}" class="text-sm font-semibold text-indigo-600">{{ __('accountant.ap.allocate_now') }}</a>
+                                    @if($payment->status === 'draft')
+                                        <button
+                                            type="button"
+                                            class="text-sm font-semibold text-rose-600 hover:text-rose-700"
+                                            @click="openDeleteModal('{{ route('accountant.payments.destroy', $payment) }}', '{{ $payment->reference ?: $payment->id }}')"
+                                        >
+                                            {{ __('accountant.ap.delete_payment_action') }}
+                                        </button>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
                 @empty
                     <div class="rounded-xl border border-dashed border-gray-200 px-4 py-8 text-center text-gray-500">{{ __('general.no_data') }}</div>
                 @endforelse
+            </div>
+        </div>
+    </div>
+
+    <div
+        x-cloak
+        x-show="isDeleteModalOpen"
+        x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="isDeleteModalOpen = false"
+    >
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
+
+        <div
+            x-show="isDeleteModalOpen"
+            x-transition
+            class="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        >
+            <h3 class="text-lg font-extrabold text-secondary">{{ __('accountant.ap.delete_payment_action') }}</h3>
+            <p class="mt-2 text-sm text-gray-600">{{ __('accountant.ap.delete_payment_confirm') }}</p>
+            <p class="mt-2 text-sm font-semibold text-secondary" x-text="deleteReference"></p>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button
+                    type="button"
+                    class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                    @click="isDeleteModalOpen = false"
+                >
+                    {{ __('general.cancel') }}
+                </button>
+
+                <form method="POST" :action="deleteAction">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
+                        {{ __('general.delete') }}
+                    </button>
+                </form>
             </div>
         </div>
     </div>

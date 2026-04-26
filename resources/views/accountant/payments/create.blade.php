@@ -73,7 +73,8 @@
         </div>
         <div>
             <label class="mb-2 block text-sm font-semibold text-gray-700">{{ __('accountant.ap.payment_reference') }}</label>
-            <input type="text" name="reference" value="{{ old('reference') }}" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-secondary shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            <input type="text" name="reference" value="{{ old('reference', $generatedReference ?? '') }}" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-secondary shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            <p class="mt-1 text-xs text-gray-500">{{ __('accountant.ap.payment_reference_autofill_help') }}</p>
         </div>
     </div>
 

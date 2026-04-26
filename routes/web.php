@@ -683,6 +683,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('supplier-payments/{supplierPayment}/apply', [SupplierPayableController::class, 'allocatePayment'])->name('payments.allocate');
         Route::post('supplier-payments/{supplierPayment}/post', [SupplierPayableController::class, 'postPayment'])->name('payments.post');
         Route::post('supplier-payments/{supplierPayment}/cancel', [SupplierPayableController::class, 'cancelPayment'])->name('payments.cancel');
+        Route::delete('supplier-payments/{supplierPayment}', [SupplierPayableController::class, 'destroyPayment'])->name('payments.destroy');
         Route::get('accounts-receivable', [AccountantDashboardController::class, 'accountsReceivable'])->name('accounts-receivable');
         Route::get('expenses', [AccountantDashboardController::class, 'expenses'])->name('expenses');
         Route::get('reports', [AccountantDashboardController::class, 'reports'])->name('reports');
