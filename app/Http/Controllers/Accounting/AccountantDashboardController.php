@@ -127,7 +127,29 @@ class AccountantDashboardController extends Controller
             ->limit(20)
             ->get();
 
-        return view('accountant.expenses', compact('expenseAccounts', 'recentExpenseLines'));
+        $supplierPaymentsSettled = (float) SupplierPayment::query()
+            ->where('status', 'posted')
+            ->whereDate('payment_date', '>=', now()->startOfMonth()->toDateString())
+            ->whereDate('payment_date', '<=', now()->toDateString())
+            ->sum('amount');
+
+        $outstandingSupplierPayables = (float) SupplierPayable::query()
+            ->where('balance', '>', 0)
+            ->sum('balance');
+
+        $recentSupplierPayments = SupplierPayment::with(['supplier', 'allocations'])
+            ->where('status', 'posted')
+            ->latest('posted_at')
+            ->limit(8)
+            ->get();
+
+        return view('accountant.expenses', compact(
+            'expenseAccounts',
+            'recentExpenseLines',
+            'supplierPaymentsSettled',
+            'outstandingSupplierPayables',
+            'recentSupplierPayments',
+        ));
     }
 
     public function reports(): View
@@ -136,6 +158,14 @@ class AccountantDashboardController extends Controller
         $dateFrom = request('date_from', now()->startOfMonth()->toDateString());
         $dateTo = request('date_to', now()->toDateString());
         $reportMetrics = $this->reportMetrics($dateFrom, $dateTo);
+        $supplierPaymentsSettled = (float) SupplierPayment::query()
+            ->where('status', 'posted')
+            ->whereDate('payment_date', '>=', $dateFrom)
+            ->whereDate('payment_date', '<=', $dateTo)
+            ->sum('amount');
+        $outstandingSupplierPayables = (float) SupplierPayable::query()
+            ->where('balance', '>', 0)
+            ->sum('balance');
         $reportQuery = [
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
@@ -152,7 +182,15 @@ class AccountantDashboardController extends Controller
             ['label' => __('accountant.reports.receipts_summary'), 'route' => 'accounting.reports.receipts-summary', 'query' => $reportQuery],
         ];
 
-        return view('accountant.reports', compact('snapshot', 'reportMetrics', 'reportLinks', 'dateFrom', 'dateTo'));
+        return view('accountant.reports', compact(
+            'snapshot',
+            'reportMetrics',
+            'reportLinks',
+            'dateFrom',
+            'dateTo',
+            'supplierPaymentsSettled',
+            'outstandingSupplierPayables',
+        ));
     }
 
     public function auditLogs(): View

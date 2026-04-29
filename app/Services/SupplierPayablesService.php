@@ -196,6 +196,11 @@ class SupplierPayablesService
                     ]);
                 }
 
+                $unallocated = round((float) $payment->amount - $allocated, 2);
+                if (abs($unallocated) <= 0.01) {
+                    $unallocated = 0.0;
+                }
+
                 $journalEntry = app(AccountingService::class)->postSupplierPayment(
                     reference: $payment->reference ?: ('SUPPAY-' . $payment->id),
                     sourceId: $payment->id,
@@ -229,6 +234,15 @@ class SupplierPayablesService
                     'financial_transaction_id' => $financialTransaction->id,
                     'posted_by' => $actorId,
                     'posted_at' => now(),
+                ]);
+
+                Log::info('Supplier payment posted', [
+                    'supplier_payment_id' => $payment->id,
+                    'payment_reference' => $payment->reference,
+                    'actor_id' => $actorId,
+                    'posted_amount' => (float) $payment->amount,
+                    'allocated_total' => $allocated,
+                    'unallocated_total' => max($unallocated, 0),
                 ]);
 
                 return $payment->fresh(['supplier', 'allocations.payable', 'journalEntry', 'financialTransaction']);

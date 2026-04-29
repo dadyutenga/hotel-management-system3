@@ -132,7 +132,7 @@ class AccountantReceiptsManagementTest extends TestCase
                     'payment_method' => 'cash',
                     'payment_status' => 'paid',
                     'transaction_reference' => 'TXN-4455',
-                    'cashier' => 'Cashier One',
+                    'cashier' => 'Handled By One',
                     'notes' => 'Captured from source record',
                 ];
             }

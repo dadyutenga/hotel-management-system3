@@ -84,7 +84,6 @@ return [
         'manager' => 'Meneja Mkuu',
         'supervisor' => 'Msimamizi',
         'front_desk' => 'Mapokezi',
-        'cashier' => 'Karani wa Pesa',
         'house_help' => 'Msaidizi wa Nyumba',
         'store_manager' => 'Meneja wa Stoo',
         'store_keeper' => 'Mlinzi wa Stoo',

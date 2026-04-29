@@ -259,7 +259,7 @@ class WalkinPaymentController extends Controller
         }
 
         return match ($module) {
-            'bar' => $user->hasAnyRole(['bar_tender', 'cashier']),
+            'bar' => $user->hasAnyRole(['bar_tender']),
             default => true,
         };
     }

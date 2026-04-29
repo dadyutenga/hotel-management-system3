@@ -19,7 +19,6 @@ return [
         'store_keeper' => 'Store Keeper Dashboard',
         'restaurant_manager' => 'Restaurant Manager Dashboard',
         'bar_tender' => 'Bar Tender Dashboard',
-        'cashier' => 'Cashier Dashboard',
     ],
     
     'admin_title' => 'System Administration',
@@ -31,7 +30,6 @@ return [
     'store_keeper_title' => 'Store Keeper Dashboard',
     'restaurant_manager_title' => 'Restaurant Manager Dashboard',
     'bar_tender_title' => 'Bar Tender Dashboard',
-    'cashier_title' => 'Cashier Dashboard',
     
     // Welcome messages
     'welcome' => [
@@ -45,7 +43,6 @@ return [
         'store_keeper_message' => 'Here\'s your store & inventory overview for today.',
         'restaurant_manager_message' => 'Bar & Kitchen inventory overview for today.',
         'bar_tender_message' => 'Your bar overview for today.',
-        'cashier_message' => 'Payment & checkout overview for today.',
     ],
     
     'admin_welcome' => 'System administration and infrastructure overview.',
@@ -57,7 +54,6 @@ return [
     'store_keeper_welcome' => 'Here\'s your store & inventory overview for today.',
     'restaurant_manager_welcome' => 'Bar & Kitchen inventory overview for today.',
     'bar_tender_welcome' => 'Your bar overview for today.',
-    'cashier_welcome' => 'Payment & checkout overview for today.',
     
     // Stats
     'stats' => [
@@ -115,13 +111,6 @@ return [
         'today_movements' => 'Today\'s Movements',
         'available_items' => 'Available Items',
         'served_today' => 'Served Today',
-    // Cashier stats
-    'cashier' => [
-        'today_revenue' => 'Today\'s Revenue',
-        'active_bookings' => 'Active Bookings',
-        'today_checkouts' => 'Today\'s Checkouts',
-        'pending_payments' => 'Pending Payments',
-    ],
     // Bar stats
     'bar' => [
         'available_items' => 'Available Items',

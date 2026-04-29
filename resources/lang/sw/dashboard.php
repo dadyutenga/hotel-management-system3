@@ -19,7 +19,6 @@ return [
         'store_keeper' => 'Dashibodi ya Mhifadhi wa Ghala',
         'restaurant_manager' => 'Dashibodi ya Meneja wa Mkahawa',
         'bar_tender' => 'Dashibodi ya Mhudumu wa Baa',
-        'cashier' => 'Dashibodi ya Mtunza Fedha',
     ],
     
     'admin_title' => 'Usimamizi wa Mfumo',
@@ -31,7 +30,6 @@ return [
     'store_keeper_title' => 'Dashibodi ya Mhifadhi wa Ghala',
     'restaurant_manager_title' => 'Dashibodi ya Meneja wa Mkahawa',
     'bar_tender_title' => 'Dashibodi ya Mhudumu wa Baa',
-    'cashier_title' => 'Dashibodi ya Mtunza Fedha',
     
     // Welcome messages
     'welcome' => [
@@ -45,7 +43,6 @@ return [
         'store_keeper_message' => 'Hapa kuna muhtasari wa ghala na hesabu kwa leo.',
         'restaurant_manager_message' => 'Muhtasari wa hesabu ya Baa na Jiko kwa leo.',
         'bar_tender_message' => 'Muhtasari wako wa baa kwa leo.',
-        'cashier_message' => 'Muhtasari wa malipo na kuondoka kwa leo.',
     ],
     
     'admin_welcome' => 'Usimamizi wa mfumo na muhtasari wa miundombinu.',
@@ -57,7 +54,6 @@ return [
     'store_keeper_welcome' => 'Hapa kuna muhtasari wa ghala na hesabu kwa leo.',
     'restaurant_manager_welcome' => 'Muhtasari wa hesabu ya Baa na Jiko kwa leo.',
     'bar_tender_welcome' => 'Muhtasari wako wa baa kwa leo.',
-    'cashier_welcome' => 'Muhtasari wa malipo na kuondoka kwa leo.',
     
     // Stats
     'stats' => [
@@ -115,13 +111,6 @@ return [
         'today_movements' => 'Mienendo ya Leo',
         'available_items' => 'Vitu Vinavyopatikana',
         'served_today' => 'Vimehudumiwa Leo',
-    // Cashier stats
-    'cashier' => [
-        'today_revenue' => 'Mapato ya Leo',
-        'active_bookings' => 'Uhifadhi Unaofanya Kazi',
-        'today_checkouts' => 'Waondoka Leo',
-        'pending_payments' => 'Malipo Yanayosubiri',
-    ],
     // Bar stats
     'bar' => [
         'available_items' => 'Vitu Vinavyopatikana',

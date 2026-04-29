@@ -177,6 +177,62 @@ class AccountingUiSmokeTest extends TestCase
             });
     }
 
+    public function test_reports_center_includes_supplier_payment_and_outstanding_payables_context(): void
+    {
+        [$accountant, $resources] = $this->bootstrapAccountingUiContext();
+
+        SupplierPayment::create([
+            'supplier_id' => $resources['payable']->supplier_id,
+            'payment_date' => now()->toDateString(),
+            'currency' => 'USD',
+            'amount' => 350,
+            'method' => 'bank',
+            'reference' => 'SUPPAY-REPORT-001',
+            'status' => 'posted',
+            'created_by' => $accountant->id,
+            'posted_by' => $accountant->id,
+            'posted_at' => now(),
+        ]);
+
+        SupplierPayment::create([
+            'supplier_id' => $resources['payable']->supplier_id,
+            'payment_date' => now()->subMonths(2)->toDateString(),
+            'currency' => 'USD',
+            'amount' => 900,
+            'method' => 'bank',
+            'reference' => 'SUPPAY-REPORT-002',
+            'status' => 'posted',
+            'created_by' => $accountant->id,
+            'posted_by' => $accountant->id,
+            'posted_at' => now()->subMonths(2),
+        ]);
+
+        SupplierPayable::create([
+            'supplier_id' => $resources['payable']->supplier_id,
+            'reference' => 'GRN-SMOKE-002',
+            'payable_date' => now()->toDateString(),
+            'currency' => 'USD',
+            'amount_total' => 125,
+            'amount_paid' => 0,
+            'balance' => 125,
+            'status' => 'unpaid',
+            'source_module' => 'procurement',
+            'source_reference_type' => 'grn',
+            'source_reference_id' => fake()->uuid(),
+            'created_by' => $accountant->id,
+        ]);
+
+        $response = $this->actingAs($accountant)
+            ->get(route('accountant.reports', [
+                'date_from' => now()->startOfMonth()->toDateString(),
+                'date_to' => now()->toDateString(),
+            ]));
+
+        $response->assertOk()
+            ->assertViewHas('supplierPaymentsSettled', 350.0)
+            ->assertViewHas('outstandingSupplierPayables', 625.0);
+    }
+
     private function bootstrapAccountingUiContext(): array
     {
         Artisan::call('db:seed', ['class' => 'RoleSeeder']);

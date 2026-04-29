@@ -49,8 +49,6 @@ class DashboardController extends Controller {
             return $this->restaurantManagerDashboard();
         } elseif ($user->isBarTender()) {
             return $this->barTenderDashboard();
-        } elseif ($user->isCashier()) {
-            return $this->cashierDashboard();
         } else {
             return $this->frontDeskDashboard();
         }
@@ -621,21 +619,4 @@ class DashboardController extends Controller {
         return view('dashboards.bar-tender', compact('stats', 'stockLevels'));
     }
 
-    private function cashierDashboard() {
-        $stats = [
-            'today_revenue' => Booking::whereDate('created_at', today())
-                ->whereIn('status', ['checked_in', 'checked_out'])->sum('total_amount'),
-            'active_bookings' => Booking::where('status', 'checked_in')->count(),
-            'today_checkouts' => Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count(),
-            'pending_payments' => Booking::where('status', 'checked_in')->where('payment_status', 'pending')->count(),
-        ];
-
-        $todayDepartures = Booking::with('room')
-            ->whereDate('check_out_date', today())
-            ->where('status', 'checked_in')
-            ->orderBy('check_out_date')
-            ->get();
-
-        return view('dashboards.cashier', compact('stats', 'todayDepartures'));
-    }
 }

@@ -266,6 +266,62 @@ class SupplierPayablesWorkflowTest extends TestCase
         $this->assertSame('unpaid', $payable->status);
     }
 
+    public function test_post_payment_preserves_saved_allocations_without_silent_reallocation(): void
+    {
+        [$accountant, $supplier, $payableA] = $this->bootstrapSinglePayable(amountTotal: 1000);
+
+        $payableB = SupplierPayable::create([
+            'supplier_id' => $supplier->id,
+            'reference' => 'GRN-AP-002',
+            'payable_date' => now()->toDateString(),
+            'currency' => 'USD',
+            'amount_total' => 600,
+            'amount_paid' => 0,
+            'balance' => 600,
+            'status' => 'unpaid',
+            'source_module' => 'procurement',
+            'source_reference_type' => 'grn',
+            'source_reference_id' => fake()->uuid(),
+            'created_by' => $accountant->id,
+        ]);
+
+        $payment = SupplierPayment::create([
+            'supplier_id' => $supplier->id,
+            'payment_date' => now()->toDateString(),
+            'currency' => 'USD',
+            'amount' => 500,
+            'method' => 'bank',
+            'status' => 'draft',
+            'created_by' => $accountant->id,
+        ]);
+
+        $this->actingAs($accountant)
+            ->post(route('accountant.payments.allocate', $payment), [
+                'allocations' => [$payableA->id => 200],
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($accountant)
+            ->post(route('accountant.payments.post', $payment))
+            ->assertRedirect(route('accountant.payables.dashboard'));
+
+        $payment->refresh();
+        $payableA->refresh();
+        $payableB->refresh();
+
+        $this->assertSame('posted', $payment->status);
+        $this->assertEquals(200.0, (float) $payment->allocations()->sum('allocated_amount'));
+        $this->assertSame(1, $payment->allocations()->count());
+
+        $this->assertEquals(200.0, (float) $payableA->amount_paid);
+        $this->assertEquals(800.0, (float) $payableA->balance);
+        $this->assertSame('partial', $payableA->status);
+
+        $this->assertEquals(0.0, (float) $payableB->amount_paid);
+        $this->assertEquals(600.0, (float) $payableB->balance);
+        $this->assertSame('unpaid', $payableB->status);
+    }
+
     public function test_store_payment_auto_generates_reference_when_missing(): void
     {
         [$accountant, $supplier, $payable] = $this->bootstrapSinglePayable(amountTotal: 300);

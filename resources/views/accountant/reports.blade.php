@@ -22,10 +22,12 @@
         </div>
     </form>
 
-    <div class="grid gap-4 md:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.metrics.total_revenue') }}</div><div class="mt-2 text-2xl font-extrabold text-emerald-600"><x-money :amount="$reportMetrics['totalRevenue']" /></div></div>
         <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.metrics.total_expenses') }}</div><div class="mt-2 text-2xl font-extrabold text-rose-600"><x-money :amount="$reportMetrics['totalExpenses']" /></div></div>
         <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.metrics.net_profit') }}</div><div class="mt-2 text-2xl font-extrabold text-sky-600"><x-money :amount="$reportMetrics['netProfit']" /></div></div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.labels.supplier_payments_settled') }}</div><div class="mt-2 text-2xl font-extrabold text-indigo-600"><x-money :amount="$supplierPaymentsSettled" /></div></div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm"><div class="text-sm text-gray-500">{{ __('accountant.labels.outstanding_supplier_payables') }}</div><div class="mt-2 text-2xl font-extrabold text-amber-600"><x-money :amount="$outstandingSupplierPayables" /></div></div>
     </div>
     <div class="rounded-2xl bg-white p-6 shadow-sm">
         <h2 class="text-xl font-extrabold text-secondary">{{ __('accountant.sections.financial_reports') }}</h2>

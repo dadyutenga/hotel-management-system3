@@ -84,7 +84,6 @@ return [
         'manager' => 'General Manager',
         'supervisor' => 'Supervisor',
         'front_desk' => 'Front Desk',
-        'cashier' => 'Cashier',
         'house_help' => 'House Help',
         'store_manager' => 'Store Manager',
         'store_keeper' => 'Store Keeper',

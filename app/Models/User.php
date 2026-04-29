@@ -129,11 +129,6 @@ class User extends Authenticatable
         return $this->hasRole(Role::BAR_TENDER);
     }
 
-    public function isCashier(): bool
-    {
-        return $this->hasRole(Role::CASHIER);
-    }
-
     public function isAccountant(): bool
     {
         return $this->hasRole(Role::ACCOUNTANT);
@@ -159,7 +154,6 @@ class User extends Authenticatable
             Role::normalizeName(Role::RESTAURANT_MANAGER) => 'shared.sidebar.restaurant-manager',
             Role::normalizeName(Role::BAR_TENDER) => 'shared.sidebar.bar-tender',
             Role::normalizeName(Role::WAITER) => 'shared.sidebar.front-desk',
-            Role::normalizeName(Role::CASHIER) => 'shared.sidebar.cashier',
             Role::normalizeName(Role::ACCOUNTANT) => 'shared.sidebar.accountant',
             default => 'shared.sidebar.front-desk',
         };

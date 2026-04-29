@@ -300,7 +300,7 @@ class BartenderController extends Controller
             ]);
 
             return redirect()->route('bartender.orders.show', $order)
-                ->with('error', 'Unable to complete serving. Please retry or notify manager/cashier.');
+                ->with('error', 'Unable to complete serving. Please retry or notify a manager.');
         }
 
         return redirect()->route('bartender.orders.show', $order)

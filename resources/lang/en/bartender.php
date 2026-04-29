@@ -103,7 +103,7 @@ return [
         'availability_ok' => 'All order lines have enough stock for processing.',
         'prepare_before_payment' => 'Accept and prepare the drink order before opening walk-in payment.',
         'walkin_payment_completed' => 'Walk-in payment has been completed. Receipt is available from the order receipt flow.',
-        'restaurant_cashier' => 'This order links to restaurant billing flow and settles with restaurant cashier.',
+        'restaurant_front_desk' => 'This order links to restaurant billing flow and settles with the front desk.',
         'room_service_checkout' => 'On serve, charge is posted to guest folio for unified checkout.',
         'damage_audit' => 'Bar Damage Audit Trail',
         'restaurant_walkin_redirect' => 'This bar walk-in order is processed from the bartender desk. Prepare it there first, then collect payment.',

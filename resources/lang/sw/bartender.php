@@ -103,7 +103,7 @@ return [
         'availability_ok' => 'Mstari wote wa agizo una hisa za kutosha kwa uchakataji.',
         'prepare_before_payment' => 'Kubali na andaa agizo la kinywaji kabla ya kufungua malipo ya mteja wa moja kwa moja.',
         'walkin_payment_completed' => 'Malipo ya mteja wa moja kwa moja yamekamilika. Risiti inapatikana kwenye mtiririko wa risiti ya agizo.',
-        'restaurant_cashier' => 'Agizo hili linaunganishwa na mtiririko wa malipo wa mkahawa na hulipwa kwa keshia wa mkahawa.',
+        'restaurant_front_desk' => 'Agizo hili linaunganishwa na mtiririko wa malipo wa mkahawa na hulipwa kupitia mapokezi.',
         'room_service_checkout' => 'Baada ya kutoa, gharama huongezwa kwenye folio ya mgeni kwa malipo ya pamoja wakati wa checkout.',
         'damage_audit' => 'Mkondo wa Ukaguzi wa Uharibifu wa Baa',
         'restaurant_walkin_redirect' => 'Agizo hili la kinywaji cha baa la mteja wa moja kwa moja hushughulikiwa kwenye dawati la mhudumu wa baa. Liandae huko kwanza kisha kusanya malipo.',

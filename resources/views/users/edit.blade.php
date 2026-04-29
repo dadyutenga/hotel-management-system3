@@ -178,7 +178,7 @@
                             class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('role_id') border-red-500 @enderror"
                             required>
                             <option value="">{{ __('users.placeholders.select_role') }}</option>
-                            @foreach($roles as $role)
+                            @foreach($roles->filter(fn ($role) => ! \App\Models\Role::matches($role->name, \App\Models\Role::ADMIN) && ! \App\Models\Role::matches($role->name, \App\Models\Role::CASHIER)) as $role)
                             <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
                                 {{ ucwords(str_replace('_', ' ', $role->name)) }} - {{ $role->description }}
                             </option>

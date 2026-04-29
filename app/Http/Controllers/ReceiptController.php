@@ -202,11 +202,11 @@ class ReceiptController extends Controller
     protected function getModuleRoles(): array
     {
         return [
-            'laundry'    => ['laundry_manager', 'house_help', 'front_desk', 'supervisor', 'manager', 'cashier', 'admin', 'accountant'],
-            'restaurant' => ['restaurant_manager', 'bar_tender', 'cashier', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
-            'bar'        => ['restaurant_manager', 'bar_tender', 'cashier', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
-            'checkout'   => ['front_desk', 'cashier', 'manager', 'admin', 'accountant'],
-            'walkin'     => ['cashier', 'front_desk', 'bar_tender', 'restaurant_manager', 'manager', 'admin', 'accountant'],
+            'laundry'    => ['laundry_manager', 'house_help', 'front_desk', 'supervisor', 'manager', 'admin', 'accountant'],
+            'restaurant' => ['restaurant_manager', 'bar_tender', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
+            'bar'        => ['restaurant_manager', 'bar_tender', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
+            'checkout'   => ['front_desk', 'manager', 'admin', 'accountant'],
+            'walkin'     => ['front_desk', 'bar_tender', 'restaurant_manager', 'manager', 'admin', 'accountant'],
             'conference' => ['front_desk', 'supervisor', 'manager', 'admin', 'accountant'],
         ];
     }

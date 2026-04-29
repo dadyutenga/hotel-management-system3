@@ -124,7 +124,7 @@
             </div>
         @elseif($order->order_source === 'restaurant')
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
-                {{ __('bartender.messages.restaurant_cashier') }}
+                {{ __('bartender.messages.restaurant_front_desk') }}
             </div>
         @elseif($order->order_source === 'room_service')
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">

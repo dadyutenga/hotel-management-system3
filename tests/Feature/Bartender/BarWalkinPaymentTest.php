@@ -26,10 +26,10 @@ class BarWalkinPaymentTest extends TestCase
 
     public function test_bar_walkin_cash_payment_settles_order_deducts_stock_once_and_creates_receipt(): void
     {
-        $cashier = $this->createUserWithRole('cashier');
-        $this->actingAs($cashier);
+        $bartender = $this->createUserWithRole('bar_tender');
+        $this->actingAs($bartender);
 
-        $order = $this->createPreparedBarWalkinOrder($cashier, ingredientQtyPerItem: 2, itemQty: 2, availableQty: 10);
+        $order = $this->createPreparedBarWalkinOrder($bartender, ingredientQtyPerItem: 2, itemQty: 2, availableQty: 10);
 
         $response = $this->postJson(route('finance.walkin-payment.process'), [
             'order_id' => $order->id,
@@ -118,10 +118,10 @@ class BarWalkinPaymentTest extends TestCase
 
     public function test_bar_receipt_reprint_uses_same_receipt_number_and_non_bar_role_is_blocked(): void
     {
-        $cashier = $this->createUserWithRole('cashier');
-        $this->actingAs($cashier);
+        $bartender = $this->createUserWithRole('bar_tender');
+        $this->actingAs($bartender);
 
-        $order = $this->createPreparedBarWalkinOrder($cashier, ingredientQtyPerItem: 1, itemQty: 1, availableQty: 10);
+        $order = $this->createPreparedBarWalkinOrder($bartender, ingredientQtyPerItem: 1, itemQty: 1, availableQty: 10);
 
         $this->postJson(route('finance.walkin-payment.process'), [
             'order_id' => $order->id,

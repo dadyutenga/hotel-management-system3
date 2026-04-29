@@ -104,7 +104,7 @@
 
                 {{-- Walk-in: mark collected --}}
                 @if($laundryOrder->status === 'ready' && $laundryOrder->customer_type === 'walkin'
-                    && auth()->user()->hasAnyRole(['house_help','cashier','supervisor','laundry_manager','admin']))
+                    && auth()->user()->hasAnyRole(['house_help','supervisor','laundry_manager','admin']))
                 <form method="POST" action="{{ route('laundry.orders.collected', $laundryOrder) }}">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-all">
@@ -114,7 +114,7 @@
                 @endif
 
                 {{-- Settle payment --}}
-                @if(!in_array($laundryOrder->status, ['settled', 'charged', 'cancelled']) && auth()->user()->hasAnyRole(['cashier','front_desk','laundry_manager','supervisor','admin']))
+                @if(!in_array($laundryOrder->status, ['settled', 'charged', 'cancelled']) && auth()->user()->hasAnyRole(['front_desk','laundry_manager','supervisor','admin']))
                     @if($laundryOrder->customer_type === 'walkin')
                         {{-- Walk-in: Use unified payment modal (direct payment allowed) --}}
                         <x-walkin-payment-modal 

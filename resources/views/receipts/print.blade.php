@@ -441,7 +441,7 @@
         <div class="meta-block right">
             <p><span class="label">Receipt No:</span> <strong>{{ $receipt->receipt_number }}</strong></p>
             <p><span class="label">Date:</span> {{ $receipt->issued_at->format('d M Y H:i') }}</p>
-            <p><span class="label">Cashier:</span> {{ $receipt->cashier_name ?? '—' }}</p>
+            <p><span class="label">Handled by:</span> {{ $receipt->cashier_name ?? '—' }}</p>
             @if($receipt->transaction_reference)
                 <p><span class="label">Ref:</span> {{ $receipt->transaction_reference }}</p>
             @endif
