@@ -1,7 +1,7 @@
 {{-- resources/views/laundry-items/edit.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Edit Laundry Item - MRK Hotel')
+@section('title', 'Edit Laundry Item - Hotel Management System')
 @section('page-title', 'Edit Laundry Item')
 
 @section('content')

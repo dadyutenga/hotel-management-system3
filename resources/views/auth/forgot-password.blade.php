@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('auth.reset.title') }} - MRK Hotel & Resort</title>
+    <title>{{ __('auth.reset.title') }} - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Reset your staff portal password for MRK Hotel.">
+    <meta name="description" content="Reset your staff portal password for the hotel management system.">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -34,10 +34,10 @@
         <!-- Header -->
         <header class="py-6 px-8 flex justify-between items-center">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-3">
-                <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto" onerror="this.style.display='none'">
+                <img src="{{ asset('images/header.png') }}" alt="Hotel Management System" class="h-12 w-auto" onerror="this.style.display='none'">
                 <div>
-                    <span class="text-xl font-serif font-bold text-primary block leading-tight">MRK Hotel</span>
-                    <span class="text-xs text-gray-500 tracking-wider uppercase">& Resort</span>
+                    <span class="text-xl font-serif font-bold text-primary block leading-tight">Hotel Management</span>
+                    <span class="text-xs text-gray-500 tracking-wider uppercase">System</span>
                 </div>
             </a>
             <!-- Language Switcher -->
@@ -139,7 +139,7 @@
         <!-- Footer -->
         <footer class="py-6 px-8 text-center">
             <p class="text-sm text-gray-500">
-                &copy; {{ date('Y') }} MRK Hotel & Resort. {{ __('auth.login.all_rights_reserved') }}
+                &copy; {{ date('Y') }} Hotel Management System. {{ __('auth.login.all_rights_reserved') }}
             </p>
         </footer>
     </div>

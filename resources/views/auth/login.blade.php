@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('auth.login.staff_portal') }} - MRK Hotel & Resort</title>
+    <title>{{ __('auth.login.staff_portal') }} - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Staff login portal for MRK Hotel management system.">
+    <meta name="description" content="Staff login portal for the hotel management system.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -31,16 +31,16 @@
         <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
             <div class="absolute inset-0">
                 <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=1600&fit=crop" 
-                     alt="MRK Hotel" class="w-full h-full object-cover">
+                     alt="Hotel Management System" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/50 to-primary/30"></div>
             </div>
             <div class="relative z-10 flex flex-col justify-between p-12 w-full">
                 <!-- Logo -->
                 <a href="{{ url('/') }}" class="flex items-center gap-3">
-                    <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto brightness-0 invert" onerror="this.style.display='none'">
+                    <img src="{{ asset('images/header.png') }}" alt="Hotel Management System" class="h-12 w-auto brightness-0 invert" onerror="this.style.display='none'">
                     <div>
-                        <span class="text-2xl font-extrabold text-white block leading-tight">MRK Hotel</span>
-                        <span class="text-xs text-blue-200 tracking-wider uppercase font-medium">& Resort</span>
+                        <span class="text-2xl font-extrabold text-white block leading-tight">Hotel Management</span>
+                        <span class="text-xs text-blue-200 tracking-wider uppercase font-medium">System</span>
                     </div>
                 </a>
                 
@@ -80,7 +80,7 @@
                 
                 <!-- Footer -->
                 <p class="text-gray-300 text-sm">
-                    &copy; {{ date('Y') }} MRK Hotel & Resort. {{ __('auth.login.all_rights_reserved') }}
+                    &copy; {{ date('Y') }} Hotel Management System. {{ __('auth.login.all_rights_reserved') }}
                 </p>
             </div>
         </div>
@@ -103,10 +103,10 @@
                 <!-- Mobile Logo -->
                 <div class="lg:hidden text-center mb-8">
                     <a href="{{ url('/') }}" class="inline-flex items-center gap-3">
-                        <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto" onerror="this.style.display='none'">
+                        <img src="{{ asset('images/header.png') }}" alt="Hotel Management System" class="h-12 w-auto" onerror="this.style.display='none'">
                         <div>
-                            <span class="text-xl font-extrabold text-secondary block leading-tight">MRK Hotel</span>
-                            <span class="text-xs text-gray-500 tracking-wider uppercase font-medium">& Resort</span>
+                            <span class="text-xl font-extrabold text-secondary block leading-tight">Hotel Management</span>
+                            <span class="text-xs text-gray-500 tracking-wider uppercase font-medium">System</span>
                         </div>
                     </a>
                 </div>

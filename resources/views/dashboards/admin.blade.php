@@ -3,7 +3,7 @@
 {{-- Operations modules (Reservations, Bookings, Guests, Laundry, Conferences, Procurement) removed per RBAC requirements --}}
 @extends('layouts.app')
 
-@section('title', __('dashboard.admin_title') . ' - MRK Hotel')
+@section('title', __('dashboard.admin_title') . ' - Hotel Management System')
 @section('page-title', __('dashboard.admin_title'))
 
 @section('content')

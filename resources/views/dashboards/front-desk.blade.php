@@ -1,7 +1,7 @@
 {{-- resources/views/dashboards/front-desk.blade.php --}}
 @extends('layouts.app')
 
-@section('title', __('dashboard.front_desk_title') . ' - MRK Hotel')
+@section('title', __('dashboard.front_desk_title') . ' - Hotel Management System')
 @section('page-title', __('dashboard.front_desk_title'))
 
 @section('content')

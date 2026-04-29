@@ -1,7 +1,7 @@
 {{-- resources/views/booking-charges/index.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Booking Charges - MRK Hotel')
+@section('title', 'Booking Charges - Hotel Management System')
 @section('page-title', 'Booking Charges')
 
 @section('content')

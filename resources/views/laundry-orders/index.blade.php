@@ -1,7 +1,7 @@
 {{-- resources/views/laundry-orders/index.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Laundry Orders - MRK Hotel')
+@section('title', 'Laundry Orders - Hotel Management System')
 @section('page-title', 'Laundry Orders')
 
 @section('content')
