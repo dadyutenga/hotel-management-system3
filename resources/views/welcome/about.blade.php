@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - MRK Hotel & Resort</title>
+    <title>About Us - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Discover the story of MRK Hotel & Resort - a premier destination offering luxury accommodations, exceptional service, and unforgettable experiences.">
+    <meta name="description" content="Discover the story behind Hotel Management System - a premier platform supporting luxury accommodations, exceptional service, and unforgettable experiences.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,7 +35,7 @@
     <section class="relative py-24 md:py-32">
         <div class="absolute inset-0">
             <img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1600&h=900&fit=crop" 
-                 alt="MRK Hotel Exterior" class="w-full h-full object-cover">
+                 alt="Hotel Building Exterior" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-r from-dark/80 via-dark/60 to-dark/40"></div>
         </div>
         <div class="container mx-auto px-6 lg:px-8 relative z-10">
@@ -45,7 +45,7 @@
                     A Legacy of<br/>Exceptional Hospitality
                 </h1>
                 <p class="text-lg md:text-xl text-gray-200 leading-relaxed">
-                    For over two decades, MRK Hotel & Resort has been a beacon of luxury and comfort, 
+                    For over two decades, Hotel Management System has been a beacon of luxury and comfort, 
                     offering guests an unforgettable experience rooted in tradition and refined elegance.
                 </p>
             </div>
@@ -62,13 +62,13 @@
                         A Tradition of Excellence Since 2001
                     </h2>
                     <p class="text-gray-600 leading-relaxed mb-6">
-                        Founded with a vision to create a sanctuary of comfort and sophistication, MRK Hotel & Resort 
+                        Founded with a vision to create a sanctuary of comfort and sophistication, Hotel Management System 
                         has grown from a boutique establishment to one of the region's most distinguished hospitality destinations.
                     </p>
                     <p class="text-gray-600 leading-relaxed mb-6">
                         Our commitment to personalized service, attention to detail, and genuine warmth has earned us 
                         the trust of discerning travelers from around the world. Every guest who walks through our doors 
-                        becomes part of the MRK family.
+                        becomes part of our hotel community.
                     </p>
                     <p class="text-gray-600 leading-relaxed">
                         Whether you're here for business or leisure, celebrating a milestone or seeking respite, 
@@ -78,7 +78,7 @@
                 <div class="relative">
                     <div class="absolute -inset-4 bg-gradient-to-tr from-accent/20 via-primary/10 to-transparent rounded-3xl blur-2xl"></div>
                     <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop" 
-                         alt="MRK Hotel Lobby" 
+                         alt="Hotel Lobby Interior" 
                          class="relative rounded-2xl shadow-2xl w-full h-auto object-cover ring-1 ring-gray-200">
                 </div>
             </div>
@@ -125,7 +125,7 @@
             <div class="text-center max-w-3xl mx-auto mb-16">
                 <span class="inline-block px-4 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4">At a Glance</span>
                 <h2 class="text-3xl md:text-4xl font-extrabold text-secondary mb-6">
-                    The MRK Experience
+                    The Hotel Experience
                 </h2>
                 <p class="text-lg text-gray-600 leading-relaxed">
                     Discover what makes our hotel a preferred choice for travelers worldwide
@@ -255,10 +255,10 @@
         <div class="container mx-auto px-6 lg:px-8 text-center">
             <div class="max-w-4xl mx-auto">
                 <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-6">
-                    Experience MRK Hospitality
+                    Experience Hotel Hospitality
                 </h2>
                 <p class="text-xl text-white/90 mb-10 leading-relaxed">
-                    We invite you to be our guest and discover why MRK Hotel & Resort 
+                    We invite you to be our guest and discover why Hotel Management System 
                     has been the choice of discerning travelers for over two decades.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Features - MRK Hotel Management System</title>
+    <title>Features - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Explore the powerful features of MRK Hotel Management System - reservations, billing, housekeeping, inventory, and more.">
+    <meta name="description" content="Explore the powerful features of Hotel Management System - reservations, billing, housekeeping, inventory, and more.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>

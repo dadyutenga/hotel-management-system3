@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Your Stay - MRK Hotel & Resort</title>
+    <title>Book Your Stay - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Book your stay at MRK Hotel & Resort. Check room availability and make reservations online.">
+    <meta name="description" content="Book your stay with our hotel management system. Check room availability and make reservations online.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -38,7 +38,7 @@
             <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white text-sm font-semibold rounded-full mb-6 backdrop-blur-sm">Reserve Your Room</span>
             <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6">Book Your Stay</h1>
             <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-                Experience luxury and comfort at MRK Hotel & Resort. Check availability and reserve your perfect room today.
+                Experience luxury and comfort with our hotel management system. Check availability and reserve your perfect room today.
             </p>
         </div>
     </section>

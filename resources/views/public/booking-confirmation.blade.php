@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Confirmed - MRK Hotel & Resort</title>
+    <title>Reservation Confirmed - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Your reservation at MRK Hotel & Resort has been confirmed.">
+    <meta name="description" content="Your reservation with Hotel Management System has been confirmed.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -41,7 +41,7 @@
                     </svg>
                 </div>
                 <h1 class="text-4xl font-extrabold text-secondary mb-4">Reservation Confirmed!</h1>
-                <p class="text-xl text-gray-500">Thank you for choosing MRK Hotel & Resort</p>
+                <p class="text-xl text-gray-500">Thank you for choosing Hotel Management System</p>
             </div>
 
             <!-- Confirmation Card -->
@@ -202,7 +202,7 @@
                         <h4 class="font-bold text-secondary mb-2">Need Help?</h4>
                         <ul class="text-sm text-gray-500 space-y-1">
                             <li>• Call: +1 (555) 123-4567</li>
-                            <li>• Email: reservations@mrkhotel.com</li>
+                            <li>• Email: reservations@hotel-system.local</li>
                         </ul>
                     </div>
                 </div>

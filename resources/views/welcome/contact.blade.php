@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us - MRK Hotel & Resort</title>
+    <title>Contact Us - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Get in touch with MRK Hotel & Resort. Our concierge team is ready to assist with reservations, inquiries, and special requests.">
+    <meta name="description" content="Get in touch with Hotel Management System. Our concierge team is ready to assist with reservations, inquiries, and special requests.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,7 +35,7 @@
     <section class="relative py-24 md:py-32">
         <div class="absolute inset-0">
             <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&h=900&fit=crop" 
-                 alt="MRK Hotel Reception" class="w-full h-full object-cover">
+                 alt="Hotel Reception Desk" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-r from-dark/80 via-dark/60 to-dark/40"></div>
         </div>
         <div class="container mx-auto px-6 lg:px-8 relative z-10">
@@ -81,9 +81,9 @@
                         </div>
                         <h3 class="text-xl font-bold text-secondary mb-2">Email Us</h3>
                         <p class="text-gray-600 mb-4">We respond within 2 hours</p>
-                        <a href="mailto:reservations@mrkhotel.com" class="text-primary font-semibold hover:text-primary-light transition-colors">reservations@mrkhotel.com</a>
+                        <a href="mailto:reservations@hotel-system.local" class="text-primary font-semibold hover:text-primary-light transition-colors">reservations@hotel-system.local</a>
                         <br>
-                        <a href="mailto:concierge@mrkhotel.com" class="text-primary font-semibold hover:text-primary-light transition-colors">concierge@mrkhotel.com</a>
+                        <a href="mailto:concierge@hotel-system.local" class="text-primary font-semibold hover:text-primary-light transition-colors">concierge@hotel-system.local</a>
                     </div>
 
                     <!-- Location -->
@@ -201,7 +201,7 @@
                                 <input type="checkbox" id="newsletter" name="newsletter" 
                                        class="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
                                 <label for="newsletter" class="text-sm text-gray-600">
-                                    I'd like to receive updates about special offers, events, and promotions from MRK Hotel & Resort.
+                                    I'd like to receive updates about special offers, events, and promotions from the hotel.
                                 </label>
                             </div>
 
@@ -331,7 +331,7 @@
         <div class="container mx-auto px-6 lg:px-8 text-center">
             <div class="max-w-4xl mx-auto">
                 <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-6">
-                    Ready to Experience MRK Hospitality?
+                    Ready to Experience Hotel Hospitality?
                 </h2>
                 <p class="text-xl text-white/90 mb-10 leading-relaxed">
                     Book your stay today and discover why our guests return again and again.

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MRK Hotel & Resort - Premium Accommodation in East Africa</title>
+    <title>Hotel Management System - Premium Hotel Operations</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
-    <meta name="description" content="Experience luxury hospitality at MRK Hotel & Resort. Book your stay, explore our rooms, and discover exceptional services across our East African properties.">
+    <meta name="description" content="Experience premium hospitality with a hotel management system. Book your stay, explore our rooms, and discover exceptional services across our East African properties.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -39,7 +39,7 @@
                 <div class="text-center lg:text-left">
                     <span class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-6 border border-primary/20">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path></svg>
-                        Welcome to MRK Hotel & Resort
+                        Welcome to Hotel Management System
                     </span>
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-secondary leading-tight mb-6">
                         Experience<br/>
@@ -105,7 +105,7 @@
                     <div class="absolute -inset-4 bg-gradient-to-tr from-primary/20 via-blue-600/10 to-transparent rounded-3xl blur-2xl"></div>
                     <div class="relative">
                         <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=900&h=700&fit=crop" 
-                             alt="MRK Hotel Exterior" 
+                             alt="Hotel Building Exterior" 
                              class="rounded-2xl shadow-2xl w-full h-auto object-cover ring-1 ring-gray-200">
                         
                         <!-- Stats Overlay -->
@@ -195,7 +195,7 @@
                         A Legacy of Excellence in Hospitality
                     </h2>
                     <p class="text-gray-600 leading-relaxed mb-6">
-                        Since our establishment, MRK Hotel & Resort has been committed to providing exceptional hospitality services across East Africa. Our properties combine modern comfort with traditional warmth, ensuring every guest feels at home.
+                        Since our establishment, Hotel Management System has been committed to supporting exceptional hospitality services across East Africa. Our properties combine modern comfort with traditional warmth, ensuring every guest feels at home.
                     </p>
                     <p class="text-gray-600 leading-relaxed mb-8">
                         Whether you're traveling for business or leisure, our dedicated staff and world-class facilities are designed to exceed your expectations and create lasting memories.
@@ -595,7 +595,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <h4 class="font-semibold mb-1">Email</h4>
-                    <p class="text-gray-400 text-sm">reservations@mrkhotel.com</p>
+                    <p class="text-gray-400 text-sm">reservations@hotel-system.local</p>
                 </div>
                 <div>
                     <svg class="w-8 h-8 text-primary mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -5,14 +5,14 @@
             <!-- Brand Column -->
             <div class="lg:col-span-1">
                 <a href="{{ url('/') }}" class="flex items-center gap-3 mb-6">
-                    <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto brightness-0 invert" onerror="this.style.display='none'">
+                    <img src="{{ asset('images/header.png') }}" alt="Hotel Management System" class="h-12 w-auto brightness-0 invert" onerror="this.style.display='none'">
                     <div>
-                        <span class="text-xl font-bold text-white block leading-tight">MRK Hotel</span>
-                        <span class="text-xs text-gray-400 tracking-wider uppercase">& Resort</span>
+                        <span class="text-xl font-bold text-white block leading-tight">Hotel Management</span>
+                        <span class="text-xs text-gray-400 tracking-wider uppercase">System</span>
                     </div>
                 </a>
                 <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                    Experience exceptional hospitality at MRK Hotel & Resort. Offering premium accommodation and world-class services across East Africa since 2010.
+                    Experience exceptional hospitality with our hotel management system. Supporting premium accommodation and world-class services across East Africa since 2010.
                 </p>
                 <div class="flex gap-4">
                     <a href="#" class="text-gray-400 hover:text-white transition-colors">
@@ -70,7 +70,7 @@
                         <svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        <span class="text-gray-400 text-sm">reservations@mrkhotel.com</span>
+                        <span class="text-gray-400 text-sm">reservations@hotel-system.local</span>
                     </li>
                 </ul>
             </div>
@@ -79,7 +79,7 @@
         <!-- Bottom Bar -->
         <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p class="text-gray-400 text-sm">
-                &copy; {{ date('Y') }} MRK Hotel & Resort. All rights reserved.
+                &copy; {{ date('Y') }} Hotel Management System. All rights reserved.
             </p>
             <div class="flex items-center gap-6">
                 <a href="{{ url('/privacy') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>

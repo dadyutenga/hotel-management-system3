@@ -4,10 +4,10 @@
         <div class="flex items-center justify-between h-20">
             <!-- Logo -->
             <a href="{{ url('/') }}" class="flex items-center gap-3">
-                <img src="{{ asset('images/header.png') }}" alt="MRK Hotel" class="h-12 w-auto" onerror="this.style.display='none'">
+                <img src="{{ asset('images/header.png') }}" alt="Hotel Management System" class="h-12 w-auto" onerror="this.style.display='none'">
                 <div>
-                    <span class="text-xl font-bold text-primary block leading-tight">MRK Hotel</span>
-                    <span class="text-xs text-gray-500 tracking-wider uppercase">& Resort</span>
+                    <span class="text-xl font-bold text-primary block leading-tight">Hotel Management</span>
+                    <span class="text-xs text-gray-500 tracking-wider uppercase">System</span>
                 </div>
             </a>
             
