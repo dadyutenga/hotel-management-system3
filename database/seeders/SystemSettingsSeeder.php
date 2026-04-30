@@ -31,6 +31,101 @@ class SystemSettingsSeeder extends Seeder
                 'value'       => 'USD',
                 'description' => 'System-wide default currency (USD or TZS)',
             ],
+            [
+                'key'         => 'sms_provider_key',
+                'value'       => '',
+                'description' => 'SMS provider key',
+            ],
+            [
+                'key'         => 'sms_sender_id',
+                'value'       => '',
+                'description' => 'SMS sender ID',
+            ],
+            [
+                'key'         => 'sms_api_key',
+                'value'       => '',
+                'description' => 'SMS provider API key',
+            ],
+            [
+                'key'         => 'sms_base_url',
+                'value'       => '',
+                'description' => 'SMS provider base URL',
+            ],
+            [
+                'key'         => 'sms_is_enabled',
+                'value'       => 'false',
+                'description' => 'SMS provider enabled flag',
+            ],
+            [
+                'key'         => 'mail_driver',
+                'value'       => 'smtp',
+                'description' => 'Mail driver',
+            ],
+            [
+                'key'         => 'mail_host',
+                'value'       => '',
+                'description' => 'Mail host',
+            ],
+            [
+                'key'         => 'mail_port',
+                'value'       => '587',
+                'description' => 'Mail port',
+            ],
+            [
+                'key'         => 'mail_username',
+                'value'       => '',
+                'description' => 'Mail username',
+            ],
+            [
+                'key'         => 'mail_password',
+                'value'       => '',
+                'description' => 'Mail password',
+            ],
+            [
+                'key'         => 'mail_encryption',
+                'value'       => 'tls',
+                'description' => 'Mail encryption',
+            ],
+            [
+                'key'         => 'mail_from_address',
+                'value'       => '',
+                'description' => 'Mail from address',
+            ],
+            [
+                'key'         => 'mail_from_name',
+                'value'       => '',
+                'description' => 'Mail from name',
+            ],
+            [
+                'key'         => 'mail_is_enabled',
+                'value'       => 'false',
+                'description' => 'Mail enabled flag',
+            ],
+            [
+                'key'         => 'snipe_base_url',
+                'value'       => '',
+                'description' => 'Snipe base URL',
+            ],
+            [
+                'key'         => 'snipe_api_key',
+                'value'       => '',
+                'description' => 'Snipe API key',
+            ],
+            [
+                'key'         => 'snipe_api_secret',
+                'value'       => '',
+                'description' => 'Snipe API secret',
+            ],
+            [
+                'key'         => 'snipe_webhook_secret',
+                'value'       => '',
+                'description' => 'Snipe webhook secret',
+            ],
+            [
+                'key'         => 'snipe_is_enabled',
+                'value'       => 'false',
+                'description' => 'Snipe payment enabled flag',
+            ],
         ];
 
         $now = now();

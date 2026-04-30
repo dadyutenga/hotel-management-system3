@@ -20,6 +20,25 @@ class SettingsController extends Controller
         $settings = [
             'default_currency' => SystemSetting::getValue('default_currency', 'USD'),
             'tzs_exchange_rate' => SystemSetting::getValue('tzs_exchange_rate', 2500),
+            'sms_provider_key' => SystemSetting::getValue('sms_provider_key', ''),
+            'sms_sender_id' => SystemSetting::getValue('sms_sender_id', ''),
+            'sms_base_url' => SystemSetting::getValue('sms_base_url', ''),
+            'sms_is_enabled' => filter_var(SystemSetting::getValue('sms_is_enabled', 'false'), FILTER_VALIDATE_BOOLEAN),
+            'sms_api_key_set' => !empty(SystemSetting::getValue('sms_api_key')),
+            'mail_driver' => SystemSetting::getValue('mail_driver', 'smtp'),
+            'mail_host' => SystemSetting::getValue('mail_host', ''),
+            'mail_port' => SystemSetting::getValue('mail_port', '587'),
+            'mail_username' => SystemSetting::getValue('mail_username', ''),
+            'mail_encryption' => SystemSetting::getValue('mail_encryption', 'tls'),
+            'mail_from_address' => SystemSetting::getValue('mail_from_address', ''),
+            'mail_from_name' => SystemSetting::getValue('mail_from_name', ''),
+            'mail_is_enabled' => filter_var(SystemSetting::getValue('mail_is_enabled', 'false'), FILTER_VALIDATE_BOOLEAN),
+            'mail_password_set' => !empty(SystemSetting::getValue('mail_password')),
+            'snipe_base_url' => SystemSetting::getValue('snipe_base_url', ''),
+            'snipe_is_enabled' => filter_var(SystemSetting::getValue('snipe_is_enabled', 'false'), FILTER_VALIDATE_BOOLEAN),
+            'snipe_api_key_set' => !empty(SystemSetting::getValue('snipe_api_key')),
+            'snipe_api_secret_set' => !empty(SystemSetting::getValue('snipe_api_secret')),
+            'snipe_webhook_secret_set' => !empty(SystemSetting::getValue('snipe_webhook_secret')),
         ];
 
         $currencies = CurrencyHelper::getCurrencyOptions();
@@ -57,6 +76,104 @@ class SettingsController extends Controller
         CurrencyHelper::clearCache();
 
         return back()->with('success', 'System settings updated successfully.');
+    }
+
+    /**
+     * Update SMS provider settings.
+     */
+    public function updateSmsSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'sms_provider_key' => ['nullable', 'string', 'max:100', 'required_if:sms_is_enabled,1'],
+            'sms_sender_id' => ['nullable', 'string', 'max:100'],
+            'sms_api_key' => ['nullable', 'string', 'max:255', 'required_if:sms_is_enabled,1'],
+            'sms_base_url' => ['nullable', 'url'],
+            'sms_is_enabled' => ['nullable', 'boolean'],
+        ]);
+
+        $userId = Auth::id();
+        $isEnabled = $request->boolean('sms_is_enabled');
+
+        SystemSetting::setValue('sms_provider_key', $validated['sms_provider_key'] ?? '', 'SMS provider key', $userId);
+        SystemSetting::setValue('sms_sender_id', $validated['sms_sender_id'] ?? '', 'SMS sender ID', $userId);
+        SystemSetting::setValue('sms_base_url', $validated['sms_base_url'] ?? '', 'SMS provider base URL', $userId);
+        SystemSetting::setValue('sms_is_enabled', $isEnabled ? 'true' : 'false', 'SMS provider enabled flag', $userId);
+
+        if (!empty($validated['sms_api_key'])) {
+            SystemSetting::setValue('sms_api_key', $validated['sms_api_key'], 'SMS provider API key', $userId);
+        }
+
+        return back()->with('sms_success', 'SMS settings updated successfully.');
+    }
+
+    /**
+     * Update email configuration settings.
+     */
+    public function updateEmailSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'mail_driver' => ['nullable', 'string', 'max:50', 'required_if:mail_is_enabled,1'],
+            'mail_host' => ['nullable', 'string', 'max:191', 'required_if:mail_is_enabled,1'],
+            'mail_port' => ['nullable', 'integer', 'min:1', 'max:65535', 'required_if:mail_is_enabled,1'],
+            'mail_username' => ['nullable', 'string', 'max:191'],
+            'mail_password' => ['nullable', 'string', 'max:255'],
+            'mail_encryption' => ['nullable', 'string', 'max:10'],
+            'mail_from_address' => ['nullable', 'email', 'max:191', 'required_if:mail_is_enabled,1'],
+            'mail_from_name' => ['nullable', 'string', 'max:191'],
+            'mail_is_enabled' => ['nullable', 'boolean'],
+        ]);
+
+        $userId = Auth::id();
+        $isEnabled = $request->boolean('mail_is_enabled');
+
+        SystemSetting::setValue('mail_driver', $validated['mail_driver'] ?? 'smtp', 'Mail driver', $userId);
+        SystemSetting::setValue('mail_host', $validated['mail_host'] ?? '', 'Mail host', $userId);
+        SystemSetting::setValue('mail_port', (string) ($validated['mail_port'] ?? ''), 'Mail port', $userId);
+        SystemSetting::setValue('mail_username', $validated['mail_username'] ?? '', 'Mail username', $userId);
+        SystemSetting::setValue('mail_encryption', $validated['mail_encryption'] ?? 'tls', 'Mail encryption', $userId);
+        SystemSetting::setValue('mail_from_address', $validated['mail_from_address'] ?? '', 'Mail from address', $userId);
+        SystemSetting::setValue('mail_from_name', $validated['mail_from_name'] ?? '', 'Mail from name', $userId);
+        SystemSetting::setValue('mail_is_enabled', $isEnabled ? 'true' : 'false', 'Mail enabled flag', $userId);
+
+        if (!empty($validated['mail_password'])) {
+            SystemSetting::setValue('mail_password', $validated['mail_password'], 'Mail password', $userId);
+        }
+
+        return back()->with('email_success', 'Email settings updated successfully.');
+    }
+
+    /**
+     * Update Snipe payment settings.
+     */
+    public function updateSnipeSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'snipe_is_enabled' => ['nullable', 'boolean'],
+            'snipe_api_key' => ['nullable', 'string', 'max:255', 'required_if:snipe_is_enabled,1'],
+            'snipe_api_secret' => ['nullable', 'string', 'max:255', 'required_if:snipe_is_enabled,1'],
+            'snipe_base_url' => ['nullable', 'url'],
+            'snipe_webhook_secret' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $userId = Auth::id();
+        $isEnabled = $request->boolean('snipe_is_enabled');
+
+        SystemSetting::setValue('snipe_base_url', $validated['snipe_base_url'] ?? '', 'Snipe base URL', $userId);
+        SystemSetting::setValue('snipe_is_enabled', $isEnabled ? 'true' : 'false', 'Snipe payment enabled flag', $userId);
+
+        if (!empty($validated['snipe_api_key'])) {
+            SystemSetting::setValue('snipe_api_key', $validated['snipe_api_key'], 'Snipe API key', $userId);
+        }
+
+        if (!empty($validated['snipe_api_secret'])) {
+            SystemSetting::setValue('snipe_api_secret', $validated['snipe_api_secret'], 'Snipe API secret', $userId);
+        }
+
+        if (!empty($validated['snipe_webhook_secret'])) {
+            SystemSetting::setValue('snipe_webhook_secret', $validated['snipe_webhook_secret'], 'Snipe webhook secret', $userId);
+        }
+
+        return back()->with('snipe_success', 'Snipe payment settings updated successfully.');
     }
 
     /**

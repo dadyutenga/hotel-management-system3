@@ -27,6 +27,9 @@ return [
         'currency' => 'Mipangilio ya Sarafu',
         'change_password' => 'Badilisha Nenosiri',
         'profile_info' => 'Taarifa za Wasifu',
+        'sms' => 'Mtoa Huduma wa SMS',
+        'email' => 'Mipangilio ya Barua Pepe',
+        'snipe' => 'Malipo ya Snipe',
     ],
     
     // Subtitles (for admin settings page)
@@ -34,6 +37,9 @@ return [
         'currency' => 'Weka mipangilio ya sarafu kwa mfumo mzima',
         'password' => 'Sasisha nenosiri la akaunti yako kwa usalama',
         'profile' => 'Sasisha maelezo ya akaunti yako',
+        'sms' => 'Sanidi taarifa za mtoa huduma wa SMS',
+        'email' => 'Dhibiti mipangilio ya barua pepe',
+        'snipe' => 'Dhibiti muunganisho wa malipo ya Snipe',
     ],
     
     // Form fields (for admin settings page)
@@ -45,6 +51,25 @@ return [
         'confirm_password' => 'Thibitisha Nenosiri Jipya',
         'name' => 'Jina',
         'email' => 'Barua Pepe',
+        'sms_provider_key' => 'Kitambulisho cha Mtoa SMS',
+        'sms_sender_id' => 'Kitambulisho cha Mtumaji SMS',
+        'sms_api_key' => 'Ufunguo wa API ya SMS',
+        'sms_base_url' => 'Kiungo cha Msingi cha SMS',
+        'sms_is_enabled' => 'Washa Mtoa SMS',
+        'mail_driver' => 'Aina ya Barua',
+        'mail_host' => 'Seva ya Barua',
+        'mail_port' => 'Bandari ya Barua',
+        'mail_username' => 'Jina la Mtumiaji wa Barua',
+        'mail_password' => 'Nenosiri la Barua',
+        'mail_encryption' => 'Usimbaji wa Barua',
+        'mail_from_address' => 'Anwani ya Mtumaji',
+        'mail_from_name' => 'Jina la Mtumaji',
+        'mail_is_enabled' => 'Washa Uwasilishaji wa Barua',
+        'snipe_base_url' => 'Kiungo cha Msingi cha Snipe',
+        'snipe_api_key' => 'Ufunguo wa API wa Snipe',
+        'snipe_api_secret' => 'Siri ya API ya Snipe',
+        'snipe_webhook_secret' => 'Siri ya Webhook ya Snipe',
+        'snipe_is_enabled' => 'Washa Malipo ya Snipe',
     ],
     
     // Hints (for admin settings page)
@@ -52,6 +77,10 @@ return [
         'currency_usage' => 'Sarafu hii itatumika katika mfumo mzima kuonyesha bei.',
         'exchange_rate' => 'Sasisha kila siku kwa ubadilishaji sahihi wa sarafu.',
         'password_requirements' => 'Angalau herufi 8, lazima iwe na herufi kubwa, ndogo, na nambari.',
+        'secret_masked' => 'Acha tupu ili kuhifadhi thamani ya siri iliyopo.',
+        'secret_saved' => 'Siri imehifadhiwa',
+        'secret_required' => 'Siri inahitajika ukiwasha',
+        'secret_optional' => 'Siri ni ya hiari',
     ],
     
     // Labels (for admin settings page)
@@ -106,6 +135,9 @@ return [
     // Actions
     'save_settings' => 'Hifadhi Mipangilio',
     'save_currency' => 'Hifadhi Mipangilio ya Sarafu',
+    'save_sms' => 'Hifadhi Mipangilio ya SMS',
+    'save_email' => 'Hifadhi Mipangilio ya Barua',
+    'save_snipe' => 'Hifadhi Mipangilio ya Snipe',
     'change_password' => 'Badilisha Nenosiri',
     'save_profile' => 'Hifadhi Wasifu',
     'reset_to_default' => 'Weka Upya',

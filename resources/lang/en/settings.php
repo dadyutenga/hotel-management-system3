@@ -27,6 +27,9 @@ return [
         'currency' => 'Currency Settings',
         'change_password' => 'Change Password',
         'profile_info' => 'Profile Information',
+        'sms' => 'SMS Provider',
+        'email' => 'Email Configuration',
+        'snipe' => 'Snipe Payments',
     ],
     
     // Subtitles (for admin settings page)
@@ -34,6 +37,9 @@ return [
         'currency' => 'Configure system-wide currency display',
         'password' => 'Update your account password securely',
         'profile' => 'Update your account details',
+        'sms' => 'Configure SMS provider credentials and status',
+        'email' => 'Manage email delivery settings',
+        'snipe' => 'Manage Snipe payment integration',
     ],
     
     // Form fields (for admin settings page)
@@ -45,6 +51,25 @@ return [
         'confirm_password' => 'Confirm New Password',
         'name' => 'Name',
         'email' => 'Email',
+        'sms_provider_key' => 'SMS Provider Key',
+        'sms_sender_id' => 'SMS Sender ID',
+        'sms_api_key' => 'SMS API Key',
+        'sms_base_url' => 'SMS Base URL',
+        'sms_is_enabled' => 'Enable SMS Provider',
+        'mail_driver' => 'Mail Driver',
+        'mail_host' => 'Mail Host',
+        'mail_port' => 'Mail Port',
+        'mail_username' => 'Mail Username',
+        'mail_password' => 'Mail Password',
+        'mail_encryption' => 'Mail Encryption',
+        'mail_from_address' => 'From Address',
+        'mail_from_name' => 'From Name',
+        'mail_is_enabled' => 'Enable Email Delivery',
+        'snipe_base_url' => 'Snipe Base URL',
+        'snipe_api_key' => 'Snipe API Key',
+        'snipe_api_secret' => 'Snipe API Secret',
+        'snipe_webhook_secret' => 'Snipe Webhook Secret',
+        'snipe_is_enabled' => 'Enable Snipe Payments',
     ],
     
     // Hints (for admin settings page)
@@ -52,6 +77,10 @@ return [
         'currency_usage' => 'This currency will be used across the entire system for displaying prices.',
         'exchange_rate' => 'Update daily for accurate currency conversion.',
         'password_requirements' => 'Minimum 8 characters, must include uppercase, lowercase, and numbers.',
+        'secret_masked' => 'Leave blank to keep the existing secret value.',
+        'secret_saved' => 'Secret is saved',
+        'secret_required' => 'Secret is required when enabled',
+        'secret_optional' => 'Secret is optional',
     ],
     
     // Labels (for admin settings page)
@@ -106,6 +135,9 @@ return [
     // Actions
     'save_settings' => 'Save Settings',
     'save_currency' => 'Save Currency Settings',
+    'save_sms' => 'Save SMS Settings',
+    'save_email' => 'Save Email Settings',
+    'save_snipe' => 'Save Snipe Settings',
     'change_password' => 'Change Password',
     'save_profile' => 'Save Profile',
     'reset_to_default' => 'Reset to Default',

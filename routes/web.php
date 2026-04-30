@@ -666,6 +666,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('settings',                         [SettingsController::class, 'index'])->name('settings.index');
         Route::post('settings',                        [SettingsController::class, 'updateSettings'])->name('settings.update');
+          Route::post('settings/sms',                    [SettingsController::class, 'updateSmsSettings'])->name('settings.sms');
+          Route::post('settings/email',                  [SettingsController::class, 'updateEmailSettings'])->name('settings.email');
+          Route::post('settings/snipe',                  [SettingsController::class, 'updateSnipeSettings'])->name('settings.snipe');
         Route::post('settings/password',               [SettingsController::class, 'updatePassword'])->name('settings.password');
     });
 

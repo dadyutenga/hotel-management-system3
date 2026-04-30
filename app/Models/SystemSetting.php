@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class SystemSetting extends Model
@@ -21,12 +22,34 @@ class SystemSetting extends Model
         'created_at' => 'datetime',
     ];
 
+    protected static array $encryptedKeys = [
+        'sms_api_key',
+        'mail_password',
+        'snipe_api_key',
+        'snipe_api_secret',
+        'snipe_webhook_secret',
+    ];
+
     /**
      * Get a setting value by key with optional default.
      */
     public static function getValue(string $key, mixed $default = null): mixed
     {
-        return static::where('key', $key)->value('value') ?? $default;
+        $value = static::where('key', $key)->value('value');
+
+        if ($value === null) {
+            return $default;
+        }
+
+        if (static::shouldEncrypt($key) && $value !== '') {
+            try {
+                return Crypt::decryptString($value);
+            } catch (\Throwable $exception) {
+                return $default;
+            }
+        }
+
+        return $value;
     }
 
     /**
@@ -34,11 +57,12 @@ class SystemSetting extends Model
      */
     public static function setValue(string $key, mixed $value, ?string $description = null, ?string $updatedBy = null): void
     {
+        $storedValue = static::normalizeValue($key, $value);
         $setting = static::where('key', $key)->first();
 
         if ($setting) {
             $setting->update([
-                'value' => $value,
+                'value' => $storedValue,
                 'description' => $description ?? $setting->description,
                 'updated_by' => $updatedBy,
                 'updated_at' => now(),
@@ -47,7 +71,7 @@ class SystemSetting extends Model
             static::create([
                 'id' => Str::uuid()->toString(),
                 'key' => $key,
-                'value' => $value,
+                'value' => $storedValue,
                 'description' => $description,
                 'updated_by' => $updatedBy,
             ]);
@@ -64,5 +88,21 @@ class SystemSetting extends Model
     public static function getAllSettings(): array
     {
         return static::pluck('value', 'key')->toArray();
+    }
+
+    protected static function shouldEncrypt(string $key): bool
+    {
+        return in_array($key, static::$encryptedKeys, true);
+    }
+
+    protected static function normalizeValue(string $key, mixed $value): string
+    {
+        $stringValue = $value === null ? '' : (string) $value;
+
+        if (!static::shouldEncrypt($key) || $stringValue === '') {
+            return $stringValue;
+        }
+
+        return Crypt::encryptString($stringValue);
     }
 }
