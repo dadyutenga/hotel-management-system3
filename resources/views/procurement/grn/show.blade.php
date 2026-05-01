@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-3">
             <!-- Status-based Actions -->
-            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_keeper'))
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasAnyRole(['store_manager', 'store_keeper']))
             <form method="POST" action="{{ route('procurement.grn.submit', $goodsReceivedNote) }}" class="inline">
                 @csrf
                 <button type="submit" class="px-4 py-2 bg-yellow-600 text-white text-sm font-semibold rounded-lg hover:bg-yellow-700 transition-colors">
@@ -24,28 +24,26 @@
             </form>
             @endif
 
-            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_SUBMITTED && auth()->user()->hasRole('store_keeper'))
-            <form method="POST" action="{{ route('procurement.grn.confirm', $goodsReceivedNote) }}" class="inline" onsubmit="return confirm('This confirms physical receipt and sends GRN for manager approval. Continue?');">
-                @csrf
-                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
-                    ✓ Confirm Receipt
-                </button>
-            </form>
+            @if($goodsReceivedNote->status === \App\Models\GoodsReceivedNote::STATUS_SUBMITTED && auth()->user()->hasRole('manager'))
+            <button type="button"
+                onclick="document.getElementById('confirm-modal').classList.remove('hidden')"
+                class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                ✓ Confirm Receipt
+            </button>
             @endif
 
-            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_keeper'))
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasAnyRole(['store_manager', 'store_keeper']))
             <a href="{{ route('procurement.grn.edit', $goodsReceivedNote) }}" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
                 Edit GRN
             </a>
             @endif
 
             @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER, \App\Models\GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL], true) && auth()->user()->hasRole('manager'))
-            <form method="POST" action="{{ route('procurement.grn.approve', $goodsReceivedNote) }}" class="inline" onsubmit="return confirm('Approve this GRN and post stock/accounting updates?');">
-                @csrf
-                <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
-                    ✓ Approve GRN
-                </button>
-            </form>
+            <button type="button"
+                onclick="document.getElementById('approve-modal').classList.remove('hidden')"
+                class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                ✓ Approve GRN
+            </button>
             <button 
                 type="button"
                 onclick="document.getElementById('reject-modal').classList.remove('hidden')"
@@ -54,7 +52,7 @@
             </button>
             @endif
 
-            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_keeper'))
+            @if(in_array($goodsReceivedNote->status, [\App\Models\GoodsReceivedNote::STATUS_DRAFT, \App\Models\GoodsReceivedNote::STATUS_REJECTED], true) && auth()->user()->hasRole('store_manager'))
             <button 
                 type="button"
                 onclick="document.getElementById('upload-modal').classList.remove('hidden')"
@@ -471,6 +469,58 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Confirm Modal -->
+<div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-bold text-secondary">Confirm Receipt</h3>
+        </div>
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">This verifies that the goods have been physically received and pushes the GRN forward for final approval.</p>
+            <div class="flex items-center justify-end gap-3">
+                <button type="button"
+                    onclick="document.getElementById('confirm-modal').classList.add('hidden')"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <form method="POST" action="{{ route('procurement.grn.confirm', $goodsReceivedNote) }}" class="inline">
+                    @csrf
+                    <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
+                        ✓ Confirm Receipt
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div id="approve-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-bold text-secondary">Approve GRN</h3>
+        </div>
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">Approving will post stock updates and create accounting entries. This action cannot be undone.</p>
+            <div class="flex items-center justify-end gap-3">
+                <button type="button"
+                    onclick="document.getElementById('approve-modal').classList.add('hidden')"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <form method="POST" action="{{ route('procurement.grn.approve', $goodsReceivedNote) }}" class="inline">
+                    @csrf
+                    <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
+                        ✓ Approve GRN
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 

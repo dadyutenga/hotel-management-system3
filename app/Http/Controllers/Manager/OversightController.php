@@ -84,6 +84,7 @@ class OversightController extends Controller
                 $request->filled('status'),
                 fn ($q) => $q->where('status', (string) $request->input('status')),
                 fn ($q) => $q->whereIn('status', [
+                    GoodsReceivedNote::STATUS_SUBMITTED,
                     GoodsReceivedNote::STATUS_CONFIRMED_BY_STOREKEEPER,
                     GoodsReceivedNote::STATUS_PENDING_MANAGER_APPROVAL,
                 ])

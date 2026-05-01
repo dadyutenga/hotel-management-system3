@@ -267,7 +267,7 @@ class GoodsReceivedNoteController extends Controller
 
     public function confirm(GoodsReceivedNote $goodsReceivedNote): RedirectResponse
     {
-        abort_unless(auth()->user()?->hasRole(Role::STORE_KEEPER), 403);
+        abort_unless(auth()->user()?->hasAnyRole([Role::MANAGER, Role::STORE_KEEPER]), 403, 'Only managers can confirm GRN receipts.');
 
         try {
             app(ProcurementIntegrationService::class)->confirmGrn($goodsReceivedNote, (string) auth()->id());

@@ -597,25 +597,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('grn', [GoodsReceivedNoteController::class, 'index'])->name('grn.index')
              ->middleware('role:store_manager,store_keeper,manager');
         Route::get('grn/create', [GoodsReceivedNoteController::class, 'create'])->name('grn.create')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager,store_keeper');
         Route::post('grn', [GoodsReceivedNoteController::class, 'store'])->name('grn.store')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager,store_keeper');
         Route::get('grn/{goodsReceivedNote}/edit', [GoodsReceivedNoteController::class, 'edit'])->name('grn.edit')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager,store_keeper');
         Route::put('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'update'])->name('grn.update')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager,store_keeper');
         Route::get('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'show'])->name('grn.show')
              ->middleware('role:store_manager,store_keeper,manager');
         Route::get('grn/{goodsReceivedNote}/print', [GoodsReceivedNoteController::class, 'print'])->name('grn.print')
              ->middleware('role:store_manager,store_keeper,manager');
         Route::delete('grn/{goodsReceivedNote}', [GoodsReceivedNoteController::class, 'destroy'])->name('grn.destroy')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager,store_keeper');
         Route::post('grn/{goodsReceivedNote}/receipt', [GoodsReceivedNoteController::class, 'uploadReceipt'])->name('grn.upload-receipt')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager');
         Route::post('grn/{goodsReceivedNote}/submit', [GoodsReceivedNoteController::class, 'submitForConfirmation'])->name('grn.submit')
-             ->middleware('role:store_keeper');
+             ->middleware('role:store_manager,store_keeper');
         Route::post('grn/{goodsReceivedNote}/confirm', [GoodsReceivedNoteController::class, 'confirm'])->name('grn.confirm')
-             ->middleware('role:store_keeper');
+             ->middleware('role:manager');
         Route::post('grn/{goodsReceivedNote}/approve', [GoodsReceivedNoteController::class, 'approve'])->name('grn.approve')
              ->middleware('role:manager');
         Route::post('grn/{goodsReceivedNote}/reject', [GoodsReceivedNoteController::class, 'reject'])->name('grn.reject')
