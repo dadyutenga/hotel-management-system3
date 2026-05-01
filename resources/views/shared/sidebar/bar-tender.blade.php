@@ -33,11 +33,11 @@
             <span>{{ __('bartender.sidebar.inbox') }}</span>
         </a>
 
-        <a href="{{ route('bartender.orders.walkin.create') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('bartender.orders.walkin.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+        <a href="{{ route('bartender.pos') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('bartender.pos*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
             </svg>
-            <span>{{ __('bartender.sidebar.new_walkin') }}</span>
+            <span>{{ __('bartender.sidebar.pos') }}</span>
         </a>
 
         <a href="{{ route('bartender.walkin-sales') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('bartender.walkin-sales') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
@@ -45,13 +45,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3v18m0 0l-4-4m4 4l4-4M4 7h16"/>
             </svg>
             <span>{{ __('bartender.sidebar.walkin_sales') }}</span>
-        </a>
-
-        <a href="{{ route('bartender.orders.room-service.create') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('bartender.orders.room-service.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <span>{{ __('bartender.sidebar.new_room_service') }}</span>
         </a>
 
         <a href="{{ route('bartender.damage.create') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('bartender.damage.create') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">

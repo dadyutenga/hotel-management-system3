@@ -91,7 +91,7 @@ class BartenderController extends Controller
         return view('bartender.order-show', compact('order', 'availability'));
     }
 
-    public function createWalkinOrder(): View
+    public function pos(): View
     {
         $bar = StockLocation::bar();
         $categories = MenuCategory::with(['menuItems' => fn ($q) => $q->where('is_active', true)->where('is_available', true)])
@@ -99,33 +99,55 @@ class BartenderController extends Controller
             ->where('is_active', true)
             ->get();
 
-        return view('bartender.create-walkin', compact('categories', 'bar'));
+        $bookings = Booking::query()
+            ->where('status', 'checked_in')
+            ->with('room')
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get();
+
+        return view('bartender.pos', compact('categories', 'bar', 'bookings'));
     }
 
-    public function storeWalkinOrder(Request $request): RedirectResponse
+    public function storePos(Request $request): RedirectResponse
     {
         $bar = StockLocation::bar();
 
         $data = $request->validate([
+            'customer_type' => 'required|in:walkin,guest',
             'customer_name' => 'nullable|string|max:150',
             'customer_phone' => 'nullable|string|max:30',
+            'booking_id' => 'nullable|uuid|exists:bookings,id',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.notes' => 'nullable|string|max:255',
         ]);
 
         $order = DB::transaction(function () use ($data, $bar) {
+            $isGuest = $data['customer_type'] === 'guest' && !empty($data['booking_id']);
+            $bookingId = $isGuest ? $data['booking_id'] : null;
+            $customerName = null;
+            $customerPhone = null;
+
+            if ($isGuest) {
+                $booking = Booking::with('room')->findOrFail($data['booking_id']);
+                $customerName = $booking->guest_display_name;
+            } else {
+                $customerName = $data['customer_name'] ?: 'Walk-in Guest';
+                $customerPhone = $data['customer_phone'] ?? null;
+            }
+
             $order = Order::create([
                 'location_id' => $bar->id,
-                'order_type' => 'walkin',
-                'order_source' => 'walkin',
+                'order_type' => $isGuest ? 'guest' : 'walkin',
+                'order_source' => $isGuest ? 'room_service' : 'walkin',
+                'booking_id' => $bookingId,
                 'bartender_status' => 'pending',
                 'bartender_status_updated_at' => now(),
                 'status' => 'open',
-                'customer_name' => $data['customer_name'] ?: 'Walk-in Guest',
-                'customer_phone' => $data['customer_phone'] ?? null,
+                'customer_name' => $customerName,
+                'customer_phone' => $customerPhone,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $this->actorId(),
             ]);
@@ -138,7 +160,7 @@ class BartenderController extends Controller
                     'quantity' => $line['quantity'],
                     'unit_price' => $menuItem->selling_price,
                     'subtotal' => $menuItem->selling_price * $line['quantity'],
-                    'notes' => $line['notes'] ?? null,
+                    'notes' => null,
                     'status' => 'pending',
                 ]);
             }
@@ -149,7 +171,7 @@ class BartenderController extends Controller
         });
 
         return redirect()->route('bartender.orders.show', $order)
-            ->with('success', "Walk-in drink order {$order->order_number} created.");
+            ->with('success', "Order {$order->order_number} created successfully.");
     }
 
     public function walkinSalesReport(Request $request): View
@@ -182,74 +204,6 @@ class BartenderController extends Controller
         ];
 
         return view('bartender.walkin-sales', compact('orders', 'summary'));
-    }
-
-    public function createRoomServiceOrder(): View
-    {
-        $bar = StockLocation::bar();
-        $categories = MenuCategory::with(['menuItems' => fn ($q) => $q->where('is_active', true)->where('is_available', true)])
-            ->where('location_id', $bar->id)
-            ->where('is_active', true)
-            ->get();
-
-        $bookings = Booking::query()
-            ->where('status', 'checked_in')
-            ->orderByDesc('created_at')
-            ->limit(100)
-            ->get();
-
-        return view('bartender.create-room-service', compact('categories', 'bookings'));
-    }
-
-    public function storeRoomServiceOrder(Request $request): RedirectResponse
-    {
-        $bar = StockLocation::bar();
-
-        $data = $request->validate([
-            'booking_id' => 'required|uuid|exists:bookings,id',
-            'notes' => 'nullable|string|max:500',
-            'items' => 'required|array|min:1',
-            'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.notes' => 'nullable|string|max:255',
-        ]);
-
-        $booking = Booking::findOrFail($data['booking_id']);
-
-        $order = DB::transaction(function () use ($data, $bar, $booking) {
-            $order = Order::create([
-                'location_id' => $bar->id,
-                'order_type' => 'guest',
-                'order_source' => 'room_service',
-                'bartender_status' => 'pending',
-                'bartender_status_updated_at' => now(),
-                'status' => 'open',
-                'booking_id' => $booking->id,
-                'customer_name' => $booking->guest_display_name,
-                'notes' => $data['notes'] ?? null,
-                'created_by' => $this->actorId(),
-            ]);
-
-            foreach ($data['items'] as $line) {
-                $menuItem = MenuItem::findOrFail($line['menu_item_id']);
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'menu_item_id' => $menuItem->id,
-                    'quantity' => $line['quantity'],
-                    'unit_price' => $menuItem->selling_price,
-                    'subtotal' => $menuItem->selling_price * $line['quantity'],
-                    'notes' => $line['notes'] ?? null,
-                    'status' => 'pending',
-                ]);
-            }
-
-            $order->recalculate();
-
-            return $order;
-        });
-
-        return redirect()->route('bartender.orders.show', $order)
-            ->with('success', "Room service drink order {$order->order_number} created.");
     }
 
     public function acceptOrder(Order $order): RedirectResponse

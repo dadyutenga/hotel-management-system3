@@ -467,6 +467,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('stock', [BartenderController::class, 'stock'])->name('stock');
 
+        // ═══ BAR POS ═══
+        Route::get('pos', [BartenderController::class, 'pos'])->name('pos');
+        Route::post('pos', [BartenderController::class, 'storePos'])->name('pos.store');
+
         Route::get('orders', [BartenderController::class, 'inbox'])->name('inbox');
         Route::get('orders/{order}', [BartenderController::class, 'showOrder'])->name('orders.show');
         Route::post('orders/{order}/accept', [BartenderController::class, 'acceptOrder'])->name('orders.accept');
@@ -475,12 +479,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('orders/{order}/reject', [BartenderController::class, 'rejectOrder'])->name('orders.reject');
         Route::post('orders/{order}/cancel', [BartenderController::class, 'cancelOrder'])->name('orders.cancel');
 
-        Route::get('orders/create/walkin', [BartenderController::class, 'createWalkinOrder'])->name('orders.walkin.create');
-        Route::post('orders/create/walkin', [BartenderController::class, 'storeWalkinOrder'])->name('orders.walkin.store');
         Route::get('walkin-sales', [BartenderController::class, 'walkinSalesReport'])->name('walkin-sales');
-
-        Route::get('orders/create/room-service', [BartenderController::class, 'createRoomServiceOrder'])->name('orders.room-service.create');
-        Route::post('orders/create/room-service', [BartenderController::class, 'storeRoomServiceOrder'])->name('orders.room-service.store');
 
         Route::get('damage', [BartenderController::class, 'damageIndex'])->name('damage.index');
         Route::get('damage/create', [BartenderController::class, 'damageForm'])->name('damage.create');
