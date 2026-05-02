@@ -55,6 +55,8 @@ class ProductController extends Controller
             'selling_price'    => 'required|numeric|min:0.01',
             'reorder_level'    => 'nullable|integer|min:0',
             'varieties'        => 'nullable|json',
+            'image_file'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_url'        => 'nullable|url|max:500',
         ]);
 
         if (empty($data['sku'])) {
@@ -65,7 +67,9 @@ class ProductController extends Controller
         $data['created_by'] = auth()->id();
         $varieties = $this->parseVarieties($request->input('varieties'));
 
-        $product = DB::transaction(function () use ($data, $varieties) {
+        $product = DB::transaction(function () use ($data, $varieties, $request) {
+            unset($data['image_file']);
+
             $product = Product::create([
                 'name'          => $data['name'],
                 'sku'           => $data['sku'],
@@ -77,9 +81,15 @@ class ProductController extends Controller
                 'selling_price' => $data['selling_price'],
                 'reorder_level' => $data['reorder_level'] ?? 0,
                 'varieties'     => $varieties,
+                'image_url'     => $data['image_url'] ?? null,
                 'is_active'     => true,
                 'created_by'    => $data['created_by'],
             ]);
+
+            if ($request->hasFile('image_file')) {
+                $product->addMediaFromRequest('image_file')
+                    ->toMediaCollection('product_image');
+            }
 
             // Auto-create MenuItem for Bar products so they appear in Bar POS
             if ($data['product_type'] === 'bar' && !empty($data['menu_category_id'])) {
@@ -141,14 +151,17 @@ class ProductController extends Controller
             'selling_price'    => 'sometimes|numeric|min:0.01',
             'reorder_level'    => 'sometimes|integer|min:0',
             'varieties'        => 'nullable|json',
+            'image_file'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_url'        => 'nullable|url|max:500',
+            'remove_image'     => 'nullable|boolean',
         ]);
 
         $varieties = $request->has('varieties')
             ? $this->parseVarieties($request->input('varieties'))
             : $product->varieties;
 
-        DB::transaction(function () use ($product, $data, $varieties) {
-            $product->update([
+        DB::transaction(function () use ($product, $data, $varieties, $request) {
+            $updateData = [
                 'name'          => $data['name'] ?? $product->name,
                 'description'   => $data['description'] ?? $product->description,
                 'category'      => $data['category'] ?? $product->category,
@@ -158,7 +171,20 @@ class ProductController extends Controller
                 'selling_price' => $data['selling_price'] ?? $product->selling_price,
                 'reorder_level' => $data['reorder_level'] ?? $product->reorder_level,
                 'varieties'     => $varieties,
-            ]);
+            ];
+
+            if ($request->hasFile('image_file')) {
+                $product->addMediaFromRequest('image_file')
+                    ->toMediaCollection('product_image');
+                $updateData['image_url'] = null;
+            } elseif ($request->has('remove_image') && $request->boolean('remove_image')) {
+                $product->clearMediaCollection('product_image');
+                $updateData['image_url'] = null;
+            } elseif ($request->has('image_url')) {
+                $updateData['image_url'] = !empty($data['image_url']) ? $data['image_url'] : null;
+            }
+
+            $product->update($updateData);
 
             $menuItem = $product->menuItem;
 

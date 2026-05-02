@@ -18,6 +18,7 @@ class Order extends Model implements ReceiptPrintable
         'payment_method', 'payment_reference', 'notes', 'created_by', 'settled_by', 'settled_at',
         'order_source', 'bartender_status', 'bartender_status_updated_at',
         'stock_deducted_at', 'stock_reversed_at', 'billed_to_folio_at', 'billing_error',
+        'guest_completed_at',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class Order extends Model implements ReceiptPrintable
         'stock_deducted_at'           => 'datetime',
         'stock_reversed_at'           => 'datetime',
         'billed_to_folio_at'          => 'datetime',
+        'guest_completed_at'          => 'datetime',
     ];
 
     /**

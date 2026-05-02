@@ -37,6 +37,7 @@
     <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b">
             <tr>
+                <th class="px-4 py-3 text-left text-gray-600 font-semibold"></th>
                 <th class="px-4 py-3 text-left text-gray-600 font-semibold">Name</th>
                 <th class="px-4 py-3 text-left text-gray-600 font-semibold">SKU</th>
                 <th class="px-4 py-3 text-left text-gray-600 font-semibold">Category</th>
@@ -44,12 +45,22 @@
                 <th class="px-4 py-3 text-center text-gray-600 font-semibold">Type</th>
                 <th class="px-4 py-3 text-right text-gray-600 font-semibold">Cost Price</th>
                 <th class="px-4 py-3 text-right text-gray-600 font-semibold">Selling Price</th>
+                <th class="px-4 py-3 text-right text-gray-600 font-semibold">Bar Stock</th>
                 <th class="px-4 py-3 text-center text-gray-600 font-semibold">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             @forelse($products as $product)
             <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3">
+                    @if($product->hasImage())
+                        <img src="{{ $product->image_thumb_url ?? $product->image_url }}"
+                             alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
+                    @else
+                        <img src="{{ asset('images/product-placeholder.svg') }}"
+                             alt="No image" class="w-10 h-10 rounded-lg border border-gray-200">
+                    @endif
+                </td>
                 <td class="px-4 py-3 font-medium text-gray-800">{{ $product->name }}</td>
                 <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ $product->sku }}</td>
                 <td class="px-4 py-3 text-gray-500">{{ $product->category ?? '—' }}</td>
@@ -63,6 +74,19 @@
                 </td>
                 <td class="px-4 py-3 text-right text-gray-700">{{ number_format($product->cost_price, 2) }}</td>
                 <td class="px-4 py-3 text-right text-gray-700">{{ number_format($product->selling_price, 2) }}</td>
+                <td class="px-4 py-3 text-right">
+                    @php
+                        $barStock = $product->stockLevels->firstWhere('location.code', 'bar');
+                        $barQty = $barStock ? (float) $barStock->available_qty : 0;
+                    @endphp
+                    @if($barQty <= 0)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">0</span>
+                    @elseif($barQty <= $product->reorder_level)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">{{ number_format($barQty, 0) }}</span>
+                    @else
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">{{ number_format($barQty, 0) }}</span>
+                    @endif
+                </td>
                 <td class="px-4 py-3 text-center">
                     <a href="{{ route('store.products.show', $product) }}"
                        class="text-primary hover:underline text-xs mr-2">View</a>
@@ -74,7 +98,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-gray-400">No products found.</td>
+                <td colspan="10" class="px-4 py-8 text-center text-gray-400">No products found.</td>
             </tr>
             @endforelse
         </tbody>

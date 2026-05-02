@@ -61,6 +61,7 @@ use App\Http\Controllers\Accounting\ReceiptManagementController;
 use App\Http\Controllers\Manager\OversightController;
 use App\Http\Controllers\Finance\PettyCashController;
 use App\Http\Controllers\Bartender\BartenderController;
+use App\Http\Controllers\Reception\DrinkRequestController;
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\BroadcastController;
@@ -174,6 +175,12 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('guests', GuestController::class);
         Route::get('guests-search', [GuestController::class, 'search'])->name('guests.search');
         Route::delete('guests/{guest}/media/{media}', [GuestController::class, 'removeMedia'])->name('guests.media.destroy');
+
+        // Reception Drink Requests
+        Route::prefix('drinks')->name('reception.drinks.')->group(function () {
+            Route::get('request', [DrinkRequestController::class, 'create'])->name('create');
+            Route::post('request', [DrinkRequestController::class, 'store'])->name('store');
+        });
     });
 
     // ═══ LAUNDRY MODULE ═══ (NO admin - admin is system only; manager has oversight)
@@ -484,6 +491,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('damage', [BartenderController::class, 'damageIndex'])->name('damage.index');
         Route::get('damage/create', [BartenderController::class, 'damageForm'])->name('damage.create');
         Route::post('damage', [BartenderController::class, 'reportDamage'])->name('damage.store');
+
+        Route::get('drink-inbox', [BartenderController::class, 'drinkInbox'])->name('drink-inbox');
     });
 
     // ═══ FINANCE MODULE ═══

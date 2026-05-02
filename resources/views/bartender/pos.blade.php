@@ -7,41 +7,19 @@
 <div x-data="barPos()" class="h-[calc(100vh-8rem)] flex gap-4">
     <!-- LEFT PANEL: Customer + Products -->
     <div class="flex-1 flex flex-col gap-4 min-w-0">
-        <!-- Customer / Booking Binding -->
+        <!-- Customer / Walk-in Info -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <div class="flex items-center justify-between">
                 <div>
                     <span class="text-sm font-semibold text-gray-700">{{ __('bartender.pos.customer') }}:</span>
-                    <span class="text-sm text-gray-600 ml-2" x-text="customerLabel"></span>
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" @click="switchToWalkin()"
-                        :class="customerType === 'walkin' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'"
-                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-                        {{ __('bartender.pos.walkin_customer') }}
-                    </button>
-                    <button type="button" @click="openGuestModal()"
-                        :class="customerType === 'guest' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'"
-                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-                        {{ __('bartender.pos.bind_to_guest') }}
-                    </button>
+                    <span class="text-sm text-gray-600 ml-2">{{ __('bartender.pos.walkin_customer') }}</span>
                 </div>
             </div>
-            <div x-show="customerType === 'walkin'" class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input type="text" x-model="customerName" placeholder="{{ __('bartender.placeholders.walkin_guest') }}"
                     class="w-full border-gray-300 rounded-lg text-sm px-3 py-2">
                 <input type="text" x-model="customerPhone" placeholder="{{ __('bartender.placeholders.customer_phone') }}"
                     class="w-full border-gray-300 rounded-lg text-sm px-3 py-2">
-            </div>
-            <div x-show="customerType === 'guest' && selectedBooking" class="mt-3 p-3 bg-blue-50 rounded-lg">
-                <div class="grid grid-cols-3 gap-3 text-sm">
-                    <div><span class="text-gray-500">{{ __('bartender.pos.guest') }}:</span> <strong x-text="selectedBooking?.guest_name"></strong></div>
-                    <div><span class="text-gray-500">{{ __('bartender.pos.room') }}:</span> <strong x-text="selectedBooking?.room_number"></strong></div>
-                    <div><span class="text-gray-500">{{ __('bartender.pos.booking') }}:</span> <strong x-text="selectedBooking?.booking_number"></strong></div>
-                </div>
-            </div>
-            <div x-show="customerType === 'guest' && !selectedBooking" class="mt-3 text-sm text-gray-500 italic">
-                {{ __('bartender.pos.select_guest_prompt') }}
             </div>
         </div>
 
@@ -69,15 +47,33 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     @foreach($categories as $cat)
                         @foreach($cat->menuItems as $item)
-                        <div @click="selectProduct('{{ $item->id }}', '{{ addslashes($item->name) }}', {{ (float) $item->selling_price }})"
+                        @php
+                            $itemStock = $stockMap[mb_strtolower(trim($item->name))] ?? 0;
+                            $itemImage = $imageMap[mb_strtolower(trim($item->name))] ?? null;
+                        @endphp
+                        <div @click="{{ $itemStock > 0 ? "selectProduct('{$item->id}', '".addslashes($item->name)."', {$item->selling_price})" : '' }}"
                             x-show="!activeCategory || activeCategory === '{{ $cat->id }}'"
-                            class="cursor-pointer p-3 rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all active:scale-95 relative"
-                            title="{{ $item->name }} - {{ number_format($item->selling_price, 0) }} TZS">
+                            class="{{ $itemStock > 0 ? 'cursor-pointer hover:border-blue-300 hover:bg-blue-50/50 active:scale-95' : 'cursor-not-allowed opacity-50' }} p-3 rounded-lg border border-gray-100 transition-all relative"
+                            title="{{ $item->name }} - {{ number_format($item->selling_price, 0) }} TZS {{ $itemStock <= 0 ? '(Out of Stock)' : '(' . number_format($itemStock, 0) . ' in stock)' }}">
+                            @if($itemImage)
+                            <div class="w-full h-20 mb-2 overflow-hidden rounded-md bg-gray-100">
+                                <img src="{{ $itemImage }}" alt="{{ $item->name }}" class="w-full h-full object-cover" loading="lazy">
+                            </div>
+                            @else
+                            <div class="w-full h-16 mb-2 overflow-hidden rounded-md">
+                                <img src="{{ asset('images/product-placeholder.svg') }}" alt="No image" class="w-full h-full object-cover" loading="lazy">
+                            </div>
+                            @endif
                             <div class="text-xs font-semibold text-gray-800 truncate">{{ $item->name }}</div>
                             @if(!empty($item->varieties))
                             <div class="text-xs text-amber-600 mt-0.5">{{ count($item->varieties) }} sizes</div>
                             @endif
                             <div class="text-xs font-bold text-primary mt-1">{{ number_format($item->selling_price, 0) }} TZS</div>
+                            @if($itemStock <= 0)
+                            <div class="absolute top-1 right-1 bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium">Out of Stock</div>
+                            @elseif($itemStock <= 5)
+                            <div class="absolute top-1 right-1 bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium">{{ number_format($itemStock, 0) }} left</div>
+                            @endif
                         </div>
                         @endforeach
                     @endforeach
@@ -142,6 +138,20 @@
                 <span x-text="formatCurrency(totalWithTax())"></span>
             </div>
 
+            <!-- Payment Method -->
+            <div class="border-t border-gray-100 pt-3">
+                <label class="block text-xs font-semibold text-gray-600 mb-2">Payment Method *</label>
+                <div class="flex gap-2">
+                    <template x-for="method in ['Cash', 'Mobile', 'Card']" :key="method">
+                        <button type="button" @click="paymentMethod = method"
+                            :class="paymentMethod === method ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'"
+                            class="flex-1 px-2 py-2 rounded-lg border text-xs font-semibold transition-all" x-text="method">
+                        </button>
+                    </template>
+                </div>
+                <input type="hidden" name="payment_method" x-model="paymentMethod">
+            </div>
+
             <div class="grid grid-cols-2 gap-2 pt-2">
                 <button @click="clearCart()"
                     class="px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
@@ -178,57 +188,10 @@
             </div>
         </div>
     </div>
-
-    <!-- Guest Search Modal -->
-    <div x-show="showGuestModal" class="fixed inset-0 z-50 flex items-center justify-center" x-cloak>
-        <div class="absolute inset-0 bg-black bg-opacity-40" @click="showGuestModal = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-bold text-gray-800">{{ __('bartender.pos.select_guest') }}</h3>
-                <button @click="showGuestModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
-            </div>
-            <div class="p-4 border-b border-gray-100">
-                <input type="text" x-model="guestSearch" @input.debounce.300ms="searchGuests()"
-                    placeholder="{{ __('bartender.pos.search_guest_placeholder') }}"
-                    class="w-full border-gray-300 rounded-lg text-sm px-3 py-2">
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-2">
-                <template x-for="booking in filteredBookings" :key="booking.id">
-                    <div @click="selectBooking(booking); showGuestModal = false"
-                        class="cursor-pointer p-3 rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-sm font-semibold text-gray-800" x-text="booking.guest_name"></div>
-                                <div class="text-xs text-gray-500">
-                                    <span x-text="booking.booking_number"></span>
-                                    <span class="mx-2">|</span>
-                                    <span>{{ __('bartender.pos.room') }}:</span>
-                                    <span x-text="booking.room_number"></span>
-                                </div>
-                            </div>
-                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">{{ __('bartender.pos.checked_in') }}</span>
-                        </div>
-                    </div>
-                </template>
-                <div x-show="filteredBookings.length === 0" class="text-center py-4 text-gray-400 text-sm">
-                    {{ __('general.no_results') }}
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 @push('scripts')
 @php
-$bookingsJson = $bookings->map(function($b) {
-    return [
-        'id' => $b->id,
-        'booking_number' => $b->booking_number,
-        'guest_name' => $b->guest_display_name,
-        'room_number' => $b->room->room_number ?? '—',
-    ];
-})->values()->toJson();
-
 $menuPricesJson = $categories
     ->flatMap(fn($cat) => $cat->menuItems->map(fn($item) => ['id' => $item->id, 'price' => (float) $item->selling_price]))
     ->pluck('price', 'id')
@@ -238,22 +201,24 @@ $menuVarietiesJson = $categories
     ->flatMap(fn($cat) => $cat->menuItems->filter(fn($item) => !empty($item->varieties)))
     ->mapWithKeys(fn($item) => [$item->id => $item->varieties])
     ->toJson();
+
+$menuStockJson = collect($categories)
+    ->flatMap(fn($cat) => $cat->menuItems)
+    ->mapWithKeys(fn($item) => [
+        $item->id => $stockMap[mb_strtolower(trim($item->name))] ?? 0
+    ])
+    ->toJson();
 @endphp
 <script>
 function barPos() {
     const menuPrices = JSON.parse({!! json_encode($menuPricesJson) !!});
     const menuVarieties = JSON.parse({!! json_encode($menuVarietiesJson) !!});
+    const menuStock = JSON.parse({!! json_encode($menuStockJson) !!});
 
     return {
         // Customer
-        customerType: 'walkin',
         customerName: '',
         customerPhone: '',
-        selectedBooking: null,
-        showGuestModal: false,
-        guestSearch: '',
-        allBookings: JSON.parse({!! json_encode($bookingsJson) !!}),
-        filteredBookings: JSON.parse({!! json_encode($bookingsJson) !!}),
 
         // Catalog
         activeCategory: null,
@@ -265,39 +230,18 @@ function barPos() {
         cart: [],
         orderNotes: '',
 
-        // Computed
-        get customerLabel() {
-            if (this.customerType === 'guest' && this.selectedBooking) {
-                return this.selectedBooking.guest_name + ' (' + this.selectedBooking.room_number + ')';
-            }
-            return this.customerName || '{{ __('bartender.placeholders.walkin_guest') }}';
-        },
+        // Payment
+        paymentMethod: '',
 
         // Actions
-        switchToWalkin() {
-            this.customerType = 'walkin';
-            this.selectedBooking = null;
-        },
-        openGuestModal() {
-            this.customerType = 'guest';
-            this.showGuestModal = true;
-            this.filteredBookings = [...this.allBookings];
-            this.guestSearch = '';
-        },
-        selectBooking(booking) {
-            this.selectedBooking = booking;
-        },
-        searchGuests() {
-            const q = this.guestSearch.toLowerCase();
-            this.filteredBookings = this.allBookings.filter(b =>
-                b.guest_name.toLowerCase().includes(q) ||
-                b.booking_number.toLowerCase().includes(q) ||
-                b.room_number.toLowerCase().includes(q)
-            );
-        },
 
         // Cart actions
         selectProduct(menuItemId, name, basePrice) {
+            const stock = menuStock[menuItemId] || 0;
+            if (stock <= 0) {
+                alert('{{ __('bartender.pos.out_of_stock') }}' || 'This item is out of stock.');
+                return;
+            }
             const varieties = menuVarieties[menuItemId];
             if (varieties && varieties.length > 0) {
                 this.selectingProduct = { id: menuItemId, name, basePrice };
@@ -385,6 +329,11 @@ function barPos() {
         saveOrder() {
             if (this.cart.length === 0) return;
 
+            if (!this.paymentMethod) {
+                alert('{{ __('bartender.pos.select_payment') }}' || 'Please select a payment method.');
+                return;
+            }
+
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '{{ route('bartender.pos.store') }}';
@@ -395,33 +344,23 @@ function barPos() {
             csrf.value = '{{ csrf_token() }}';
             form.appendChild(csrf);
 
-            const customerTypeInput = document.createElement('input');
-            customerTypeInput.type = 'hidden';
-            customerTypeInput.name = 'customer_type';
-            customerTypeInput.value = this.customerType;
-            form.appendChild(customerTypeInput);
+            const customerNameInput = document.createElement('input');
+            customerNameInput.type = 'hidden';
+            customerNameInput.name = 'customer_name';
+            customerNameInput.value = this.customerName || 'Walk-in Guest';
+            form.appendChild(customerNameInput);
 
-            if (this.customerType === 'walkin') {
-                const nameInput = document.createElement('input');
-                nameInput.type = 'hidden';
-                nameInput.name = 'customer_name';
-                nameInput.value = this.customerName;
-                form.appendChild(nameInput);
+            const customerPhoneInput = document.createElement('input');
+            customerPhoneInput.type = 'hidden';
+            customerPhoneInput.name = 'customer_phone';
+            customerPhoneInput.value = this.customerPhone;
+            form.appendChild(customerPhoneInput);
 
-                const phoneInput = document.createElement('input');
-                phoneInput.type = 'hidden';
-                phoneInput.name = 'customer_phone';
-                phoneInput.value = this.customerPhone;
-                form.appendChild(phoneInput);
-            }
-
-            if (this.customerType === 'guest' && this.selectedBooking) {
-                const bookingInput = document.createElement('input');
-                bookingInput.type = 'hidden';
-                bookingInput.name = 'booking_id';
-                bookingInput.value = this.selectedBooking.id;
-                form.appendChild(bookingInput);
-            }
+            const paymentInput = document.createElement('input');
+            paymentInput.type = 'hidden';
+            paymentInput.name = 'payment_method';
+            paymentInput.value = this.paymentMethod.toLowerCase();
+            form.appendChild(paymentInput);
 
             if (this.orderNotes) {
                 const notesInput = document.createElement('input');

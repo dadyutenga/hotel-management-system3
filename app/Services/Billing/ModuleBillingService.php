@@ -157,6 +157,7 @@ class ModuleBillingService
                         'payment_method' => $paymentMethod,
                         'settled_by' => $actorId,
                         'settled_at' => now(),
+                        'guest_completed_at' => $order->booking_id ? now() : $order->guest_completed_at,
                     ]);
 
                     app(AccountingService::class)->postRestaurantSettlement(

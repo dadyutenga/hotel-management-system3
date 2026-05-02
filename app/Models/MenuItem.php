@@ -11,7 +11,7 @@ class MenuItem extends Model
 
     protected $fillable = [
         'category_id', 'name', 'description',
-        'selling_price', 'is_available', 'service_location_tag', 'is_active', 'created_by',
+        'selling_price', 'is_available', 'service_location_tag', 'is_active', 'created_by', 'varieties',
     ];
 
     protected $casts = [

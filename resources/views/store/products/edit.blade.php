@@ -8,7 +8,7 @@
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Edit Product: {{ $product->name }}</h1>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <form method="POST" action="{{ route('store.products.update', $product) }}" x-data="productVarieties()">
+        <form method="POST" action="{{ route('store.products.update', $product) }}" x-data="productVarieties()" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -139,6 +139,49 @@
                 </template>
 
                 <input type="hidden" name="varieties" x-model="varietiesJson">
+            </div>
+
+            {{-- Product Image --}}
+            <div class="mt-6 pt-6 border-t border-gray-100">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">Product Image</h3>
+
+                @if($product->hasImage())
+                <div class="mb-4 flex items-start gap-4">
+                    <div class="flex-shrink-0">
+                        <img src="{{ $product->image_thumb_url ?? $product->image_url }}"
+                             alt="{{ $product->name }}" class="w-24 h-24 rounded-lg object-cover border border-gray-200">
+                    </div>
+                    <div class="text-sm">
+                        @if($product->is_cdn_image)
+                            <p class="text-gray-500">CDN URL: <span class="font-mono text-xs text-gray-600 break-all">{{ $product->image_url }}</span></p>
+                        @else
+                            <p class="text-gray-500">Local upload</p>
+                        @endif
+                        <label class="inline-flex items-center gap-1 mt-2 cursor-pointer">
+                            <input type="checkbox" name="remove_image" value="1" class="rounded border-gray-300 text-red-500 focus:ring-red-400">
+                            <span class="text-red-600 text-xs">Remove current image</span>
+                        </label>
+                    </div>
+                </div>
+                @endif
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload New Image</label>
+                        <input type="file" name="image_file" accept="image/jpeg,image/png,image/jpg,image/webp"
+                               class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        @error('image_file')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        <p class="text-xs text-gray-400 mt-1">Max 2MB. JPEG, PNG, or WebP.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Or Image URL (CDN)</label>
+                        <input type="url" name="image_url" value="{{ old('image_url', $product->is_cdn_image ? $product->image_url : '') }}"
+                               placeholder="https://cdn.example.com/image.jpg"
+                               class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        @error('image_url')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        <p class="text-xs text-gray-400 mt-1">External URL takes priority over uploaded file.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex gap-3 mt-6">

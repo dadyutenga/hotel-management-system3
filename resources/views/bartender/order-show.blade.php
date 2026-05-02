@@ -30,7 +30,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($order->items as $item)
                         <tr>
-                            <td class="px-3 py-2">{{ $item->menuItem->name }}</td>
+                            <td class="px-3 py-2">{{ $item->menuItem?->name ?? $item->item_name_snapshot ?? '—' }}</td>
                             <td class="px-3 py-2 text-right">{{ $item->quantity }}</td>
                             <td class="px-3 py-2 text-right">{{ number_format($item->unit_price, 0) }}</td>
                             <td class="px-3 py-2 text-right font-semibold">{{ number_format($item->subtotal, 0) }}</td>

@@ -24,6 +24,20 @@
 <div class="grid grid-cols-3 gap-6 mb-6">
     {{-- Product details --}}
     <div class="bg-white rounded-xl shadow-sm p-5">
+        @if($product->hasImage())
+        <div class="mb-4">
+            <img src="{{ $product->image_medium_url ?? $product->image_url }}"
+                 alt="{{ $product->name }}" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+            @if($product->is_cdn_image)
+            <p class="text-xs text-gray-400 mt-1 truncate">CDN: {{ $product->image_url }}</p>
+            @endif
+        </div>
+        @else
+        <div class="mb-4">
+            <img src="{{ asset('images/product-placeholder.svg') }}"
+                 alt="No image" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+        </div>
+        @endif
         <h2 class="font-semibold text-gray-700 mb-3">Details</h2>
         <dl class="space-y-2 text-sm">
             <div class="flex justify-between"><dt class="text-gray-500">Category</dt><dd>{{ $product->category ?? '—' }}</dd></div>

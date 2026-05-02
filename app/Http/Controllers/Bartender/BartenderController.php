@@ -15,6 +15,7 @@ use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\Billing\ModuleBillingService;
 use App\Services\Bartender\BarOrderStockService;
+use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,6 +81,20 @@ class BartenderController extends Controller
         return view('bartender.inbox', compact('orders'));
     }
 
+    public function drinkInbox(Request $request): View
+    {
+        $bar = StockLocation::bar();
+
+        $orders = Order::with(['items.menuItem', 'booking.room'])
+            ->where('location_id', $bar->id)
+            ->where('order_source', 'reception_drink')
+            ->when($request->status, fn ($q) => $q->where('bartender_status', $request->status))
+            ->latest()
+            ->paginate(20);
+
+        return view('bartender.drink-inbox', compact('orders'));
+    }
+
     public function showOrder(Order $order): View
     {
         $bar = StockLocation::bar();
@@ -103,14 +118,34 @@ class BartenderController extends Controller
             ->where('is_active', true)
             ->get();
 
-        $bookings = Booking::query()
-            ->where('status', 'checked_in')
-            ->with('room')
-            ->orderByDesc('created_at')
-            ->limit(100)
+        // Build stock lookup keyed by product name (lowercase) → available quantity
+        $stockLevels = StockLevel::with('product')
+            ->where('location_id', $bar->id)
+            ->where('quantity', '>', 0)
             ->get();
 
-        return view('bartender.pos', compact('categories', 'bar', 'bookings'));
+        $stockMap = [];
+        foreach ($stockLevels as $level) {
+            if ($level->product) {
+                $name = mb_strtolower(trim($level->product->name));
+                $stockMap[$name] = (float) $level->available_qty;
+            }
+        }
+
+        // Build product image lookup keyed by product name (lowercase) → thumb URL
+        $barProducts = Product::where('product_type', 'bar')
+            ->where('is_active', true)
+            ->get();
+
+        $imageMap = [];
+        foreach ($barProducts as $product) {
+            $url = $product->image_thumb_url ?? $product->image_url;
+            if ($url) {
+                $imageMap[mb_strtolower(trim($product->name))] = $url;
+            }
+        }
+
+        return view('bartender.pos', compact('categories', 'stockMap', 'imageMap'));
     }
 
     protected function syncBarProductsToMenu(StockLocation $bar): void
@@ -161,64 +196,65 @@ class BartenderController extends Controller
         $bar = StockLocation::bar();
 
         $data = $request->validate([
-            'customer_type' => 'required|in:walkin,guest',
-            'customer_name' => 'nullable|string|max:150',
+            'customer_name'  => 'nullable|string|max:150',
             'customer_phone' => 'nullable|string|max:30',
-            'booking_id' => 'nullable|uuid|exists:bookings,id',
-            'notes' => 'nullable|string|max:500',
-            'items' => 'required|array|min:1',
+            'payment_method' => 'required|in:cash,mobile,card',
+            'notes'          => 'nullable|string|max:500',
+            'items'          => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity'     => 'required|integer|min:1',
         ]);
 
         $order = DB::transaction(function () use ($data, $bar) {
-            $isGuest = $data['customer_type'] === 'guest' && !empty($data['booking_id']);
-            $bookingId = $isGuest ? $data['booking_id'] : null;
-            $customerName = null;
-            $customerPhone = null;
-
-            if ($isGuest) {
-                $booking = Booking::with('room')->findOrFail($data['booking_id']);
-                $customerName = $booking->guest_display_name;
-            } else {
-                $customerName = $data['customer_name'] ?: 'Walk-in Guest';
-                $customerPhone = $data['customer_phone'] ?? null;
-            }
+            $customerName = $data['customer_name'] ?: 'Walk-in Guest';
+            $customerPhone = $data['customer_phone'] ?? null;
 
             $order = Order::create([
-                'location_id' => $bar->id,
-                'order_type' => $isGuest ? 'guest' : 'walkin',
-                'order_source' => $isGuest ? 'room_service' : 'walkin',
-                'booking_id' => $bookingId,
-                'bartender_status' => 'pending',
-                'bartender_status_updated_at' => now(),
-                'status' => 'open',
-                'customer_name' => $customerName,
+                'location_id'    => $bar->id,
+                'order_type'     => 'walkin',
+                'order_source'   => 'walkin',
+                'customer_name'  => $customerName,
                 'customer_phone' => $customerPhone,
-                'notes' => $data['notes'] ?? null,
-                'created_by' => $this->actorId(),
+                'bartender_status' => 'prepared',
+                'bartender_status_updated_at' => now(),
+                'status'         => 'open',
+                'payment_method' => $data['payment_method'],
+                'notes'          => $data['notes'] ?? null,
+                'created_by'     => $this->actorId(),
             ]);
 
             foreach ($data['items'] as $line) {
                 $menuItem = MenuItem::findOrFail($line['menu_item_id']);
                 OrderItem::create([
-                    'order_id' => $order->id,
+                    'order_id'    => $order->id,
                     'menu_item_id' => $menuItem->id,
-                    'quantity' => $line['quantity'],
-                    'unit_price' => $menuItem->selling_price,
-                    'subtotal' => $menuItem->selling_price * $line['quantity'],
-                    'notes' => null,
-                    'status' => 'pending',
+                    'quantity'    => $line['quantity'],
+                    'unit_price'  => $menuItem->selling_price,
+                    'subtotal'    => $menuItem->selling_price * $line['quantity'],
+                    'notes'       => null,
+                    'status'      => 'pending',
                 ]);
             }
 
             $order->recalculate();
 
+            $this->barOrderStockService->deductForOrder($order, $this->actorId());
+
+            $order->update([
+                'bartender_status' => 'served',
+                'bartender_status_updated_at' => now(),
+                'status'           => 'settled',
+                'settled_by'       => $this->actorId(),
+                'settled_at'       => now(),
+            ]);
+
+            app(ReceiptService::class)->getOrCreateReceipt($order);
+
             return $order;
         });
 
         return redirect()->route('bartender.orders.show', $order)
-            ->with('success', "Order {$order->order_number} created successfully.");
+            ->with('success', "Order {$order->order_number} completed successfully.");
     }
 
     public function walkinSalesReport(Request $request): View
@@ -285,7 +321,7 @@ class BartenderController extends Controller
                     'status' => 'served',
                 ]);
 
-                if ($order->order_source === 'room_service') {
+                if (in_array($order->order_source, ['room_service', 'reception_drink'])) {
                     $this->moduleBillingService->syncOrderCharge($order->fresh(), $this->actorId());
                 }
             });

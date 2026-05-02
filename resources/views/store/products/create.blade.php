@@ -8,7 +8,7 @@
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Create Product</h1>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <form method="POST" action="{{ route('store.products.store') }}" x-data="productVarieties()">
+        <form method="POST" action="{{ route('store.products.store') }}" x-data="productVarieties()" enctype="multipart/form-data">
             @csrf
 
             <div class="grid grid-cols-2 gap-4">
@@ -141,6 +141,28 @@
                 </template>
 
                 <input type="hidden" name="varieties" x-model="varietiesJson">
+            </div>
+
+            {{-- Product Image --}}
+            <div class="mt-6 pt-6 border-t border-gray-100">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">Product Image</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
+                        <input type="file" name="image_file" accept="image/jpeg,image/png,image/jpg,image/webp"
+                               class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        @error('image_file')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        <p class="text-xs text-gray-400 mt-1">Max 2MB. JPEG, PNG, or WebP.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Or Image URL (CDN)</label>
+                        <input type="url" name="image_url" value="{{ old('image_url') }}"
+                               placeholder="https://cdn.example.com/image.jpg"
+                               class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        @error('image_url')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        <p class="text-xs text-gray-400 mt-1">External URL takes priority over uploaded file.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex gap-3 mt-6">
