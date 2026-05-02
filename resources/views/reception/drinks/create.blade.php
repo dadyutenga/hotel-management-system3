@@ -112,11 +112,11 @@ function drinkRequest() {
         showProductPicker: false,
         productSearch: '',
 
-        allProducts: @json($barProducts->map(fn($p) => [
+        allProducts: {!! json_encode($barProducts->map(fn($p) => [
             'name'  => $p->name,
             'price' => (float) $p->selling_price,
             'stock' => $stockMap[$p->name] ?? 0,
-        ])),
+        ])) !!},
 
         get filteredProducts() {
             const q = this.productSearch.toLowerCase();

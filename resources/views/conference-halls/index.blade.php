@@ -12,6 +12,7 @@
             <h2 class="text-2xl font-extrabold text-secondary">Conference Halls</h2>
             <p class="text-sm text-gray-500 mt-1">Manage conference halls and venues</p>
         </div>
+        @if(auth()->user()->isAdmin())
         <a href="{{ route('conference-halls.create') }}" 
            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,6 +20,7 @@
             </svg>
             Add Conference Hall
         </a>
+        @endif
     </div>
 
     <!-- Stats -->
@@ -134,7 +136,9 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <div class="flex items-center gap-3">
                             <a href="{{ route('conference-halls.show', $hall) }}" class="text-gray-600 hover:text-gray-800 font-semibold">View</a>
+                            @if(auth()->user()->isAdmin())
                             <a href="{{ route('conference-halls.edit', $hall) }}" class="text-primary hover:text-blue-700 font-semibold">Edit</a>
+                            @endif
                         </div>
                     </td>
                 </tr>
@@ -148,6 +152,7 @@
                         </div>
                         <h3 class="text-lg font-bold text-secondary">No conference halls yet</h3>
                         <p class="mt-2 text-sm text-gray-500">Get started by creating your first conference hall.</p>
+                        @if(auth()->user()->isAdmin())
                         <div class="mt-6">
                             <a href="{{ route('conference-halls.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,6 +161,7 @@
                                 Add Conference Hall
                             </a>
                         </div>
+                        @endif
                     </td>
                 </tr>
                 @endforelse

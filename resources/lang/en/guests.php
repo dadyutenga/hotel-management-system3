@@ -17,6 +17,7 @@ return [
     // Subtitles & descriptions
     'subtitle' => 'Manage hotel guests and their information',
     'create_subtitle' => 'Create a new guest profile for hotel reservations',
+    'search_guests' => 'Search Guests',
 
     // Fields
     'fields' => [

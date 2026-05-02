@@ -26,8 +26,7 @@
         </form>
 
         <div class="flex gap-2 text-sm">
-            <a href="{{ route('bartender.orders.walkin.create') }}" class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">{{ __('bartender.actions.new_walkin') }}</a>
-            <a href="{{ route('bartender.orders.room-service.create') }}" class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">{{ __('bartender.actions.new_room_service') }}</a>
+            <a href="{{ route('bartender.pos') }}" class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">{{ __('bartender.actions.new_walkin') }}</a>
         </div>
     </div>
 

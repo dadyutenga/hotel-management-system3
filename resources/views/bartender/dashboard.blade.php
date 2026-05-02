@@ -24,8 +24,7 @@
     <div class="flex flex-wrap gap-3 text-sm">
         <a href="{{ route('bartender.inbox') }}" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">{{ __('bartender.actions.open_inbox') }}</a>
         <a href="{{ route('bartender.stock') }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('bartender.actions.view_stock') }}</a>
-        <a href="{{ route('bartender.orders.walkin.create') }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('bartender.actions.create_walkin') }}</a>
-        <a href="{{ route('bartender.orders.room-service.create') }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('bartender.actions.create_room_service') }}</a>
+        <a href="{{ route('bartender.pos') }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('bartender.actions.create_walkin') }}</a>
         <a href="{{ route('bartender.damage.create') }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">{{ __('bartender.actions.report_damage') }}</a>
     </div>
 </div>
