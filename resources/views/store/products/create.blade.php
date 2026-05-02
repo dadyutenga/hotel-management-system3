@@ -130,7 +130,7 @@
                                    class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                         </div>
                         <div>
-                            <label class="text-xs text-gray-500">Price Override (TZS)</label>
+                            <label class="text-xs text-gray-500">Price Override ({{ CurrencyHelper::getCurrencySymbol('TZS') }})</label>
                             <input type="number" :name="'varieties['+idx+'][price]'" x-model.number="v.price"
                                    step="1" min="0"
                                    class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">

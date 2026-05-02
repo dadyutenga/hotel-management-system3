@@ -54,7 +54,7 @@
                         <td class="px-4 py-2">{{ $sale->package_name_snapshot }}</td>
                         <td class="px-4 py-2">{{ __('general.restaurant.buffet.sale_type.' . $sale->sale_type) }}</td>
                         <td class="px-4 py-2">{{ $sale->adults_count }}A / {{ $sale->children_count }}C</td>
-                        <td class="px-4 py-2 text-right">{{ number_format($sale->total_amount, 0) }}</td>
+                        <td class="px-4 py-2 text-right">@currency($sale->total_amount, 'TZS')</td>
                         <td class="px-4 py-2">{{ ucfirst($sale->status) }}</td>
                         <td class="px-4 py-2 text-right">
                             <a href="{{ route('restaurant.buffet.show', $sale) }}" class="text-primary text-xs">{{ __('general.view') }}</a>

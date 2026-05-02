@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingCharge;
@@ -42,9 +43,8 @@ class CheckoutController extends Controller
             ['initiated_by' => (string) Auth::id()]
         );
 
-        // Get exchange rate
-        $exchangeRate = (float) (DB::table('system_settings')
-            ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+        // Get exchange rate from currency helper (cached)
+        $exchangeRate = CurrencyHelper::getExchangeRate();
 
         // Fetch all unpaid charges grouped by type
         // This includes ALL charge types: restaurant, bar, laundry, room_service, etc.
@@ -263,8 +263,7 @@ class CheckoutController extends Controller
             'amount'      => 'required|numeric|min:0.01',
         ]);
 
-        $exchangeRate = (float) (DB::table('system_settings')
-            ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
 
         BookingCharge::create([
             'booking_id'  => $checkout->booking_id,

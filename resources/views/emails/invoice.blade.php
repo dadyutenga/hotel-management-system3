@@ -29,25 +29,25 @@
         @foreach($invoice['charges'] as $charge)
         <tr>
             <td>{{ $charge['description'] }}</td>
-            <td style="text-align: right;">TZS {{ number_format($charge['amount'], 2) }}</td>
+            <td style="text-align: right;">@currency($charge['amount'], 'TZS')</td>
         </tr>
         @endforeach
     </tbody>
     <tfoot>
         <tr>
             <th>Total</th>
-            <td style="text-align: right;"><strong>TZS {{ number_format($invoice['total'] ?? 0, 2) }}</strong></td>
+            <td style="text-align: right;"><strong>@currency($invoice['total'] ?? 0, 'TZS')</strong></td>
         </tr>
         @if(isset($invoice['paid']))
         <tr>
             <th>Paid</th>
-            <td style="text-align: right;">TZS {{ number_format($invoice['paid'], 2) }}</td>
+            <td style="text-align: right;">@currency($invoice['paid'], 'TZS')</td>
         </tr>
         @endif
         @if(isset($invoice['balance']))
         <tr>
             <th>Balance Due</th>
-            <td style="text-align: right;"><strong style="color: {{ $invoice['balance'] > 0 ? '#dc2626' : '#16a34a' }};">TZS {{ number_format($invoice['balance'], 2) }}</strong></td>
+            <td style="text-align: right;"><strong style="color: {{ $invoice['balance'] > 0 ? '#dc2626' : '#16a34a' }};">@currency($invoice['balance'], 'TZS')</strong></td>
         </tr>
         @endif
     </tfoot>

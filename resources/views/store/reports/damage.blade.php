@@ -58,7 +58,7 @@
                 <td class="px-4 py-3 text-gray-500">{{ $d->location->name }}</td>
                 <td class="px-4 py-3 text-right text-red-600 font-medium">{{ $d->quantity }}</td>
                 <td class="px-4 py-3 text-right text-gray-500">
-                    {{ number_format($d->quantity * ($d->product->cost_price ?? 0), 0) }} TZS
+                    @currency($d->quantity * ($d->product->cost_price ?? 0), 'TZS')
                 </td>
                 <td class="px-4 py-3 text-gray-500">{{ $d->reason ?? '—' }}</td>
                 <td class="px-4 py-3 text-gray-400 text-xs">{{ \Illuminate\Support\Str::limit($d->notes, 40) }}</td>
@@ -81,7 +81,7 @@
     </div>
     <div class="bg-white rounded-xl shadow-sm p-4">
         <p class="text-sm text-gray-500">Estimated Total Loss</p>
-        <p class="text-2xl font-bold text-red-600">{{ number_format($totalDamageCost, 0) }} TZS</p>
+        <p class="text-2xl font-bold text-red-600">@currency($totalDamageCost, 'TZS')</p>
     </div>
 </div>
 @endif

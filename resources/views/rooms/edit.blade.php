@@ -59,7 +59,7 @@
                         <option value="">{{ __('rooms.filters.select_room_type') }}</option>
                         @foreach($roomTypes as $roomType)
                         <option value="{{ $roomType->id }}" {{ old('room_type_id', $room->room_type_id) == $roomType->id ? 'selected' : '' }}>
-                            {{ $roomType->name }} ({{ $roomType->code }}) - ${{ number_format($roomType->base_rate, 2) }}
+                            {{ $roomType->name }} ({{ $roomType->code }}) - @currency($roomType->base_rate)
                         </option>
                         @endforeach
                     </select>
@@ -149,7 +149,7 @@
                         </div>
                         <div>
                             <span class="text-gray-500">{{ __('rooms.fields.base_rate') }}:</span>
-                            <span class="text-secondary font-semibold ml-2">${{ number_format($room->roomType->base_rate, 2) }}</span>
+                            <span class="text-secondary font-semibold ml-2">@currency($room->roomType->base_rate)</span>
                         </div>
                         <div>
                             <span class="text-gray-500">{{ __('rooms.fields.created') }}:</span>

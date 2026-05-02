@@ -93,8 +93,8 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">{{ $item->quantity }}</td>
-                            <td class="px-4 py-3 text-right">{{ number_format($item->unit_price, 0) }}</td>
-                            <td class="px-4 py-3 text-right font-semibold">{{ number_format($item->subtotal, 0) }}</td>
+                            <td class="px-4 py-3 text-right">@currency($item->unit_price, 'TZS')</td>
+                            <td class="px-4 py-3 text-right font-semibold">@currency($item->subtotal, 'TZS')</td>
                             <td class="px-4 py-3">
                                 <span class="text-xs {{ $item->status === 'cancelled' ? 'text-red-500' : 'text-gray-500' }}">
                                     {{ ucfirst($item->status) }}
@@ -119,13 +119,13 @@
                 {{-- Totals --}}
                 <div class="bg-gray-50 px-4 py-3 border-t text-right space-y-1">
                     @if($order->discount > 0)
-                    <p class="text-sm text-gray-500">Subtotal: {{ number_format($order->subtotal, 0) }} TZS</p>
-                    <p class="text-sm text-red-500">Discount: -{{ number_format($order->discount, 0) }} TZS</p>
+                    <p class="text-sm text-gray-500">Subtotal: @currency($order->subtotal, 'TZS')</p>
+                    <p class="text-sm text-red-500">Discount: -@currency($order->discount, 'TZS')</p>
                     @endif
                     @if($order->tax > 0)
-                    <p class="text-sm text-gray-500">Tax: {{ number_format($order->tax, 0) }} TZS</p>
+                    <p class="text-sm text-gray-500">Tax: @currency($order->tax, 'TZS')</p>
                     @endif
-                    <p class="text-lg font-bold text-gray-800">Total: {{ number_format($order->total, 0) }} TZS</p>
+                    <p class="text-lg font-bold text-gray-800">Total: @currency($order->total, 'TZS')</p>
                 </div>
             </div>
 
@@ -144,8 +144,8 @@
                             @if($cat->menuItems->count())
                             <optgroup label="{{ $cat->name }}">
                                 @foreach($cat->menuItems as $mi)
-                                 <option value="{{ $mi->id }}" {{ !$mi->is_available ? 'disabled' : '' }}>
-                                     {{ $mi->name }} — {{ number_format($mi->selling_price, 0) }} TZS{{ !$mi->is_available ? ' ('.__('general.restaurant.status.unavailable').')' : '' }}
+                                     <option value="{{ $mi->id }}" {{ !$mi->is_available ? 'disabled' : '' }}>
+                                         {{ $mi->name }} — @currency($mi->selling_price, 'TZS'){{ !$mi->is_available ? ' ('.__('general.restaurant.status.unavailable').')' : '' }}
                                  </option>
                                 @endforeach
                             </optgroup>

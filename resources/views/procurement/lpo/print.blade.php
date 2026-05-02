@@ -498,15 +498,15 @@
         <table class="totals">
             <tr>
                 <td class="lbl">Subtotal:</td>
-                <td class="val">{{ number_format($localPurchaseOrder->subtotal, 0) }} TZS</td>
+                <td class="val">@currency($localPurchaseOrder->subtotal, 'TZS')</td>
             </tr>
             <tr>
                 <td class="lbl">Tax (18% VAT):</td>
-                <td class="val">{{ number_format($localPurchaseOrder->tax_amount, 0) }} TZS</td>
+                <td class="val">@currency($localPurchaseOrder->tax_amount, 'TZS')</td>
             </tr>
             <tr class="grand-total">
                 <td style="font-size: 14px;">TOTAL COST:</td>
-                <td class="val" style="font-size: 16px;">{{ number_format($localPurchaseOrder->grand_total, 0) }} TZS</td>
+                <td class="val" style="font-size: 16px;">@currency($localPurchaseOrder->grand_total, 'TZS')</td>
             </tr>
         </table>
     </div>

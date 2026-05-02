@@ -133,8 +133,8 @@
                         @endphp
                         <div class="space-y-2">
                             <div class="flex justify-between text-gray-500">
-                                <span>${{ number_format($pricePerNight, 2) }} x {{ $nights }} {{ $nights > 1 ? 'nights' : 'night' }}</span>
-                                <span>${{ number_format($pricePerNight * $nights, 2) }}</span>
+                                <span>@currency($pricePerNight) x {{ $nights }} {{ $nights > 1 ? 'nights' : 'night' }}</span>
+                                <span>@currency($pricePerNight * $nights)</span>
                             </div>
                             <div class="flex justify-between text-gray-500">
                                 <span>Taxes & Fees</span>
@@ -142,7 +142,7 @@
                             </div>
                             <div class="flex justify-between text-lg font-bold text-secondary pt-2 border-t border-gray-100 mt-2">
                                 <span>Total</span>
-                                <span class="text-primary">${{ number_format($reservation->estimated_amount, 2) }}</span>
+                                <span class="text-primary">@currency($reservation->estimated_amount)</span>
                             </div>
                         </div>
                         <p class="text-sm text-gray-500 mt-4">Payment will be collected at check-in.</p>

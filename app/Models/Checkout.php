@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\ReceiptPrintable;
+use App\Helpers\CurrencyHelper;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -66,9 +67,7 @@ class Checkout extends Model implements ReceiptPrintable
      */
     public function calculateTotals(): void
     {
-        $exchangeRate = (float) (DB::table('system_settings')
-            ->where('key', 'tzs_exchange_rate')
-            ->value('value') ?? 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
 
         $charges = BookingCharge::where('booking_id', $this->booking_id)
             ->where('status', 'unpaid')
@@ -112,18 +111,21 @@ class Checkout extends Model implements ReceiptPrintable
         $this->loadMissing(['booking.guest', 'booking.room', 'charges', 'completer']);
 
         // Group charges by type for items
-        $items = $this->charges->map(function ($charge) {
+        $exchangeRate = (float) $this->exchange_rate;
+
+        $items = $this->charges->map(function ($charge) use ($exchangeRate) {
+            $unitPriceTzs = round($charge->amount * $exchangeRate, 2);
             return [
                 'name'       => $charge->description,
                 'details'    => $charge->charge_type_label ?? $charge->charge_type,
                 'quantity'   => 1,
-                'unit_price' => $charge->amount * $this->exchange_rate, // Convert to TZS
-                'amount'     => $charge->amount * $this->exchange_rate,
+                'unit_price' => $unitPriceTzs,
+                'amount'     => $unitPriceTzs,
             ];
         })->toArray();
 
         $totalTzs = (float) $this->grand_total_tzs;
-        $paidTzs  = (float) $this->total_paid_usd * (float) $this->exchange_rate;
+        $paidTzs  = round((float) $this->total_paid_usd * $exchangeRate, 2);
 
         return [
             'receipt_no'            => $this->receipt_number,
@@ -132,8 +134,8 @@ class Checkout extends Model implements ReceiptPrintable
             'customer_name'         => $this->booking?->guest_name ?? null,
             'customer_phone'        => $this->booking?->guest?->phone ?? null,
             'items'                 => $items,
-            'subtotal'              => (float) $this->total_charges_usd * (float) $this->exchange_rate,
-            'discount'              => (float) $this->discount_usd * (float) $this->exchange_rate,
+            'subtotal'              => round((float) $this->total_charges_usd * $exchangeRate, 2),
+            'discount'              => round((float) $this->discount_usd * $exchangeRate, 2),
             'tax'                   => 0.0,
             'total'                 => $totalTzs,
             'amount_paid'           => $paidTzs,

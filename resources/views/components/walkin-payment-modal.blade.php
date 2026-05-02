@@ -314,11 +314,12 @@ function walkinPayment(config) {
         },
         
         formatCurrency(amount) {
+            const symbol = '{{ \App\Helpers\CurrencyHelper::getCurrencySymbol('TZS') }}';
             return new Intl.NumberFormat('en-TZ', {
                 style: 'decimal',
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
-            }).format(amount) + ' TZS';
+            }).format(amount) + ' ' + symbol;
         },
         
         getButtonText() {

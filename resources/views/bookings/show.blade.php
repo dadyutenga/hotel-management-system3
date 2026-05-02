@@ -163,7 +163,7 @@
                     @endif
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">{{ __('bookings.rate_per_night') }}</span>
-                        <span class="font-medium text-primary">${{ number_format($booking->room->roomType->base_rate ?? 0, 2) }}</span>
+                        <span class="font-medium text-primary">@currency($booking->room->roomType->base_rate ?? 0)</span>
                     </div>
                 </div>
             @else
@@ -179,12 +179,12 @@
                     $pricePerNight = $booking->room?->roomType?->base_rate ?? 0;
                 @endphp
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-500">${{ number_format($pricePerNight, 2) }} × {{ $booking->nights }} nights</span>
-                    <span class="font-medium text-secondary">${{ number_format($pricePerNight * $booking->nights, 2) }}</span>
+                    <span class="text-gray-500">@currency($pricePerNight) × {{ $booking->nights }} nights</span>
+                    <span class="font-medium text-secondary">@currency($pricePerNight * $booking->nights)</span>
                 </div>
                 <div class="flex justify-between text-sm pt-2 border-t border-gray-100">
                     <span class="font-bold text-secondary">{{ __('bookings.fields.total_amount') }}</span>
-                    <span class="text-lg font-bold text-primary">${{ number_format($booking->total_amount, 2) }}</span>
+                    <span class="text-lg font-bold text-primary">@currency($booking->total_amount)</span>
                 </div>
             </div>
         </div>

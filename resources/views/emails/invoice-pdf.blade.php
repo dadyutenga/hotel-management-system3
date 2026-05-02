@@ -48,7 +48,7 @@
             <tr>
                 <th>#</th>
                 <th>Description</th>
-                <th style="text-align: right;">Amount (TZS)</th>
+                <th style="text-align: right;">Amount (@currencySymbol('TZS'))</th>
             </tr>
         </thead>
         <tbody>
@@ -63,18 +63,18 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="2">Total</td>
-                <td style="text-align: right;">TZS {{ number_format($invoice['total'] ?? 0, 2) }}</td>
+                <td style="text-align: right;">@currency($invoice['total'] ?? 0, 'TZS')</td>
             </tr>
             @if(isset($invoice['paid']))
             <tr>
                 <td colspan="2">Amount Paid</td>
-                <td style="text-align: right;">TZS {{ number_format($invoice['paid'], 2) }}</td>
+                <td style="text-align: right;">@currency($invoice['paid'], 'TZS')</td>
             </tr>
             @endif
             @if(isset($invoice['balance']))
             <tr class="total-row">
                 <td colspan="2">Balance Due</td>
-                <td style="text-align: right;">TZS {{ number_format($invoice['balance'], 2) }}</td>
+                <td style="text-align: right;">@currency($invoice['balance'], 'TZS')</td>
             </tr>
             @endif
         </tfoot>

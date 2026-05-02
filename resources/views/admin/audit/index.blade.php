@@ -36,7 +36,7 @@
                         <div class="text-xs text-gray-400">{{ $audit->authorizer->role->name ?? '' }}</div>
                     </td>
                     <td class="px-4 py-3 text-right font-bold text-red-600">
-                        - TZS {{ number_format($audit->discount_amount, 2) }}
+                        - @currency($audit->discount_amount, 'TZS')
                     </td>
                     <td class="px-4 py-3 text-center">{{ $audit->valid_days }}</td>
                     <td class="px-4 py-3 text-xs text-gray-500">

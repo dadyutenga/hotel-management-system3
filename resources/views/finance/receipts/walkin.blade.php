@@ -18,6 +18,9 @@
     </style>
 </head>
 <body>
+@php
+    use App\Helpers\CurrencyHelper;
+@endphp
 
 <div class="header">
     <div class="hotel-name">🏨 HOTEL NAME</div>
@@ -59,18 +62,18 @@
 <table>
     <tr class="total-row">
         <td>TOTAL</td>
-        <td class="text-right">USD {{ number_format($order->total, 2) }}</td>
+        <td class="text-right">{{ CurrencyHelper::formatTZS($order->total) }}</td>
     </tr>
     <tr>
-        <td style="color: #666;">In TZS</td>
-        <td class="text-right" style="color: #666;">TZS {{ number_format($order->total * $exchangeRate, 0) }}</td>
+        <td style="color: #666;">In USD</td>
+        <td class="text-right" style="color: #666;">{{ CurrencyHelper::formatUSD(round($order->total / $exchangeRate, 2)) }}</td>
     </tr>
     @if($payment)
     <tr style="height:6px;"></tr>
     <tr>
         <td style="color: #666;">Paid ({{ ucfirst($payment->method) }})</td>
         <td class="text-right">
-            {{ $payment->currency }} {{ number_format($payment->amount, 2) }}
+            {{ CurrencyHelper::formatCurrency($payment->amount, $payment->currency) }}
         </td>
     </tr>
     @endif
@@ -78,7 +81,7 @@
 
 <div class="footer">
     <p>Thank you for your visit!</p>
-    <p style="margin-top: 4px;">Rate: 1 USD = {{ number_format($exchangeRate, 0) }} TZS</p>
+    <p style="margin-top: 4px;">Rate: 1 {{ CurrencyHelper::getCurrencySymbol('USD') }} = {{ number_format($exchangeRate, 0) }} {{ CurrencyHelper::getCurrencySymbol('TZS') }}</p>
     <p style="margin-top: 4px; font-size: 10px;">Served by: {{ auth()->user()->name }}</p>
 </div>
 

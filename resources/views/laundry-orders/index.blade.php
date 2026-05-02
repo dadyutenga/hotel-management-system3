@@ -129,7 +129,7 @@
                             <span class="text-sm text-gray-600">{{ $order->items->count() }} item(s)</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="font-bold text-green-600">{{ number_format($order->total_amount) }}</span>
+                            <span class="font-bold text-green-600">@currency($order->total_amount, 'TZS')</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @switch($order->status)

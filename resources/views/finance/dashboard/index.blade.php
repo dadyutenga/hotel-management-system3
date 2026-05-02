@@ -16,31 +16,31 @@
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">{{ __('finance.dashboard.today_revenue') }}</p>
         <p class="text-2xl font-bold text-gray-800 mt-1">
-            ${{ number_format($todaySummary['total_revenue'], 2) }}
+            @currency($todaySummary['total_revenue'], 'USD')
         </p>
     </div>
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">{{ __('finance.dashboard.checkout') }}</p>
         <p class="text-2xl font-bold text-green-600 mt-1">
-            ${{ number_format($todaySummary['checkout_revenue'], 2) }}
+            @currency($todaySummary['checkout_revenue'], 'USD')
         </p>
     </div>
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">{{ __('finance.dashboard.walkin_sales') }}</p>
         <p class="text-2xl font-bold text-blue-600 mt-1">
-            ${{ number_format($todaySummary['walkin_revenue'], 2) }}
+            @currency($todaySummary['walkin_revenue'], 'USD')
         </p>
     </div>
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">{{ __('finance.dashboard.cash') }}</p>
         <p class="text-2xl font-bold text-gray-700 mt-1">
-            ${{ number_format($todaySummary['cash_total'], 2) }}
+            @currency($todaySummary['cash_total'], 'USD')
         </p>
     </div>
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">{{ __('finance.dashboard.card') }}</p>
         <p class="text-2xl font-bold text-gray-700 mt-1">
-            ${{ number_format($todaySummary['card_total'], 2) }}
+            @currency($todaySummary['card_total'], 'USD')
         </p>
     </div>
 </div>
@@ -52,7 +52,7 @@
         @forelse($revenueByModule as $row)
         <div class="flex justify-between items-center py-2 border-b last:border-0 text-sm">
             <span class="text-gray-600 capitalize">{{ str_replace('_', ' ', $row->source_module) }}</span>
-            <span class="font-medium">${{ number_format($row->total_usd, 2) }}</span>
+            <span class="font-medium">@currency($row->total_usd, 'USD')</span>
         </div>
         @empty
         <p class="text-sm text-gray-400">{{ __('finance.dashboard.no_data') }}</p>
@@ -65,7 +65,7 @@
         @forelse($revenueByMethod as $row)
         <div class="flex justify-between items-center py-2 border-b last:border-0 text-sm">
             <span class="text-gray-600 capitalize">{{ ucfirst($row->payment_method) }}</span>
-            <span class="font-medium">${{ number_format($row->total_usd, 2) }}</span>
+            <span class="font-medium">@currency($row->total_usd, 'USD')</span>
         </div>
         @empty
         <p class="text-sm text-gray-400">{{ __('finance.dashboard.no_data') }}</p>
@@ -75,7 +75,7 @@
     {{-- Outstanding --}}
     <div class="bg-white rounded shadow p-5">
         <h2 class="font-semibold text-gray-700 mb-3">{{ __('finance.dashboard.outstanding_balance') }}</h2>
-        <p class="text-3xl font-bold text-red-500">${{ number_format($outstandingTotal, 2) }}</p>
+        <p class="text-3xl font-bold text-red-500">@currency($outstandingTotal, 'USD')</p>
         <p class="text-sm text-gray-400 mt-2">{{ __('finance.dashboard.outstanding_help') }}</p>
     </div>
 </div>
@@ -121,7 +121,7 @@
                         <p class="font-medium text-gray-800">{{ $row->booking?->booking_number ?? __('finance.dashboard.unknown_booking') }}</p>
                         <p class="text-gray-500">{{ __('finance.dashboard.unpaid_charge_count', ['count' => $row->charge_count]) }}</p>
                     </div>
-                    <span class="font-medium text-amber-700">TZS {{ number_format($row->total_tzs, 0) }}</span>
+                    <span class="font-medium text-amber-700">@currency($row->total_tzs, 'TZS')</span>
                 </div>
             @empty
                 <p class="text-sm text-gray-400">{{ __('finance.dashboard.no_unpaid_charges') }}</p>
@@ -159,7 +159,7 @@
                 </td>
                 <td class="px-4 py-3 text-gray-500 capitalize">{{ $txn->source_module }}</td>
                 <td class="px-4 py-3 text-gray-500 capitalize">{{ $txn->payment_method }}</td>
-                <td class="px-4 py-3 text-right font-medium">${{ number_format($txn->amount_usd, 2) }}</td>
+                <td class="px-4 py-3 text-right font-medium">@currency($txn->amount_usd, 'USD')</td>
                 <td class="px-4 py-3 text-gray-500 text-xs">{{ $txn->actor?->name }}</td>
                 <td class="px-4 py-3 text-gray-400 text-xs">{{ $txn->created_at->format('H:i d M') }}</td>
             </tr>

@@ -248,8 +248,8 @@
                             <td class="px-6 py-4 text-sm text-gray-500">{{ $item->serviceItem->service->name }}</td>
                             <td class="px-6 py-4 text-sm font-semibold text-secondary">{{ $item->serviceItem->item_name }}</td>
                             <td class="px-6 py-4 text-sm text-right text-secondary">{{ $item->quantity }}</td>
-                            <td class="px-6 py-4 text-sm text-right text-secondary">{{ number_format($item->unit_price, 0) }}</td>
-                            <td class="px-6 py-4 text-sm text-right font-bold text-secondary">{{ number_format($item->subtotal, 0) }}</td>
+                            <td class="px-6 py-4 text-sm text-right text-secondary">@currency($item->unit_price, 'TZS')</td>
+                            <td class="px-6 py-4 text-sm text-right font-bold text-secondary">@currency($item->subtotal, 'TZS')</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ $item->notes ?? '—' }}</td>
                         </tr>
                         @endforeach
@@ -266,7 +266,7 @@
                         <tr>
                             <td colspan="4"></td>
                             <td class="px-6 py-3 text-right text-sm font-bold text-secondary">{{ __('laundry.info.total_tzs') }}</td>
-                            <td class="px-6 py-3 text-right text-lg font-extrabold text-primary">{{ number_format($laundryOrder->total, 0) }}</td>
+                            <td class="px-6 py-3 text-right text-lg font-extrabold text-primary">@currency($laundryOrder->total, 'TZS')</td>
                             <td></td>
                         </tr>
                     </tfoot>

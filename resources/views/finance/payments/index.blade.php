@@ -10,15 +10,15 @@
 <div class="grid grid-cols-3 gap-4 mb-6">
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">Today Total</p>
-        <p class="text-2xl font-bold text-gray-800 mt-1">${{ number_format($summary['total_usd'], 2) }}</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1">@currency($summary['total_usd'], 'USD')</p>
     </div>
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">Cash</p>
-        <p class="text-2xl font-bold text-green-600 mt-1">${{ number_format($summary['cash_usd'], 2) }}</p>
+        <p class="text-2xl font-bold text-green-600 mt-1">@currency($summary['cash_usd'], 'USD')</p>
     </div>
     <div class="bg-white rounded shadow p-4">
         <p class="text-xs text-gray-400 uppercase tracking-wide">Card</p>
-        <p class="text-2xl font-bold text-blue-600 mt-1">${{ number_format($summary['card_usd'], 2) }}</p>
+        <p class="text-2xl font-bold text-blue-600 mt-1">@currency($summary['card_usd'], 'USD')</p>
     </div>
 </div>
 
@@ -94,7 +94,7 @@
                 <td class="px-4 py-3 capitalize">{{ str_replace('_', ' ', $payment->method) }}</td>
                 <td class="px-4 py-3">{{ $payment->currency }}</td>
                 <td class="px-4 py-3 text-right font-medium">{{ number_format($payment->amount, 2) }}</td>
-                <td class="px-4 py-3 text-right">${{ number_format($payment->amount_usd, 2) }}</td>
+                <td class="px-4 py-3 text-right">@currency($payment->amount_usd, 'USD')</td>
                 <td class="px-4 py-3">
                     <span class="px-2 py-0.5 rounded text-xs
                         {{ $payment->status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">

@@ -81,7 +81,7 @@
                     </span>
                 </td>
                 <td class="px-4 py-3 text-center">{{ $order->items->count() }}</td>
-                <td class="px-4 py-3 text-right font-semibold">{{ number_format($order->total, 0) }}</td>
+                <td class="px-4 py-3 text-right font-semibold">@currency($order->total, 'TZS')</td>
                 <td class="px-4 py-3">
                     @php
                         $colors = [

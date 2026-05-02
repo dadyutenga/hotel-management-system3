@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Restaurant;
 
+use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\BookingCharge;
 use App\Models\MenuCategory;
@@ -239,8 +240,7 @@ class OrderController extends Controller
 
             // 3. Create BookingCharge — payment will happen at Finance Checkout
             // Store amount in USD (converted from TZS) and also store TZS amount
-            $exchangeRate = (float) (DB::table('system_settings')
-                ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+            $exchangeRate = CurrencyHelper::getExchangeRate();
             $amountUsd = round($order->total / $exchangeRate, 2);
 
             app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());

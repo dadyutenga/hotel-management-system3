@@ -43,7 +43,7 @@
                     <td class="px-4 py-3 text-gray-500">{{ $item->menuItem->category->name ?? '—' }}</td>
                     <td class="px-4 py-3 text-right font-semibold">{{ number_format($item->total_qty) }}</td>
                     <td class="px-4 py-3 text-right">{{ number_format($item->order_count) }}</td>
-                    <td class="px-4 py-3 text-right font-semibold text-primary">{{ number_format($item->total_revenue, 0) }}</td>
+                    <td class="px-4 py-3 text-right font-semibold text-primary">@currency($item->total_revenue, 'TZS')</td>
                 </tr>
                 @empty
                 <tr>
@@ -57,7 +57,7 @@
                     <td class="px-4 py-3" colspan="3">Totals</td>
                     <td class="px-4 py-3 text-right">{{ number_format($items->sum('total_qty')) }}</td>
                     <td class="px-4 py-3 text-right">{{ number_format($items->sum('order_count')) }}</td>
-                    <td class="px-4 py-3 text-right text-primary">{{ number_format($items->sum('total_revenue'), 0) }}</td>
+                    <td class="px-4 py-3 text-right text-primary">@currency($items->sum('total_revenue'), 'TZS')</td>
                 </tr>
             </tfoot>
             @endif

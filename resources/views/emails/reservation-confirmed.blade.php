@@ -17,7 +17,7 @@
     <tr><th>Nights</th><td>{{ $reservation['nights'] ?? 1 }}</td></tr>
     <tr><th>Guests</th><td>{{ $reservation['guests'] ?? 1 }}</td></tr>
     @if(!empty($reservation['estimated_total']))
-    <tr><th>Estimated Total</th><td><strong>TZS {{ number_format($reservation['estimated_total'], 2) }}</strong></td></tr>
+    <tr><th>Estimated Total</th><td><strong>@currency($reservation['estimated_total'], 'TZS')</strong></td></tr>
     @endif
 </table>
 

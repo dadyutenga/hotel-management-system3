@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Restaurant;
 
+use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingCharge;
@@ -173,9 +174,7 @@ class BuffetController extends Controller
         }
 
         DB::transaction(function () use ($buffetSale) {
-            $exchangeRate = (float) (DB::table('system_settings')
-                ->where('key', 'tzs_exchange_rate')
-                ->value('value') ?? 2500);
+            $exchangeRate = CurrencyHelper::getExchangeRate();
             $amountUsd = round(((float) $buffetSale->total_amount) / $exchangeRate, 2);
 
             BookingCharge::updateOrCreate(
@@ -220,9 +219,7 @@ class BuffetController extends Controller
 
         DB::transaction(function () use ($request, $buffetSale) {
             $method = $request->string('payment_method')->toString();
-            $exchangeRate = (float) (DB::table('system_settings')
-                ->where('key', 'tzs_exchange_rate')
-                ->value('value') ?? 2500);
+            $exchangeRate = CurrencyHelper::getExchangeRate();
             $amountUsd = FinancePayment::toUsd((float) $buffetSale->total_amount, 'TZS', $exchangeRate);
             $normalizedMethod = $method === 'mobile' ? 'mobile_money' : $method;
             $paymentReference = $request->string('payment_reference')->toString() ?: null;

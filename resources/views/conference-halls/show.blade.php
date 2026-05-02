@@ -56,7 +56,7 @@
                 </div>
                 <div>
                     <div class="text-sm text-gray-500 font-medium">Hourly Rate</div>
-                    <div class="text-2xl font-extrabold text-secondary">${{ number_format($conferenceHall->hourly_rate, 2) }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">@currency($conferenceHall->hourly_rate)</div>
                 </div>
             </div>
         </div>

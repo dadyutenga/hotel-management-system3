@@ -127,7 +127,7 @@
                         <span class="text-sm text-secondary">{{ $booking->duration_in_hours }} hrs</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm font-bold text-secondary">${{ number_format($booking->total_cost, 2) }}</span>
+                        <span class="text-sm font-bold text-secondary">@currency($booking->total_cost)</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @include('components.conference-booking-status-badge', ['status' => $booking->status])

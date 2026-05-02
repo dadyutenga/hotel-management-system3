@@ -13,10 +13,10 @@
     <tr><th>Check-in</th><td>{{ $booking['check_in'] }}</td></tr>
     <tr><th>Check-out</th><td>{{ $booking['check_out'] }}</td></tr>
     <tr><th>Nights</th><td>{{ $booking['nights'] }}</td></tr>
-    <tr><th>Rate per Night</th><td>TZS {{ number_format($booking['rate'] ?? 0, 2) }}</td></tr>
-    <tr><th>Total</th><td><strong>TZS {{ number_format($booking['total'] ?? 0, 2) }}</strong></td></tr>
+    <tr><th>Rate per Night</th><td>@currency($booking['rate'] ?? 0, 'TZS')</td></tr>
+    <tr><th>Total</th><td><strong>@currency($booking['total'] ?? 0, 'TZS')</strong></td></tr>
     @if(!empty($booking['discount']))
-    <tr><th>Discount Applied</th><td style="color: #dc2626;">- TZS {{ number_format($booking['discount'], 2) }}</td></tr>
+    <tr><th>Discount Applied</th><td style="color: #dc2626;">- @currency($booking['discount'], 'TZS')</td></tr>
     @endif
 </table>
 

@@ -54,7 +54,7 @@
                         <div @click="{{ $itemStock > 0 ? "selectProduct('{$item->id}', '".addslashes($item->name)."', {$item->selling_price})" : '' }}"
                             x-show="!activeCategory || activeCategory === '{{ $cat->id }}'"
                             class="{{ $itemStock > 0 ? 'cursor-pointer hover:border-blue-300 hover:bg-blue-50/50 active:scale-95' : 'cursor-not-allowed opacity-50' }} p-3 rounded-lg border border-gray-100 transition-all relative"
-                            title="{{ $item->name }} - {{ number_format($item->selling_price, 0) }} TZS {{ $itemStock <= 0 ? '(Out of Stock)' : '(' . number_format($itemStock, 0) . ' in stock)' }}">
+                            title="{{ $item->name }} - @currency($item->selling_price, 'TZS') {{ $itemStock <= 0 ? '(Out of Stock)' : '(' . number_format($itemStock, 0) . ' in stock)' }}">
                             @if($itemImage)
                             <div class="w-full h-20 mb-2 overflow-hidden rounded-md bg-gray-100">
                                 <img src="{{ $itemImage }}" alt="{{ $item->name }}" class="w-full h-full object-cover" loading="lazy">
@@ -68,7 +68,7 @@
                             @if(!empty($item->varieties))
                             <div class="text-xs text-amber-600 mt-0.5">{{ count($item->varieties) }} sizes</div>
                             @endif
-                            <div class="text-xs font-bold text-primary mt-1">{{ number_format($item->selling_price, 0) }} TZS</div>
+                            <div class="text-xs font-bold text-primary mt-1">@currency($item->selling_price, 'TZS')</div>
                             @if($itemStock <= 0)
                             <div class="absolute top-1 right-1 bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium">Out of Stock</div>
                             @elseif($itemStock <= 5)
@@ -390,10 +390,11 @@ function barPos() {
 
         // Formatting
         formatCurrency(value) {
+            const symbol = '{{ \App\Helpers\CurrencyHelper::getCurrencySymbol('TZS') }}';
             return new Intl.NumberFormat('en-TZ', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
-            }).format(Number(value || 0)) + ' TZS';
+            }).format(Number(value || 0)) + ' ' + symbol;
         },
     }
 }

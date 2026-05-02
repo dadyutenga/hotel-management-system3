@@ -172,15 +172,15 @@
                         <td class="px-6 py-3 text-sm text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ $item->laundryItem->name ?? 'Unknown' }}</td>
                         <td class="px-6 py-3 text-sm text-gray-600 text-center">{{ $item->quantity }}</td>
-                        <td class="px-6 py-3 text-sm text-gray-600 text-right">{{ number_format($item->unit_price) }}</td>
-                        <td class="px-6 py-3 text-sm font-bold text-gray-900 text-right">{{ number_format($item->total_price) }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-600 text-right">@currency($item->unit_price, 'TZS')</td>
+                        <td class="px-6 py-3 text-sm font-bold text-gray-900 text-right">@currency($item->total_price, 'TZS')</td>
                     </tr>
                     @endforeach
                 </tbody>
                 <tfoot class="bg-gray-50">
                     <tr>
                         <td colspan="4" class="px-6 py-3 text-right text-sm font-bold text-gray-900">Grand Total:</td>
-                        <td class="px-6 py-3 text-right text-lg font-bold text-green-600">{{ number_format($laundryOrder->total_amount) }}</td>
+                        <td class="px-6 py-3 text-right text-lg font-bold text-green-600">@currency($laundryOrder->total_amount, 'TZS')</td>
                     </tr>
                 </tfoot>
             </table>
@@ -194,7 +194,7 @@
         <div class="flex items-center justify-between p-4 rounded-lg {{ $laundryOrder->bookingCharge->status === 'paid' ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200' }}">
             <div>
                 <p class="text-sm font-semibold {{ $laundryOrder->bookingCharge->status === 'paid' ? 'text-green-800' : 'text-yellow-800' }}">
-                    Booking Charge: {{ number_format($laundryOrder->bookingCharge->amount) }}
+                    Booking Charge: @currency($laundryOrder->bookingCharge->amount)
                 </p>
                 <p class="text-xs {{ $laundryOrder->bookingCharge->status === 'paid' ? 'text-green-600' : 'text-yellow-600' }}">
                     {{ $laundryOrder->bookingCharge->description }}

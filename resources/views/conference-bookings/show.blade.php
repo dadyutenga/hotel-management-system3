@@ -106,9 +106,9 @@
 
             <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
                 <div class="text-sm text-gray-600 mb-1">Total Cost</div>
-                <div class="text-2xl font-bold text-secondary">${{ number_format($conferenceBooking->total_cost, 2) }}</div>
+                <div class="text-2xl font-bold text-secondary">@currency($conferenceBooking->total_cost)</div>
                 <div class="text-xs text-gray-500 mt-1">
-                    Rate: ${{ number_format($conferenceBooking->conferenceHall->hourly_rate, 2) }}/hr
+                    Rate: @currency($conferenceBooking->conferenceHall->hourly_rate)/hr
                 </div>
             </div>
         </div>

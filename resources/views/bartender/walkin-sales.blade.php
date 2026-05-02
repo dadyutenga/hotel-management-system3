@@ -51,11 +51,11 @@
         </div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <div class="text-xs text-gray-500">{{ __('bartender.messages.summary_total') }}</div>
-            <div class="text-2xl font-bold text-gray-800">{{ number_format($summary['total'], 0) }} TZS</div>
+            <div class="text-2xl font-bold text-gray-800">@currency($summary['total'], 'TZS')</div>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <div class="text-xs text-gray-500">{{ __('bartender.messages.summary_paid') }}</div>
-            <div class="text-2xl font-bold text-green-700">{{ number_format($summary['paid'], 0) }} TZS</div>
+            <div class="text-2xl font-bold text-green-700">@currency($summary['paid'], 'TZS')</div>
         </div>
     </div>
 
@@ -81,7 +81,7 @@
                         <td class="px-4 py-3">{{ __('bartender.statuses.' . $statusKey) }}</td>
                         @php($paymentKey = in_array($order->payment_method, $paymentOptions, true) ? $order->payment_method : 'unknown')
                         <td class="px-4 py-3">{{ __('bartender.payment_methods.' . $paymentKey) }}</td>
-                        <td class="px-4 py-3 text-right font-semibold">{{ number_format($order->total, 0) }}</td>
+                        <td class="px-4 py-3 text-right font-semibold">@currency($order->total, 'TZS')</td>
                         <td class="px-4 py-3">{{ $order->settled_at?->format('Y-m-d H:i') ?? '—' }}</td>
                         <td class="px-4 py-3 text-right">
                             <a href="{{ route('bartender.orders.show', $order) }}" class="text-blue-600 hover:underline">{{ __('bartender.actions.open') }}</a>

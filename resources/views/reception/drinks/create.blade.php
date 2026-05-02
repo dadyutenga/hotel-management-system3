@@ -134,7 +134,8 @@ function drinkRequest() {
         },
 
         formatCurrency(value) {
-            return new Intl.NumberFormat('en-TZ', { minimumFractionDigits: 0 }).format(value) + ' TZS';
+            const symbol = '{{ \App\Helpers\CurrencyHelper::getCurrencySymbol('TZS') }}';
+            return new Intl.NumberFormat('en-TZ', { minimumFractionDigits: 0 }).format(value) + ' ' + symbol;
         },
 
         validateBeforeSubmit(e) {

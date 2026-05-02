@@ -47,7 +47,7 @@
                     <p class="text-xs text-gray-500 mt-1">{{ Str::limit($item->description, 80) }}</p>
                     @endif
                 </div>
-                <span class="text-lg font-bold text-primary">{{ number_format($item->selling_price, 0) }} TZS</span>
+                <span class="text-lg font-bold text-primary">@currency($item->selling_price, 'TZS')</span>
             </div>
 
             @if($item->ingredients->count())

@@ -46,15 +46,15 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
             <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Paid</div>
-            <div class="text-2xl font-extrabold text-green-600 mt-1">TZS {{ number_format($totalPaid, 0) }}</div>
+            <div class="text-2xl font-extrabold text-green-600 mt-1">@currency($totalPaid, 'TZS')</div>
         </div>
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
             <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pending</div>
-            <div class="text-2xl font-extrabold text-yellow-600 mt-1">TZS {{ number_format($totalPending, 0) }}</div>
+            <div class="text-2xl font-extrabold text-yellow-600 mt-1">@currency($totalPending, 'TZS')</div>
         </div>
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
             <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">Booking Total</div>
-            <div class="text-2xl font-extrabold text-primary mt-1">TZS {{ number_format($booking->total_amount, 0) }}</div>
+            <div class="text-2xl font-extrabold text-primary mt-1">@currency($booking->total_amount, 'TZS')</div>
         </div>
     </div>
 
@@ -94,7 +94,7 @@
                             <span class="text-sm text-secondary capitalize">{{ str_replace('-', ' ', $payment->payment_method ?? 'N/A') }}</span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="text-sm font-semibold text-secondary">TZS {{ number_format($payment->amount, 0) }}</span>
+                            <span class="text-sm font-semibold text-secondary">@currency($payment->amount, 'TZS')</span>
                         </td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $payment->status_badge_class }}">

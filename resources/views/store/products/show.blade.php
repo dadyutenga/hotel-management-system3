@@ -42,8 +42,8 @@
         <dl class="space-y-2 text-sm">
             <div class="flex justify-between"><dt class="text-gray-500">Category</dt><dd>{{ $product->category ?? '—' }}</dd></div>
             <div class="flex justify-between"><dt class="text-gray-500">Unit</dt><dd>{{ $product->unit }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Cost Price</dt><dd>{{ number_format($product->cost_price, 2) }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Selling Price</dt><dd class="font-medium">{{ number_format($product->selling_price, 2) }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Cost Price</dt><dd>@currency($product->cost_price, 'TZS')</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Selling Price</dt><dd class="font-medium">@currency($product->selling_price, 'TZS')</dd></div>
             <div class="flex justify-between"><dt class="text-gray-500">Reorder Level</dt><dd>{{ $product->reorder_level }}</dd></div>
             <div class="flex justify-between"><dt class="text-gray-500">Status</dt>
                 <dd>

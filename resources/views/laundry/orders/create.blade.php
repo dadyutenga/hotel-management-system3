@@ -128,7 +128,7 @@
                             <p class="text-sm text-gray-600">
                                 {{ __('laundry.info.estimated_total') }}:
                                 <span id="order-total" class="text-2xl font-extrabold text-primary ml-2">0</span>
-                                <span class="text-sm text-gray-400 ml-1">TZS</span>
+                                <span class="text-sm text-gray-400 ml-1">@currencySymbol()</span>
                             </p>
                         </div>
                     </div>
@@ -199,7 +199,7 @@ function addRow() {
         options += `<optgroup label="${service.name} (${service.turnaround_hours}h)">`;
         service.service_items.forEach(item => {
             options += `<option value="${item.id}" data-price="${item.price}">
-                ${item.item_name} — ${parseFloat(item.price).toLocaleString()} TZS
+                ${item.item_name} — ${parseFloat(item.price).toLocaleString()} @currencySymbol('TZS')
             </option>`;
         });
         options += '</optgroup>';

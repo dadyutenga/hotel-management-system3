@@ -14,7 +14,7 @@
     <tr><th>Check-in Date</th><td>{{ $booking['check_in'] }}</td></tr>
     <tr><th>Check-out Date</th><td>{{ $booking['check_out'] }}</td></tr>
     @if(isset($booking['balance']))
-    <tr><th>Outstanding Balance</th><td><strong>TZS {{ number_format($booking['balance'], 2) }}</strong></td></tr>
+    <tr><th>Outstanding Balance</th><td><strong>@currency($booking['balance'], 'TZS')</strong></td></tr>
     @endif
 </table>
 

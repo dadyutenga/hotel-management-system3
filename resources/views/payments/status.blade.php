@@ -70,7 +70,7 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-bold text-green-700">Payment Successful!</h3>
-                    <p class="text-sm text-gray-500 mt-2">Your payment of <strong>TZS {{ number_format($payment->amount, 0) }}</strong> has been confirmed.</p>
+                    <p class="text-sm text-gray-500 mt-2">Your payment of <strong>@currency($payment->amount, 'TZS')</strong> has been confirmed.</p>
                 </div>
                 <div class="flex justify-center gap-3">
                     <a href="{{ route('payments.show', $payment) }}" 
@@ -129,7 +129,7 @@
             </div>
             <div class="flex justify-between text-sm pt-2 border-t border-gray-100">
                 <span class="font-bold text-secondary">Amount</span>
-                <span class="text-lg font-bold text-primary">TZS {{ number_format($payment->amount, 0) }}</span>
+                <span class="text-lg font-bold text-primary">@currency($payment->amount, 'TZS')</span>
             </div>
         </div>
     </div>

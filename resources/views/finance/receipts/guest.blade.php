@@ -75,7 +75,13 @@
             <td>{{ $charge->created_at->format('d M') }}</td>
             <td>{{ $charge->description }}</td>
             <td class="text-right">{{ CurrencyHelper::formatCurrency($charge->amount, 'USD', false) }}</td>
-            <td class="text-right">{{ CurrencyHelper::formatCurrency($charge->amount * $exchangeRate, 'TZS', false) }}</td>
+            <td class="text-right">
+                @if($charge->amount_tzs)
+                    {{ CurrencyHelper::formatCurrency($charge->amount_tzs, 'TZS', false) }}
+                @else
+                    {{ CurrencyHelper::formatCurrency($charge->amount * $exchangeRate, 'TZS', false) }}
+                @endif
+            </td>
         </tr>
         @endforeach
         @endforeach

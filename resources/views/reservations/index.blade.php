@@ -152,7 +152,7 @@
                             <div class="text-xs text-primary">{{ $reservation->check_in_date->diffInDays($reservation->check_out_date) }} {{ __('reservations.labels.nights') }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold text-secondary">${{ number_format($reservation->estimated_amount, 2) }}</span>
+                            <span class="text-sm font-bold text-secondary">@currency($reservation->estimated_amount)</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @include('components.reservation-status-badge', ['status' => $reservation->status])

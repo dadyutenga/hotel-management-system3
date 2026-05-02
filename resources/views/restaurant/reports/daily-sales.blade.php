@@ -25,7 +25,7 @@
         </div>
         <div class="bg-white rounded-lg shadow p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Total Revenue</p>
-            <p class="text-2xl font-bold text-primary">{{ number_format($summary['total_revenue'], 0) }}</p>
+            <p class="text-2xl font-bold text-primary">@currency($summary['total_revenue'], 'TZS')</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Cash</p>
@@ -68,7 +68,7 @@
                     <td class="px-4 py-3">{{ $order->table->table_number ?? '—' }}</td>
                     <td class="px-4 py-3">{{ ucfirst($order->order_type) }}</td>
                     <td class="px-4 py-3 text-center">{{ $order->items->count() }}</td>
-                    <td class="px-4 py-3 text-right font-semibold">{{ number_format($order->total, 0) }}</td>
+                    <td class="px-4 py-3 text-right font-semibold">@currency($order->total, 'TZS')</td>
                     <td class="px-4 py-3">
                         <span class="text-xs px-2 py-0.5 rounded-full
                             {{ $order->payment_method === 'cash' ? 'bg-green-100 text-green-700' : '' }}

@@ -65,7 +65,7 @@
                 </div>
             </div>
             <div class="text-right">
-                <div class="text-2xl font-extrabold text-primary">TZS {{ number_format($payment->amount, 0) }}</div>
+                <div class="text-2xl font-extrabold text-primary">@currency($payment->amount, 'TZS')</div>
                 <div class="text-xs text-gray-500">{{ $payment->currency }}</div>
             </div>
         </div>
@@ -173,7 +173,7 @@
             @endif
             @if($payment->canBeRefunded())
                 <form method="POST" action="{{ route('payments.refund', $payment) }}" class="inline"
-                      onsubmit="return confirm('Are you sure you want to refund TZS {{ number_format($payment->amount, 0) }}?')">
+                      onsubmit="return confirm('Are you sure you want to refund @currency($payment->amount, 'TZS')?')">
                     @csrf
                     <button type="submit" class="px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-all">
                         Full Refund

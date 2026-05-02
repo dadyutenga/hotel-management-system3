@@ -32,13 +32,13 @@
                         <tr>
                             <td class="px-3 py-2">{{ $item->menuItem?->name ?? $item->item_name_snapshot ?? '—' }}</td>
                             <td class="px-3 py-2 text-right">{{ $item->quantity }}</td>
-                            <td class="px-3 py-2 text-right">{{ number_format($item->unit_price, 0) }}</td>
-                            <td class="px-3 py-2 text-right font-semibold">{{ number_format($item->subtotal, 0) }}</td>
+                            <td class="px-3 py-2 text-right">@currency($item->unit_price, 'TZS')</td>
+                            <td class="px-3 py-2 text-right font-semibold">@currency($item->subtotal, 'TZS')</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-            <div class="text-right mt-3 text-lg font-bold text-gray-800">{{ __('bartender.messages.total_tzs', ['amount' => number_format($order->total, 0)]) }}</div>
+            <div class="text-right mt-3 text-lg font-bold text-gray-800">@currency($order->total, 'TZS')</div>
         </div>
 
         @if(!$availability['ok'])

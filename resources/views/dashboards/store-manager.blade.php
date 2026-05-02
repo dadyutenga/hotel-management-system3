@@ -146,12 +146,12 @@
         <div class="space-y-4">
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                 <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">{{ __('dashboard.procurement.month_spending') }}</p>
-                <p class="text-2xl font-extrabold text-green-700 mt-2">{{ number_format($stats['month_spending'], 0) }} TZS</p>
+                <p class="text-2xl font-extrabold text-green-700 mt-2">@currency($stats['month_spending'], 'TZS')</p>
                 <p class="text-xs text-green-600 mt-1">{{ __('dashboard.procurement.confirmed_grns') }}</p>
             </div>
             <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200">
                 <p class="text-xs font-semibold text-yellow-600 uppercase tracking-wider">{{ __('dashboard.procurement.pending_orders_value') }}</p>
-                <p class="text-2xl font-extrabold text-yellow-700 mt-2">{{ number_format($stats['pending_orders_value'], 0) }} TZS</p>
+                <p class="text-2xl font-extrabold text-yellow-700 mt-2">@currency($stats['pending_orders_value'], 'TZS')</p>
                 <p class="text-xs text-yellow-600 mt-1">{{ __('dashboard.stats.awaiting_delivery') }}</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -187,7 +187,7 @@
                         <p class="text-sm text-gray-500">{{ $lpo->supplierName }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-secondary">{{ number_format($lpo->grand_total, 0) }} TZS</p>
+                        <p class="font-bold text-secondary">@currency($lpo->grand_total, 'TZS')</p>
                         <p class="text-xs text-gray-500">{{ $lpo->created_at->diffForHumans() }}</p>
                     </div>
                 </div>
@@ -216,7 +216,7 @@
                         <p class="text-sm text-gray-500">{{ $grn->supplierName }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-secondary">{{ number_format($grn->grand_total, 0) }} TZS</p>
+                        <p class="font-bold text-secondary">@currency($grn->grand_total, 'TZS')</p>
                         <p class="text-xs text-gray-500">{{ $grn->received_date?->format('M d, Y') }}</p>
                     </div>
                 </div>
@@ -256,7 +256,7 @@
                             <span class="text-sm text-gray-600">{{ Str::limit($lpo->supplierName, 20) }}</span>
                         </td>
                         <td class="py-3 pr-4">
-                            <span class="font-semibold text-secondary">{{ number_format($lpo->grand_total, 0) }}</span>
+                            <span class="font-semibold text-secondary">@currency($lpo->grand_total, 'TZS')</span>
                         </td>
                         <td class="py-3">
                             @php
@@ -350,7 +350,7 @@
                         <span class="text-sm text-gray-600">{{ $grn->received_date?->format('M d, Y') ?? 'N/A' }}</span>
                     </td>
                     <td class="py-3 pr-4">
-                        <span class="font-semibold text-secondary">{{ number_format($grn->grand_total, 0) }}</span>
+                        <span class="font-semibold text-secondary">@currency($grn->grand_total, 'TZS')</span>
                     </td>
                     <td class="py-3">
                         @php

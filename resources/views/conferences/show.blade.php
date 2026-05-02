@@ -102,7 +102,7 @@
 
                 <div class="flex items-center justify-between py-2">
                     <span class="text-xs text-gray-500">Total Cost</span>
-                    <span class="text-sm font-bold text-secondary">${{ number_format($conference->conferenceBooking->total_cost, 2) }}</span>
+                    <span class="text-sm font-bold text-secondary">@currency($conference->conferenceBooking->total_cost)</span>
                 </div>
             </div>
         </div>

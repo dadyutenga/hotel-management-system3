@@ -2,6 +2,7 @@
 
 namespace App\Services\Billing;
 
+use App\Helpers\CurrencyHelper;
 use App\Models\Booking;
 use App\Models\BookingCharge;
 use App\Models\LaundryOrder;
@@ -210,9 +211,7 @@ class ModuleBillingService
 
     protected function convertTzsToUsd(float $amountTzs): array
     {
-        $exchangeRate = (float) (DB::table('system_settings')
-            ->where('key', 'tzs_exchange_rate')
-            ->value('value') ?? 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
 
         return [round($amountTzs / $exchangeRate, 2), $exchangeRate];
     }

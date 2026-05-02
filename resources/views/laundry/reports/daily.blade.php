@@ -47,7 +47,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ number_format($summary['total_revenue'], 0) }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">@currency($summary['total_revenue'], 'TZS')</div>
                     <div class="text-xs text-gray-500 font-medium">{{ __('laundry.reports.total_revenue_tzs') }}</div>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                             <span class="text-sm text-secondary">{{ $order->items->count() }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <span class="text-sm font-bold text-secondary">{{ number_format($order->total, 0) }} <span class="text-xs text-gray-400">TZS</span></span>
+                            <span class="text-sm font-bold text-secondary">@currency($order->total, 'TZS')</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                             <span class="text-xs text-gray-500">{{ ucwords(str_replace('_', ' ', $order->payment_method)) }}</span>

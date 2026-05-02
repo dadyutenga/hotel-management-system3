@@ -533,15 +533,15 @@
         <table class="totals">
             <tr>
                 <td class="lbl">Subtotal:</td>
-                <td class="val">{{ number_format($goodsReceivedNote->subtotal, 0) }} TZS</td>
+                <td class="val">@currency($goodsReceivedNote->subtotal, 'TZS')</td>
             </tr>
             <tr>
                 <td class="lbl">Tax (18% VAT):</td>
-                <td class="val">{{ number_format($goodsReceivedNote->tax_amount, 0) }} TZS</td>
+                <td class="val">@currency($goodsReceivedNote->tax_amount, 'TZS')</td>
             </tr>
             <tr class="grand-total">
                 <td style="font-size: 14px;">TOTAL COST:</td>
-                <td class="val" style="font-size: 16px;">{{ number_format($goodsReceivedNote->grand_total, 0) }} TZS</td>
+                <td class="val" style="font-size: 16px;">@currency($goodsReceivedNote->grand_total, 'TZS')</td>
             </tr>
         </table>
     </div>

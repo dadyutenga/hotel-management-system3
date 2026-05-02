@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\FinancialTransaction;
 use App\Models\FinancePayment;
@@ -58,8 +59,7 @@ class FinancePaymentController extends Controller
             'notes'     => 'nullable|string|max:500',
         ]);
 
-        $exchangeRate = (float) (DB::table('system_settings')
-            ->where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
 
         $amountUsd = FinancePayment::toUsd(
             (float) $data['amount'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
@@ -593,7 +594,7 @@ class WalkinPaymentController extends Controller
      */
     protected function recordFinancePayment($order, array $data, ?WalkinTransaction $walkinTxn = null): void
     {
-        $exchangeRate = (float) (SystemSetting::where('key', 'tzs_exchange_rate')->value('value') ?? 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
         $amountUsd = FinancePayment::toUsd((float) $data['amount'], 'TZS', $exchangeRate);
 
         $payment = FinancePayment::create([

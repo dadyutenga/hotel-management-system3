@@ -13,7 +13,7 @@
             <div><span class="text-gray-500">{{ __('general.restaurant.buffet.fields.sale_type') }}:</span> {{ __('general.restaurant.buffet.sale_type.' . $buffetSale->sale_type) }}</div>
             <div><span class="text-gray-500">{{ __('general.status') }}:</span> {{ ucfirst($buffetSale->status) }}</div>
             <div><span class="text-gray-500">{{ __('general.restaurant.buffet.fields.pax') }}:</span> {{ $buffetSale->adults_count }}A / {{ $buffetSale->children_count }}C</div>
-            <div><span class="text-gray-500">{{ __('general.total') }}:</span> {{ number_format($buffetSale->total_amount, 0) }} TZS</div>
+            <div><span class="text-gray-500">{{ __('general.total') }}:</span> @currency($buffetSale->total_amount, 'TZS')</div>
             <div><span class="text-gray-500">{{ __('general.restaurant.buffet.fields.payment_method') }}:</span> {{ $buffetSale->payment_method ? ucfirst(str_replace('_', ' ', $buffetSale->payment_method)) : '—' }}</div>
             <div><span class="text-gray-500">{{ __('general.restaurant.buffet.fields.reference') }}:</span> {{ $buffetSale->payment_reference ?? '—' }}</div>
             @if($buffetSale->booking_id)

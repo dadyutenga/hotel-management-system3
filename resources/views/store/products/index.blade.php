@@ -72,8 +72,8 @@
                         <span class="text-gray-400">—</span>
                     @endif
                 </td>
-                <td class="px-4 py-3 text-right text-gray-700">{{ number_format($product->cost_price, 2) }}</td>
-                <td class="px-4 py-3 text-right text-gray-700">{{ number_format($product->selling_price, 2) }}</td>
+                <td class="px-4 py-3 text-right text-gray-700">@currency($product->cost_price, 'TZS')</td>
+                <td class="px-4 py-3 text-right text-gray-700">@currency($product->selling_price, 'TZS')</td>
                 <td class="px-4 py-3 text-right">
                     @php
                         $barStock = $product->stockLevels->firstWhere('location.code', 'bar');

@@ -18,7 +18,7 @@
     <tr><th>Collection</th><td>Ready for pickup at our laundry counter</td></tr>
     @endif
     @if(!empty($data['total']))
-    <tr><th>Total</th><td>TZS {{ number_format($data['total'], 2) }}</td></tr>
+    <tr><th>Total</th><td>@currency($data['total'], 'TZS')</td></tr>
     @endif
 </table>
 

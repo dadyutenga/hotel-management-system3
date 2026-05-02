@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Helpers\CurrencyHelper;
 use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\Payment;
@@ -505,7 +506,7 @@ class StandardizedPaymentService
      */
     protected function recordRefundTransaction(Payment $payment, float $amount, ?string $reason = null, ?string $actorId = null): void
     {
-        $exchangeRate = (float) SystemSetting::getValue('tzs_exchange_rate', 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
 
         // Determine currency - refund in same currency as original payment
         $currency = $payment->currency ?? 'TZS';
@@ -623,7 +624,7 @@ class StandardizedPaymentService
      */
     protected function recordWalkinRefundTransaction(WalkinTransaction $transaction, float $amount, ?string $reason, ?string $actorId): void
     {
-        $exchangeRate = (float) SystemSetting::getValue('tzs_exchange_rate', 2500);
+        $exchangeRate = CurrencyHelper::getExchangeRate();
         $currency = $transaction->currency ?? 'TZS';
         $amountUsd = $currency === 'USD' ? $amount : round($amount / $exchangeRate, 2);
 

@@ -130,7 +130,7 @@
                         <div class="text-xs text-primary">{{ $room->roomType->code }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm font-bold text-secondary">${{ number_format($room->roomType->base_rate, 2) }}</span>
+                        <span class="text-sm font-bold text-secondary">@currency($room->roomType->base_rate)</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @include('components.room-status-badge', ['status' => $room->status])

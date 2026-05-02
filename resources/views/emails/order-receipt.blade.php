@@ -32,14 +32,14 @@
         <tr>
             <td>{{ $item['name'] }}</td>
             <td style="text-align: center;">{{ $item['quantity'] }}</td>
-            <td style="text-align: right;">TZS {{ number_format($item['total'], 2) }}</td>
+            <td style="text-align: right;">@currency($item['total'], 'TZS')</td>
         </tr>
         @endforeach
     </tbody>
     <tfoot>
         <tr>
             <th colspan="2">Total</th>
-            <td style="text-align: right;"><strong>TZS {{ number_format($order['total'] ?? 0, 2) }}</strong></td>
+            <td style="text-align: right;"><strong>@currency($order['total'] ?? 0, 'TZS')</strong></td>
         </tr>
     </tfoot>
 </table>
