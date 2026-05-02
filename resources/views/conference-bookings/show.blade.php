@@ -108,7 +108,7 @@
                 <div class="text-sm text-gray-600 mb-1">Total Cost</div>
                 <div class="text-2xl font-bold text-secondary">@currency($conferenceBooking->total_cost)</div>
                 <div class="text-xs text-gray-500 mt-1">
-                    Rate: @currency($conferenceBooking->conferenceHall->hourly_rate)/hr
+                    Rate: {{ $conferenceBooking->conferenceHall->formatted_rate }}/hr
                 </div>
             </div>
         </div>

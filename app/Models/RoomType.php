@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\CurrencyHelper;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +14,7 @@ class RoomType extends Model implements HasMedia
 {
     use HasUuid, InteractsWithMedia;
 
-    protected $fillable = ['name', 'code', 'base_rate', 'max_occupancy', 'description'];
+    protected $fillable = ['name', 'code', 'base_rate', 'currency', 'max_occupancy', 'description'];
     
     protected $casts = [
         'base_rate' => 'decimal:2',
@@ -72,12 +73,38 @@ class RoomType extends Model implements HasMedia
     }
 
     /**
-     * Get the price per night (alias for base_rate).
+     * Get the price per night (alias for base_rate), converted to system currency.
      * Provides compatibility with views referencing price_per_night.
      */
     public function getPricePerNightAttribute(): float
     {
-        return (float) $this->base_rate;
+        $storedCurrency = $this->currency ?? 'USD';
+        $systemCurrency = CurrencyHelper::getDefaultCurrency();
+
+        if ($storedCurrency === $systemCurrency) {
+            return (float) $this->base_rate;
+        }
+
+        return CurrencyHelper::convert((float) $this->base_rate, $storedCurrency, $systemCurrency);
+    }
+
+    /**
+     * Get the base rate formatted in the system default currency,
+     * converting from the stored currency if needed.
+     */
+    public function getFormattedRateAttribute(): string
+    {
+        $storedCurrency = $this->currency ?? 'USD';
+        $systemCurrency = CurrencyHelper::getDefaultCurrency();
+        $amount = (float) $this->base_rate;
+
+        if ($storedCurrency === $systemCurrency) {
+            return CurrencyHelper::formatCurrency($amount, $systemCurrency);
+        }
+
+        $converted = CurrencyHelper::convert($amount, $storedCurrency, $systemCurrency);
+
+        return CurrencyHelper::formatCurrency($converted, $systemCurrency);
     }
 
     /**

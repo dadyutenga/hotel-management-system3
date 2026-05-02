@@ -121,7 +121,7 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm font-bold text-secondary">@currency($hall->hourly_rate)/hr</span>
+                        <span class="text-sm font-bold text-secondary">{{ $hall->formatted_rate }}/hr</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $hall->status === 'available' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">

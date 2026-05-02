@@ -163,7 +163,7 @@
                     @endif
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">{{ __('bookings.rate_per_night') }}</span>
-                        <span class="font-medium text-primary">@currency($booking->room->roomType->base_rate ?? 0)</span>
+                        <span class="font-medium text-primary">{{ $booking->room->roomType->formatted_rate }}</span>
                     </div>
                 </div>
             @else

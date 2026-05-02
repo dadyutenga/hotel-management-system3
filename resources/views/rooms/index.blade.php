@@ -31,7 +31,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $rooms->where('status', 'available')->count() }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['available'] ?? 0 }}</div>
                     <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.available') }}</div>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $rooms->where('status', 'occupied')->count() }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['occupied'] ?? 0 }}</div>
                     <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.occupied') }}</div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $rooms->where('status', 'reserved')->count() }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['reserved'] ?? 0 }}</div>
                     <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.reserved') }}</div>
                 </div>
             </div>
@@ -73,7 +73,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $rooms->where('status', 'dirty')->count() }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['dirty'] ?? 0 }}</div>
                     <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.dirty') }}</div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $rooms->where('status', 'out_of_order')->count() }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['out_of_order'] ?? 0 }}</div>
                     <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.out_of_order') }}</div>
                 </div>
             </div>
@@ -130,7 +130,7 @@
                         <div class="text-xs text-primary">{{ $room->roomType->code }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm font-bold text-secondary">@currency($room->roomType->base_rate)</span>
+                        <span class="text-sm font-bold text-secondary">{{ $room->roomType->formatted_rate }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @include('components.room-status-badge', ['status' => $room->status])

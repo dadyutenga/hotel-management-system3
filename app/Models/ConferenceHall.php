@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Helpers\CurrencyHelper;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +17,7 @@ class ConferenceHall extends Model
         'location',
         'capacity',
         'hourly_rate',
+        'currency',
         'status',
         'amenities',
         'description',
@@ -29,6 +31,21 @@ class ConferenceHall extends Model
     public function conferenceBookings(): HasMany
     {
         return $this->hasMany(ConferenceBooking::class);
+    }
+
+    public function getFormattedRateAttribute(): string
+    {
+        $storedCurrency = $this->currency ?? 'USD';
+        $systemCurrency = CurrencyHelper::getDefaultCurrency();
+        $amount = (float) $this->hourly_rate;
+
+        if ($storedCurrency === $systemCurrency) {
+            return CurrencyHelper::formatCurrency($amount, $systemCurrency);
+        }
+
+        $converted = CurrencyHelper::convert($amount, $storedCurrency, $systemCurrency);
+
+        return CurrencyHelper::formatCurrency($converted, $systemCurrency);
     }
 
     public function isAvailable(): bool

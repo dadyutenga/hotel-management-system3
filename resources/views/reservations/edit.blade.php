@@ -402,7 +402,7 @@
                             <option value="">{{ __('reservations.placeholders.not_assigned') }}</option>
                             @foreach($availableRooms as $room)
                             <option value="{{ $room->id }}" {{ old('room_id', $reservation->room_id) == $room->id ? 'selected' : '' }}>
-                                {{ $room->room_number }} - {{ $room->roomType->name }} (@currency($room->roomType->base_rate)/night)
+                                {{ $room->room_number }} - {{ $room->roomType->name }} ({{ $room->roomType->formatted_rate }}/night)
                             </option>
                             @endforeach
                         </select>

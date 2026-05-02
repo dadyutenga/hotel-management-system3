@@ -1,4 +1,4 @@
-Task: Fix Currency Consistency and Conversion Across Modules
+newTask: Fix Currency Consistency and Conversion Across Modules
 
 Objective:
 Ensure TZS (Tanzanian Shillings) and any configured base currency is reflected consistently across all modules and views (including bookings, conference, rooms, bar, restaurant, POS, store, accounting, reports) and that converted amounts display correctly wherever conversions are expected.

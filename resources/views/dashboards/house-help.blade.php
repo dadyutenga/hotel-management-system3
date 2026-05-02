@@ -147,7 +147,7 @@
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
     <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-extrabold text-secondary">{{ __('dashboard.sections.recent_laundry_orders') }}</h3>
-        <a href="{{ route('laundry.index') }}" class="text-sm text-primary hover:text-blue-700 font-semibold">{{ __('dashboard.actions.view_all') }} &rarr;</a>
+        <a href="{{ route('laundry.orders.index') }}" class="text-sm text-primary hover:text-blue-700 font-semibold">{{ __('dashboard.actions.view_all') }} &rarr;</a>
     </div>
     
     <div class="overflow-x-auto">
@@ -166,7 +166,7 @@
                 @forelse($recentOrders as $order)
                 <tr class="hover:bg-purple-50/50 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <a href="{{ route('laundry.show', $order) }}" class="font-semibold text-blue-600 hover:text-blue-800">
+                        <a href="{{ route('laundry.orders.show', $order) }}" class="font-semibold text-blue-600 hover:text-blue-800">
                             {{ $order->order_number }}
                         </a>
                     </td>
@@ -197,17 +197,17 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         @if($order->status === 'pending')
-                            <form method="POST" action="{{ route('laundry.mark-in-progress', $order) }}" class="inline">
+                            <form method="POST" action="{{ route('laundry.orders.process', $order) }}" class="inline">
                                 @csrf
                                 <button type="submit" class="text-blue-600 hover:text-blue-800 font-medium">{{ __('dashboard.actions.start') }}</button>
                             </form>
                         @elseif($order->status === 'in_progress')
-                            <form method="POST" action="{{ route('laundry.mark-completed', $order) }}" class="inline">
+                            <form method="POST" action="{{ route('laundry.orders.ready', $order) }}" class="inline">
                                 @csrf
                                 <button type="submit" class="text-green-600 hover:text-green-800 font-medium">{{ __('dashboard.actions.complete') }}</button>
                             </form>
                         @else
-                            <a href="{{ route('laundry.show', $order) }}" class="text-gray-500 hover:text-gray-700 font-medium">{{ __('dashboard.actions.view') }}</a>
+                            <a href="{{ route('laundry.orders.show', $order) }}" class="text-gray-500 hover:text-gray-700 font-medium">{{ __('dashboard.actions.view') }}</a>
                         @endif
                     </td>
                 </tr>
@@ -231,7 +231,7 @@
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
     <h3 class="text-lg font-extrabold text-secondary mb-6">{{ __('dashboard.sections.quick_actions') }}</h3>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <a href="{{ route('laundry.index') }}" class="flex flex-col items-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl hover:shadow-lg transition border border-purple-200 group">
+        <a href="{{ route('laundry.orders.index') }}" class="flex flex-col items-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl hover:shadow-lg transition border border-purple-200 group">
             <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -249,7 +249,7 @@
             <span class="text-sm font-semibold text-secondary">{{ __('dashboard.actions.my_profile') }}</span>
         </a>
 
-        <a href="{{ route('laundry.index') }}?status=pending" class="flex flex-col items-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl hover:shadow-lg transition border border-yellow-200 group">
+        <a href="{{ route('laundry.orders.index') }}?status=pending" class="flex flex-col items-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl hover:shadow-lg transition border border-yellow-200 group">
             <div class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>

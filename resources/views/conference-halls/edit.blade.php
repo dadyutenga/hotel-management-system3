@@ -95,18 +95,19 @@
 
                         <div>
                             <label for="hourly_rate" class="block text-sm font-medium text-gray-700 mb-2">
-                                Hourly Rate ($) <span class="text-red-500">*</span>
+                                Hourly Rate ({{ $currencySymbol }}) <span class="text-red-500">*</span>
                             </label>
                             <input 
                                 type="number" 
                                 name="hourly_rate" 
                                 id="hourly_rate"
                                 value="{{ old('hourly_rate', $conferenceHall->hourly_rate) }}"
-                                step="0.01"
+                                step="{{ $systemCurrency === 'TZS' ? '1' : '0.01' }}"
                                 min="0"
                                 required
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('hourly_rate') border-red-500 @enderror"
-                                placeholder="150.00">
+                                placeholder="{{ $systemCurrency === 'TZS' ? '0' : '0.00' }}">
+                            <input type="hidden" name="currency" value="{{ old('currency', $conferenceHall->currency) }}">
                             @error('hourly_rate')
                                 <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
                             @enderror

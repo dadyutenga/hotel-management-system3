@@ -67,17 +67,18 @@
                     <!-- Base Rate -->
                     <div>
                         <label for="base_rate" class="block text-sm font-semibold text-secondary mb-2">
-                            Base Rate ($) <span class="text-red-500">*</span>
+                            Base Rate ({{ CurrencyHelper::getCurrencySymbol() }}) <span class="text-red-500">*</span>
                         </label>
                         <input 
                             type="number" 
                             name="base_rate" 
                             id="base_rate"
                             value="{{ old('base_rate', $roomType->base_rate) }}" 
-                            step="0.01"
+                            step="{{ CurrencyHelper::getDecimals() === 0 ? '1' : '0.01' }}"
                             min="0"
                             class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('base_rate') border-red-500 @enderror"
                             required>
+                        <input type="hidden" name="currency" value="{{ old('currency', $roomType->currency) }}">
                         @error('base_rate')
                             <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

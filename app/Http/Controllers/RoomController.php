@@ -9,7 +9,13 @@ use Illuminate\Http\Request;
 class RoomController extends Controller {
     public function index() {
         $rooms = Room::with(['floor.building', 'roomType'])->latest()->paginate(20);
-        return view('rooms.index', compact('rooms'));
+
+        $statusCounts = Room::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        return view('rooms.index', compact('rooms', 'statusCounts'));
     }
 
     public function create() {

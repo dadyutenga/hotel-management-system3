@@ -174,7 +174,7 @@
                                         <div class="flex-1">
                                             <div class="flex items-center justify-between">
                                                 <span class="font-semibold text-secondary">Room {{ $room->room_number }}</span>
-                                                <span class="text-sm font-bold text-primary">@currency($room->roomType->base_rate ?? 0){{ __('bookings.per_night') }}</span>
+                                                <span class="text-sm font-bold text-primary">{{ $room->roomType->formatted_rate }}{{ __('bookings.per_night') }}</span>
                                             </div>
                                             <div class="text-xs text-gray-500 mt-1">
                                                 {{ $room->roomType->name ?? 'N/A' }} &bull; Floor {{ $room->floor->number ?? 'N/A' }}
