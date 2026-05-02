@@ -14,6 +14,10 @@ return [
     'manage_subtitle' => 'Simamia vyumba na upatikanaji wa hoteli',
     'add_new_subtitle' => 'Ongeza chumba kipya kwenye orodha yako',
     'update_subtitle' => 'Sasisha maelezo ya chumba',
+    'structure' => 'Muundo wa Vyumba',
+    'buildings' => 'Majengo',
+    'floors' => 'Ghorofa',
+    'room_types' => 'Aina za Vyumba',
 
     // Fields
     'fields' => [

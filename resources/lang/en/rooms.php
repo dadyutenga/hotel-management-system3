@@ -14,6 +14,10 @@ return [
     'manage_subtitle' => 'Manage hotel rooms and availability',
     'add_new_subtitle' => 'Add a new room to your inventory',
     'update_subtitle' => 'Update room information',
+    'structure' => 'Room Structure',
+    'buildings' => 'Buildings',
+    'floors' => 'Floors',
+    'room_types' => 'Room Types',
 
     // Fields
     'fields' => [
