@@ -237,6 +237,39 @@ class BookingController extends Controller
     }
 
     /**
+     * Show current guests — only checked-in bookings (active stays).
+     */
+    public function currentGuests(Request $request)
+    {
+        $query = Booking::with(['room.roomType', 'room.floor.building', 'guest'])
+            ->where('status', 'checked_in')
+            ->orderBy('check_in_date', 'desc');
+
+        // Search by guest name, email, or room number
+        if ($request->filled('search')) {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('guest_name', 'like', "%{$search}%")
+                  ->orWhere('guest_email', 'like', "%{$search}%")
+                  ->orWhere('booking_number', 'like', "%{$search}%")
+                  ->orWhere('guest_phone', 'like', "%{$search}%")
+                  ->orWhereHas('room', function ($rq) use ($search) {
+                      $rq->where('room_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $currentGuests = $query->paginate(min($request->input('per_page', 20), 100));
+
+        $totalGuests = Booking::where('status', 'checked_in')->count();
+        $totalRooms = Booking::where('status', 'checked_in')->distinct()->count('room_id');
+        $todayCheckins = Booking::whereDate('check_in_date', today())->where('status', 'checked_in')->count();
+        $todayCheckouts = Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count();
+
+        return view('bookings.current-guests', compact('currentGuests', 'totalGuests', 'totalRooms', 'todayCheckins', 'todayCheckouts'));
+    }
+
+    /**
      * Show create booking form — for walk-in guests (immediate check-in).
      */
     public function create(Request $request)

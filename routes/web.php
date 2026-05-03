@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('bookings/api/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('bookings.available-rooms');
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
+        Route::get('bookings/current-guests', [BookingController::class, 'currentGuests'])->name('bookings.current-guests');
         Route::post('bookings', [BookingController::class, 'storeFrontdesk'])->name('bookings.store');
         Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
         Route::get('bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
