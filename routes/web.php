@@ -62,6 +62,7 @@ use App\Http\Controllers\Manager\OversightController;
 use App\Http\Controllers\Finance\PettyCashController;
 use App\Http\Controllers\Bartender\BartenderController;
 use App\Http\Controllers\Reception\DrinkRequestController;
+use App\Http\Controllers\CleaningController;
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\BroadcastController;
@@ -258,6 +259,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/daily', [LaundryReportController::class, 'daily'])
              ->name('reports.daily')
              ->middleware('role:laundry_manager,supervisor,manager');
+    });
+
+    // ═══ CLEANING WORKFLOW ═══
+    // Supervisor: manage room cleaning queue
+    Route::middleware(['role:supervisor'])->prefix('cleaning')->name('cleaning.')->group(function () {
+        Route::get('/', [CleaningController::class, 'index'])->name('index');
+        Route::post('assign/{room}', [CleaningController::class, 'assign'])->name('assign');
+        Route::post('confirm/{room}', [CleaningController::class, 'confirm'])->name('confirm');
+    });
+
+    // House Help: view assigned rooms and mark done
+    Route::middleware(['role:house_help'])->prefix('cleaning')->name('cleaning.')->group(function () {
+        Route::get('my-rooms', [CleaningController::class, 'myRooms'])->name('my-rooms');
+        Route::post('mark-done/{room}', [CleaningController::class, 'markDone'])->name('mark-done');
+    });
+
+    // Front desk: mark room as out of order
+    Route::middleware(['role:front_desk,supervisor,manager'])->group(function () {
+        Route::post('rooms/{room}/out-of-order', [CleaningController::class, 'markOutOfOrder'])->name('rooms.out-of-order');
     });
 
     // Booking Charges (NO admin - admin is system only)

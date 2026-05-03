@@ -65,7 +65,7 @@ return [
         'occupied' => 'Occupied',
         'available_rooms' => 'Available Rooms',
         'available' => 'Available',
-        'dirty_rooms' => 'Dirty',
+        'dirty_rooms' => 'Needs Cleaning',
         'reserved_rooms' => 'Reserved',
         'maintenance_rooms' => 'Maintenance',
         'today_checkins' => 'Today\'s Check-ins',
@@ -263,7 +263,7 @@ return [
     'room_status' => [
         'available' => 'Available',
         'occupied' => 'Occupied',
-        'dirty' => 'Dirty',
+        'needs_cleaning' => 'Needs Cleaning',
         'cleaning' => 'Cleaning',
         'maintenance' => 'Maintenance',
         'reserved' => 'Reserved',

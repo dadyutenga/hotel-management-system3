@@ -136,7 +136,7 @@ class DashboardController extends Controller {
             'occupied_rooms' => Room::where('status', 'occupied')->count(),
             'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
-            'dirty_rooms' => Room::where('status', 'dirty')->count(),
+            'dirty_rooms' => Room::where('status', 'needs_cleaning')->count(),
             // Expected arrivals today (Reservation)
             'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
             // Guests who need to check out today (Booking)
@@ -239,7 +239,7 @@ class DashboardController extends Controller {
             'total_rooms' => Room::count(),
             'occupied_rooms' => Room::where('status', 'occupied')->count(),
             'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
-            'dirty_rooms' => Room::where('status', 'dirty')->count(),
+            'dirty_rooms' => Room::where('status', 'needs_cleaning')->count(),
             'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
             // Expected arrivals (Reservation)
@@ -290,7 +290,7 @@ class DashboardController extends Controller {
             ->get();
 
         $roomsNeedingAttention = Room::with(['floor.building', 'roomType'])
-            ->whereIn('status', ['dirty', 'out_of_order'])
+            ->whereIn('status', ['needs_cleaning', 'out_of_order'])
             ->get();
 
         $recentLaundryOrders = LaundryOrder::with(['guest', 'booking.room', 'creator'])
@@ -328,8 +328,13 @@ class DashboardController extends Controller {
             'total_orders' => LaundryOrder::count(),
         ];
 
-        $stats['dirty_rooms'] = Room::where('status', 'dirty')->count();
+        $stats['dirty_rooms'] = Room::where('status', 'needs_cleaning')->count();
         $stats['out_of_order_rooms'] = Room::where('status', 'out_of_order')->count();
+        $stats['my_assigned_rooms'] = Room::where('status', 'needs_cleaning')
+            ->where('cleaning_assigned_to', (string) auth()->id())->count();
+        $stats['my_pending_rooms'] = Room::where('status', 'needs_cleaning')
+            ->where('cleaning_assigned_to', (string) auth()->id())
+            ->whereNull('cleaning_completed_at')->count();
 
         $recentOrders = LaundryOrder::with(['guest', 'booking.room', 'creator'])
             ->orderBy('created_at', 'desc')
@@ -341,7 +346,15 @@ class DashboardController extends Controller {
             ->pluck('count', 'status')
             ->toArray();
 
-        return view('dashboards.house-help', compact('stats', 'recentOrders', 'ordersByStatus'));
+        $myAssignedRooms = Room::with(['floor.building', 'roomType'])
+            ->where('status', 'needs_cleaning')
+            ->where('cleaning_assigned_to', (string) auth()->id())
+            ->orderBy('cleaning_assigned_at', 'desc')
+            ->get();
+
+        return view('dashboards.house-help', compact(
+            'stats', 'recentOrders', 'ordersByStatus', 'myAssignedRooms'
+        ));
     }
 
     private function frontDeskDashboard() {

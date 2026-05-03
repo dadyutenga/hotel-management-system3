@@ -29,7 +29,7 @@ class RoomController extends Controller {
             'floor_id' => 'required|uuid|exists:floors,id',
             'room_type_id' => 'required|uuid|exists:room_types,id',
             'room_number' => 'required|max:255',
-            'status' => 'required|in:available,reserved,occupied,dirty,out_of_order',
+            'status' => 'required|in:available,reserved,occupied,needs_cleaning,out_of_order',
             'is_active' => 'boolean',
         ]);
 
@@ -48,7 +48,7 @@ class RoomController extends Controller {
             'floor_id' => 'required|uuid|exists:floors,id',
             'room_type_id' => 'required|uuid|exists:room_types,id',
             'room_number' => 'required|max:255',
-            'status' => 'required|in:available,reserved,occupied,dirty,out_of_order',
+            'status' => 'required|in:available,reserved,occupied,needs_cleaning,out_of_order',
             'is_active' => 'boolean',
         ]);
 
@@ -63,7 +63,7 @@ class RoomController extends Controller {
 
     public function toggleStatus(Request $request, Room $room) {
         $validated = $request->validate([
-            'status' => 'required|in:available,reserved,occupied,dirty,out_of_order',
+            'status' => 'required|in:available,reserved,occupied,needs_cleaning,out_of_order',
         ]);
 
         $room->update(['status' => $validated['status']]);

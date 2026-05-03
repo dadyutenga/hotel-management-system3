@@ -9,7 +9,7 @@ use App\Models\Booking;
  *
  * Booking = active guest stay. Room status is controlled here:
  *   checked_in  → room occupied
- *   checked_out → room dirty (needs cleaning)
+ *   checked_out → room needs_cleaning
  *   cancelled   → room available
  */
 class BookingObserver
@@ -32,7 +32,7 @@ class BookingObserver
         if ($booking->isDirty('status')) {
             match ($booking->status) {
                 'checked_in'  => $booking->room?->update(['status' => 'occupied']),
-                'checked_out' => $booking->room?->update(['status' => 'dirty']),
+                'checked_out' => $booking->room?->update(['status' => 'needs_cleaning']),
                 'cancelled'   => $booking->room?->update(['status' => 'available']),
                 default => null,
             };

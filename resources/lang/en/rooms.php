@@ -53,7 +53,7 @@ return [
     'status' => [
         'available' => 'Available',
         'occupied' => 'Occupied',
-        'dirty' => 'Dirty',
+        'needs_cleaning' => 'Needs Cleaning',
         'cleaning' => 'Cleaning',
         'maintenance' => 'Maintenance',
         'out_of_order' => 'Out of Order',
@@ -85,11 +85,7 @@ return [
         'edit' => 'Edit',
         'delete' => 'Delete',
         'view' => 'View',
-        'create' => 'Create',
-        'cancel' => 'Cancel',
-        'save' => 'Save',
-        'confirm_delete' => 'Are you sure?',
-        'confirm_delete_room' => 'Are you sure you want to delete this room?',
+        'out_of_order' => 'Out of Order',
     ],
 
     // Messages

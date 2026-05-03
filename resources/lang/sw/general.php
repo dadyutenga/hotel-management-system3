@@ -214,6 +214,12 @@ return [
         'payment_date' => 'Tarehe ya Malipo',
         'reason' => 'Sababu',
         'status' => 'Hali',
+        'booking_number' => 'Uhifadhi',
+        'room_number' => 'Chumba',
+        'check_in' => 'Kuingia',
+        'check_out' => 'Kutoka',
+        'nights' => 'Usiku',
+        'guest_name' => 'Mgeni',
     ],
     'restaurant' => [
         'fields' => [

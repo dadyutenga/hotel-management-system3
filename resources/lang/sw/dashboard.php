@@ -65,7 +65,7 @@ return [
         'occupied' => 'Imejaa',
         'available_rooms' => 'Vyumba Vinavyopatikana',
         'available' => 'Vinapatikana',
-        'dirty_rooms' => 'Vichafu',
+        'dirty_rooms' => 'Inahitaji Usafi',
         'reserved_rooms' => 'Vimehifadhiwa',
         'maintenance_rooms' => 'Matengenezo',
         'today_checkins' => 'Wageni wa Leo',
@@ -258,7 +258,7 @@ return [
     'room_status' => [
         'available' => 'Inapatikana',
         'occupied' => 'Imejaa',
-        'dirty' => 'Chafu',
+        'needs_cleaning' => 'Inahitaji Usafi',
         'cleaning' => 'Inasafishwa',
         'maintenance' => 'Matengenezo',
         'reserved' => 'Imehifadhiwa',

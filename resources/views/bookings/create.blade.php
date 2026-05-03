@@ -193,6 +193,7 @@
                                             {{ __('bookings.messages.no_available_rooms') }} {{ __('bookings.search_rooms_hint') }}
                                         @else
                                             {{ __('bookings.search_rooms_hint') }}
+                                        @endif
                                 </p>
                             </div>
                         @endif

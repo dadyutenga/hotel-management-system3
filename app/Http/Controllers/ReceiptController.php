@@ -94,7 +94,16 @@ class ReceiptController extends Controller
 
         $receipt = $this->receiptService->getOrCreateReceipt($checkout);
 
-        return view('receipts.print', compact('receipt'));
+        $booking = $checkout->booking;
+        $extraFields = [
+            __('general.receipt.booking_number')  => $booking?->booking_number,
+            __('general.receipt.room_number')     => $booking?->room?->room_number,
+            __('general.receipt.check_in')        => $booking?->check_in_date?->format('d M Y'),
+            __('general.receipt.check_out')       => $booking?->check_out_date?->format('d M Y'),
+            __('general.receipt.nights')          => $booking?->nights,
+        ];
+
+        return view('receipts.print', compact('receipt', 'extraFields'));
     }
 
     /**

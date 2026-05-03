@@ -5,6 +5,7 @@ namespace App\Services\Billing;
 use App\Helpers\CurrencyHelper;
 use App\Models\Booking;
 use App\Models\BookingCharge;
+use App\Models\BuffetSale;
 use App\Models\LaundryOrder;
 use App\Models\Order;
 use App\Services\AccountingService;
@@ -189,6 +190,17 @@ class ModuleBillingService
                         paymentMethod: $paymentMethod,
                         actorId: $actorId
                     );
+                }
+            }
+
+            // Finalize BuffetSale charges (charge_type='restaurant', reference_id = BuffetSale id)
+            if ($charge->charge_type === 'restaurant' && !$charge->order_id && $charge->reference_id) {
+                $buffetSale = BuffetSale::find($charge->reference_id);
+                if ($buffetSale && $buffetSale->status === 'charged') {
+                    $buffetSale->update([
+                        'status' => 'settled',
+                        'settled_at' => now(),
+                    ]);
                 }
             }
         }

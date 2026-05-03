@@ -214,6 +214,12 @@ return [
         'payment_date' => 'Payment Date',
         'reason' => 'Reason',
         'status' => 'Status',
+        'booking_number' => 'Booking',
+        'room_number' => 'Room',
+        'check_in' => 'Check-in',
+        'check_out' => 'Check-out',
+        'nights' => 'Nights',
+        'guest_name' => 'Guest',
     ],
     'restaurant' => [
         'fields' => [

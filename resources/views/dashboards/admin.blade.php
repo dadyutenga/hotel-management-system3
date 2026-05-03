@@ -105,7 +105,7 @@
                 <div class="text-sm text-gray-600 font-medium mt-1">{{ __('dashboard.room_status.reserved') }}</div>
             </div>
             <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                <div class="text-3xl font-extrabold text-primary">{{ $roomStatusCounts['dirty'] ?? 0 }}</div>
+                <div class="text-3xl font-extrabold text-primary">{{ $roomStatusCounts['needs_cleaning'] ?? 0 }}</div>
                 <div class="text-sm text-gray-600 font-medium mt-1">{{ __('dashboard.stats.needs_cleaning') }}</div>
             </div>
         </div>

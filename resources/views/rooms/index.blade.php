@@ -75,8 +75,8 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['dirty'] ?? 0 }}</div>
-                    <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.dirty') }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['needs_cleaning'] ?? 0 }}</div>
+                    <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.needs_cleaning') }}</div>
                 </div>
             </div>
         </div>
@@ -153,7 +153,30 @@
                                 <button type="submit" class="text-red-600 hover:text-red-700 font-semibold" onclick="return confirm(&quot;{{ __('rooms.actions.confirm_delete') }}&quot;)">{{ __('rooms.actions.delete') }}</button>
                             </form>
                             @endif
+                            @if(in_array($room->status, ['available', 'needs_cleaning']))
+                            <button onclick="document.getElementById('ooo-modal-{{ $room->id }}').classList.remove('hidden')" class="text-orange-600 hover:text-orange-700 font-semibold text-xs">{{ __('rooms.actions.out_of_order') }}</button>
+                            @endif
                         </div>
+                        {{-- Out of Order Modal --}}
+                        @if(in_array($room->status, ['available', 'needs_cleaning']))
+                        <div id="ooo-modal-{{ $room->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+                            <div class="absolute inset-0 bg-black bg-opacity-40" onclick="this.parentElement.classList.add('hidden')"></div>
+                            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+                                <h3 class="text-lg font-bold text-secondary mb-4">Mark Out of Order — Room {{ $room->room_number }}</h3>
+                                <form method="POST" action="{{ route('rooms.out-of-order', $room) }}">
+                                    @csrf
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-semibold text-secondary mb-2">Reason <span class="text-red-500">*</span></label>
+                                        <textarea name="reason" rows="3" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary transition-all" placeholder="e.g. plumbing issue, electrical fault, deep cleaning required..."></textarea>
+                                    </div>
+                                    <div class="flex justify-end gap-3">
+                                        <button type="button" onclick="this.closest('.fixed').classList.add('hidden')" class="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50">Cancel</button>
+                                        <button type="submit" class="px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-xl hover:bg-orange-700">Mark Out of Order</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endif
                     </td>
                 </tr>
                 @empty

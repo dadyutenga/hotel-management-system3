@@ -12,10 +12,25 @@ class Room extends Model
 {
     use HasUuid;
 
-    protected $fillable = ['floor_id', 'room_type_id', 'room_number', 'status', 'is_active'];
-    
+    const STATUS_AVAILABLE = 'available';
+    const STATUS_NEEDS_CLEANING = 'needs_cleaning';
+    const STATUS_OUT_OF_ORDER = 'out_of_order';
+    const STATUS_OCCUPIED = 'occupied';
+    const STATUS_RESERVED = 'reserved';
+
+    protected $fillable = [
+        'floor_id', 'room_type_id', 'room_number', 'status', 'is_active',
+        'cleaning_assigned_to', 'cleaning_assigned_at',
+        'cleaning_completed_at', 'cleaning_confirmed_by', 'cleaning_confirmed_at',
+        'out_of_order_reason', 'out_of_order_set_by', 'out_of_order_set_at',
+    ];
+
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'              => 'boolean',
+        'cleaning_assigned_at'   => 'datetime',
+        'cleaning_completed_at'  => 'datetime',
+        'cleaning_confirmed_at'  => 'datetime',
+        'out_of_order_set_at'    => 'datetime',
     ];
 
     public function floor(): BelongsTo
@@ -36,6 +51,21 @@ class Room extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function cleaningAssignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cleaning_assigned_to');
+    }
+
+    public function cleaningConfirmer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cleaning_confirmed_by');
+    }
+
+    public function outOfOrderBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'out_of_order_set_by');
     }
 
     public function isAvailable(): bool

@@ -53,7 +53,7 @@ return [
     'status' => [
         'available' => 'Inapatikana',
         'occupied' => 'Imejaa',
-        'dirty' => 'Chafu',
+        'needs_cleaning' => 'Inahitaji Usafi',
         'cleaning' => 'Inasafishwa',
         'maintenance' => 'Matengenezo',
         'out_of_order' => 'Haifanyi Kazi',
@@ -85,11 +85,7 @@ return [
         'edit' => 'Hariri',
         'delete' => 'Futa',
         'view' => 'Tazama',
-        'create' => 'Unda',
-        'cancel' => 'Ghairi',
-        'save' => 'Hifadhi',
-        'confirm_delete' => 'Una uhakika?',
-        'confirm_delete_room' => 'Una uhakika unataka kufuta chumba hiki?',
+        'out_of_order' => 'Nje ya Huduma',
     ],
 
     // Messages
