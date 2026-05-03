@@ -15,7 +15,7 @@ class UserController extends Controller {
     }
 
     public function create() {
-        $roles = Role::whereNotIn('name', [Role::ADMIN, Role::CASHIER])->get();
+        $roles = Role::whereNotIn('name', [Role::ADMIN])->get();
         return view('users.create', compact('roles'));
     }
 
@@ -36,7 +36,7 @@ class UserController extends Controller {
             'role_id' => [
                 'required',
                 'uuid',
-                \Illuminate\Validation\Rule::exists('roles', 'id')->whereNotIn('name', [Role::ADMIN, Role::CASHIER]),
+                \Illuminate\Validation\Rule::exists('roles', 'id')->whereNotIn('name', [Role::ADMIN]),
             ],
             'is_active' => 'boolean',
         ]);
@@ -65,7 +65,7 @@ class UserController extends Controller {
     }
 
     public function edit(User $user) {
-        $roles = Role::whereNotIn('name', [Role::ADMIN, Role::CASHIER])->get();
+        $roles = Role::whereNotIn('name', [Role::ADMIN])->get();
         return view('users.edit', compact('user', 'roles'));
     }
 
@@ -86,7 +86,7 @@ class UserController extends Controller {
             'role_id' => [
                 'required',
                 'uuid',
-                \Illuminate\Validation\Rule::exists('roles', 'id')->whereNotIn('name', [Role::ADMIN, Role::CASHIER]),
+                \Illuminate\Validation\Rule::exists('roles', 'id')->whereNotIn('name', [Role::ADMIN]),
             ],
             'is_active' => 'boolean',
         ]);
