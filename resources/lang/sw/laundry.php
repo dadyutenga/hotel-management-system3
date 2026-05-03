@@ -23,11 +23,13 @@ return [
         'pending' => 'Inasubiri',
         'received' => 'Imepokelewa',
         'processing' => 'Inafanyiwa kazi',
+        'pending_confirmation' => 'Inasubiri Uthibitisho',
         'ready' => 'Tayari',
         'delivered' => 'Imewasilishwa',
         'collected' => 'Imechukuliwa',
         'settled' => 'Imelipwa',
         'cancelled' => 'Imefutwa',
+        'charged' => 'Imewekwa',
     ],
 
     // Services

@@ -45,7 +45,6 @@ class LaundryOrderController extends Controller
             ->paginate(25);
 
         $statusCounts = LaundryOrder::selectRaw('status, count(*) as count')
-            ->whereNotIn('status', ['settled', 'cancelled'])
             ->groupBy('status')
             ->pluck('count', 'status');
 

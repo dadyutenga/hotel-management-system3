@@ -23,11 +23,13 @@ return [
         'pending' => 'Pending',
         'received' => 'Received',
         'processing' => 'Processing',
+        'pending_confirmation' => 'Pending Confirmation',
         'ready' => 'Ready',
         'delivered' => 'Delivered',
         'collected' => 'Collected',
         'settled' => 'Settled',
         'cancelled' => 'Cancelled',
+        'charged' => 'Charged',
     ],
 
     // Services
