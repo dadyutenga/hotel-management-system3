@@ -13,7 +13,7 @@ class Room extends Model
     use HasUuid;
 
     const STATUS_AVAILABLE = 'available';
-    const STATUS_NEEDS_CLEANING = 'needs_cleaning';
+    const STATUS_NEEDS_CLEANING = 'dirty';
     const STATUS_OUT_OF_ORDER = 'out_of_order';
     const STATUS_OCCUPIED = 'occupied';
     const STATUS_RESERVED = 'reserved';

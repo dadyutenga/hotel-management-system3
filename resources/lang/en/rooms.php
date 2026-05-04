@@ -58,6 +58,7 @@ return [
         'maintenance' => 'Maintenance',
         'out_of_order' => 'Out of Order',
         'reserved' => 'Reserved',
+        'dirty' => 'Needs Cleaning',
         'needs_cleaning' => 'Needs Cleaning',
     ],
 

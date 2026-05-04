@@ -14,10 +14,14 @@ use App\Models\StockLocation;
 use App\Models\Table;
 use App\Services\Billing\ModuleBillingService;
 use App\Services\Bartender\BarOrderStockService;
+use App\Services\AccountingService;      // Added for POS accounting posting
+use App\Services\ReceiptService;          // Added for POS receipt creation
+use App\Models\FinancePayment;            // Added for POS walk-in payments
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class OrderController extends Controller
@@ -60,6 +64,178 @@ class OrderController extends Controller
                           ->get();
 
         return view('restaurant.orders.create', compact('locations', 'tables', 'categories'));
+    }
+
+    /**
+     * GET /restaurant/pos
+     * Restaurant POS screen — grid-based Quick Sale interface modeled on bar POS.
+     */
+    public function pos(Request $request): View
+    {
+        $kitchen = StockLocation::kitchen();
+
+        $categories = MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->where('is_available', true)])
+            ->where('is_active', true)
+            ->when($kitchen, fn($q) => $q->where('location_id', $kitchen->id))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // Build stock lookup keyed by product name (lowercase) → available quantity
+        $stockLevels = \App\Models\StockLevel::with('product')
+            ->when($kitchen, fn($q) => $q->where('location_id', $kitchen->id))
+            ->where('quantity', '>', 0)
+            ->get();
+
+        $stockMap = [];
+        foreach ($stockLevels as $level) {
+            if ($level->product) {
+                $name = mb_strtolower(trim($level->product->name));
+                $stockMap[$name] = (float) $level->available_qty;
+            }
+        }
+
+        return view('restaurant.pos', compact('categories', 'stockMap'));
+    }
+
+    /**
+     * POST /restaurant/pos
+     * Process restaurant POS sale — walk-in or guest folio charge.
+     */
+    public function storePos(Request $request): RedirectResponse
+    {
+        $kitchen = StockLocation::kitchen();
+        abort_if(!$kitchen, 500, 'Kitchen stock location not configured.');
+
+        $data = $request->validate([
+            'customer_name'  => 'nullable|string|max:150',
+            'customer_phone' => 'nullable|string|max:30',
+            'payment_method' => 'required|in:cash,mobile,card,charge_to_booking',
+            'booking_id'     => 'required_if:payment_method,charge_to_booking|uuid|exists:bookings,id',
+            'notes'          => 'nullable|string|max:500',
+            'items'          => 'required|array|min:1',
+            'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
+            'items.*.quantity'     => 'required|integer|min:1',
+        ]);
+
+        // Validate the booking is checked in if charging to folio
+        $isChargeToBooking = $data['payment_method'] === 'charge_to_booking';
+
+        if ($isChargeToBooking) {
+            $booking = \App\Models\Booking::findOrFail($data['booking_id']);
+            abort_if($booking->status !== 'checked_in', 422, 'Can only charge to a checked-in booking.');
+        }
+
+        $order = DB::transaction(function () use ($data, $kitchen, $isChargeToBooking) {
+            $customerName = $data['customer_name'] ?: ($isChargeToBooking ? 'Guest' : 'Walk-in Guest');
+            $customerPhone = $data['customer_phone'] ?? null;
+
+            $order = Order::create([
+                'location_id'    => $kitchen->id,
+                'order_type'     => $isChargeToBooking ? 'guest' : 'walkin',
+                'order_source'   => 'walkin',
+                'booking_id'     => $isChargeToBooking ? $data['booking_id'] : null,
+                'customer_name'  => $customerName,
+                'customer_phone' => $customerPhone,
+                'status'         => 'open',
+                'payment_method' => $data['payment_method'],
+                'notes'          => $data['notes'] ?? null,
+                'created_by'     => (string) Auth::id(),
+            ]);
+
+            foreach ($data['items'] as $line) {
+                $menuItem = MenuItem::findOrFail($line['menu_item_id']);
+                OrderItem::create([
+                    'order_id'       => $order->id,
+                    'menu_item_id'   => $menuItem->id,
+                    'item_name_snapshot' => $menuItem->name,
+                    'quantity'       => $line['quantity'],
+                    'base_unit_price' => (float) $menuItem->selling_price,
+                    'unit_price'     => (float) $menuItem->selling_price,
+                    'subtotal'       => (float) $menuItem->selling_price * $line['quantity'],
+                    'status'         => 'pending',
+                ]);
+            }
+
+            $order->recalculate();
+
+            // Deduct stock via BarOrderStockService
+            app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
+
+            if ($isChargeToBooking) {
+                // Charge to guest folio — settled at checkout
+                $order->update([
+                    'status'             => 'charged',
+                    'billed_to_folio_at' => now(),
+                ]);
+
+                app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());
+            } else {
+                // Walk-in — settled immediately
+                $paymentMethod = $data['payment_method'] === 'mobile' ? 'mobile_money' : $data['payment_method'];
+
+                $order->update([
+                    'status'         => 'settled',
+                    'payment_method' => $paymentMethod,
+                    'settled_by'     => (string) Auth::id(),
+                    'settled_at'     => now(),
+                ]);
+
+                // Post to accounting
+                app(AccountingService::class)->postRestaurantSettlement(
+                    orderNo: $order->order_number,
+                    orderId: $order->id,
+                    amount: (float) $order->total,
+                    paymentMethod: $paymentMethod,
+                    actorId: (string) Auth::id()
+                );
+
+                // Record finance payment
+                $exchangeRate = CurrencyHelper::getExchangeRate();
+                $amountUsd = FinancePayment::toUsd((float) $order->total, 'TZS', $exchangeRate);
+
+                FinancePayment::create([
+                    'payment_type'  => 'walkin',
+                    'checkout_id'   => null,
+                    'order_id'      => $order->id,
+                    'method'        => $paymentMethod,
+                    'amount'        => (float) $order->total,
+                    'currency'      => 'TZS',
+                    'amount_usd'    => $amountUsd,
+                    'exchange_rate' => $exchangeRate,
+                    'status'        => 'paid',
+                    'created_by'    => (string) Auth::id(),
+                    'paid_at'       => now(),
+                ]);
+
+                // Record financial transaction
+                \App\Models\FinancialTransaction::record([
+                    'type'            => 'payment',
+                    'source_module'   => 'restaurant',
+                    'payment_id'      => null,
+                    'order_id'        => $order->id,
+                    'currency'        => 'TZS',
+                    'amount'          => (float) $order->total,
+                    'amount_usd'      => $amountUsd,
+                    'exchange_rate'   => $exchangeRate,
+                    'payment_method'  => $paymentMethod,
+                    'description'     => "Walk-in restaurant order {$order->order_number}",
+                ], (string) Auth::id());
+            }
+
+            // Generate receipt
+            app(ReceiptService::class)->getOrCreateReceipt($order);
+
+            return $order;
+        });
+
+        if ($isChargeToBooking) {
+            return redirect()->route('restaurant.orders.show', $order)
+                ->with('success', "Order {$order->order_number} charged to guest folio. Payment pending at checkout.");
+        }
+
+        return redirect()->route('restaurant.orders.show', $order)
+            ->with('success', "Order {$order->order_number} completed successfully.");
     }
 
     /**

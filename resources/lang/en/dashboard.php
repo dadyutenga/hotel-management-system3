@@ -82,6 +82,7 @@ return [
         'awaiting_confirmation' => 'Awaiting confirmation',
         'categories_configured' => 'Categories configured',
         'active_staff' => 'Active staff members',
+        'dirty' => 'Needs Cleaning',
         'needs_cleaning' => 'Needs Cleaning',
         'out_of_order' => 'Out of Order',
         'total' => 'Total',
@@ -267,8 +268,10 @@ return [
         'cleaning' => 'Cleaning',
         'maintenance' => 'Maintenance',
         'reserved' => 'Reserved',
+        'dirty' => 'Needs Cleaning',
         'out_of_order' => 'Out of Order',
     ],
+
     
     // Table headers
     'table' => [

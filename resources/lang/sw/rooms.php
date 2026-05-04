@@ -58,6 +58,7 @@ return [
         'maintenance' => 'Matengenezo',
         'out_of_order' => 'Haifanyi Kazi',
         'reserved' => 'Imehifadhiwa',
+        'dirty' => 'Inahitaji Usafi',
         'needs_cleaning' => 'Inahitaji Usafishaji',
     ],
 

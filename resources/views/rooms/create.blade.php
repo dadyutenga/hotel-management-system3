@@ -108,7 +108,7 @@
                         <option value="available" {{ old('status', 'available') == 'available' ? 'selected' : '' }}>{{ __('rooms.status.available') }}</option>
                         <option value="occupied" {{ old('status') == 'occupied' ? 'selected' : '' }}>{{ __('rooms.status.occupied') }}</option>
                         <option value="reserved" {{ old('status') == 'reserved' ? 'selected' : '' }}>{{ __('rooms.status.reserved') }}</option>
-                        <option value="needs_cleaning" {{ old('status') == 'needs_cleaning' ? 'selected' : '' }}>{{ __('rooms.status.needs_cleaning') }}</option>
+                        <option value="dirty" {{ old('status') == 'dirty' ? 'selected' : '' }}>{{ __('rooms.status.dirty') }}</option>
                         <option value="out_of_order" {{ old('status') == 'out_of_order' ? 'selected' : '' }}>{{ __('rooms.status.out_of_order') }}</option>
                     </select>
                     @error('status')

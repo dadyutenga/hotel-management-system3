@@ -20,7 +20,67 @@
 </div>
 
 <!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Today's Sales</p>
+                <p class="text-3xl font-extrabold text-green-600 mt-1">{{ $stats['today_orders'] }}</p>
+                <p class="text-xs text-gray-400 mt-1">Revenue: @currency($stats['today_revenue'], 'TZS')</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Settled Today</p>
+                <p class="text-3xl font-extrabold text-emerald-600 mt-1">{{ $stats['today_settled'] }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stock.pending_transfers') }}</p>
+                <p class="text-3xl font-extrabold text-blue-600 mt-1">{{ $stats['pending_transfers'] }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stock.today_movements') }}</p>
+                <p class="text-3xl font-extrabold text-purple-600 mt-1">{{ $stats['today_movements'] }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div class="flex items-center justify-between">
             <div>
@@ -58,34 +118,6 @@
             <div class="w-14 h-14 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                </svg>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stock.pending_transfers') }}</p>
-                <p class="text-3xl font-extrabold text-blue-600 mt-1">{{ $stats['pending_transfers'] }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
-                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                </svg>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-500">{{ __('dashboard.stock.today_movements') }}</p>
-                <p class="text-3xl font-extrabold text-green-600 mt-1">{{ $stats['today_movements'] }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center">
-                <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                 </svg>
             </div>
         </div>
@@ -137,7 +169,33 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <a href="{{ route('restaurant.pos') }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-bold text-secondary">Restaurant POS</p>
+                <p class="text-xs text-gray-500">Quick walk-in and folio sales</p>
+            </div>
+        </div>
+    </a>
+    <a href="{{ route('restaurant.reports.dailySales') }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-bold text-secondary">Sales Reports</p>
+                <p class="text-xs text-gray-500">View daily sales and popular items</p>
+            </div>
+        </div>
+    </a>
     <a href="{{ route('store.transfers.create') }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
@@ -148,19 +206,6 @@
             <div>
                 <p class="font-bold text-secondary">{{ __('dashboard.actions.request_transfer') }}</p>
                 <p class="text-xs text-gray-500">{{ __('dashboard.actions.request_stock_from_store') }}</p>
-            </div>
-        </div>
-    </a>
-    <a href="{{ route('store.stock.levels') }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="font-bold text-secondary">{{ __('dashboard.actions.view_stock') }}</p>
-                <p class="text-xs text-gray-500">{{ __('dashboard.actions.check_bar_kitchen_inventory') }}</p>
             </div>
         </div>
     </a>

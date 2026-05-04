@@ -18,6 +18,7 @@ use App\Models\InternalUsageRequest;
 use App\Models\StoreNotification;
 use App\Models\LocalPurchaseOrder;
 use App\Models\GoodsReceivedNote;
+use App\Models\Order;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
 
@@ -138,7 +139,7 @@ class DashboardController extends Controller {
             'occupied_rooms' => Room::where('status', 'occupied')->count(),
             'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
-            'dirty_rooms' => Room::where('status', 'needs_cleaning')->count(),
+            'dirty_rooms' => Room::where('status', 'dirty')->count(),
             // Expected arrivals today (Reservation)
             'today_checkins' => Reservation::whereDate('check_in_date', today())->whereIn('status', ['confirmed', 'pending'])->count(),
             // Guests who need to check out today (Booking)
@@ -241,7 +242,7 @@ class DashboardController extends Controller {
             'total_rooms' => Room::count(),
             'occupied_rooms' => Room::where('status', 'occupied')->count(),
             'available_rooms' => Room::where('status', 'available')->where('is_active', true)->count(),
-            'dirty_rooms' => Room::where('status', 'needs_cleaning')->count(),
+            'dirty_rooms' => Room::where('status', 'dirty')->count(),
             'out_of_order_rooms' => Room::where('status', 'out_of_order')->count(),
             'reserved_rooms' => Room::where('status', 'reserved')->count(),
             // Expected arrivals (Reservation)
@@ -292,7 +293,7 @@ class DashboardController extends Controller {
             ->get();
 
         $roomsNeedingAttention = Room::with(['floor.building', 'roomType'])
-            ->whereIn('status', ['needs_cleaning', 'out_of_order'])
+            ->whereIn('status', ['dirty', 'out_of_order'])
             ->get();
 
         $recentLaundryOrders = LaundryOrder::with(['guest', 'booking.room', 'creator'])
@@ -330,11 +331,11 @@ class DashboardController extends Controller {
             'total_orders' => LaundryOrder::count(),
         ];
 
-        $stats['dirty_rooms'] = Room::where('status', 'needs_cleaning')->count();
+        $stats['dirty_rooms'] = Room::where('status', 'dirty')->count();
         $stats['out_of_order_rooms'] = Room::where('status', 'out_of_order')->count();
-        $stats['my_assigned_rooms'] = Room::where('status', 'needs_cleaning')
+        $stats['my_assigned_rooms'] = Room::where('status', 'dirty')
             ->where('cleaning_assigned_to', (string) auth()->id())->count();
-        $stats['my_pending_rooms'] = Room::where('status', 'needs_cleaning')
+        $stats['my_pending_rooms'] = Room::where('status', 'dirty')
             ->where('cleaning_assigned_to', (string) auth()->id())
             ->whereNull('cleaning_completed_at')->count();
 
@@ -349,7 +350,7 @@ class DashboardController extends Controller {
             ->toArray();
 
         $myAssignedRooms = Room::with(['floor.building', 'roomType'])
-            ->where('status', 'needs_cleaning')
+            ->where('status', 'dirty')
             ->where('cleaning_assigned_to', (string) auth()->id())
             ->orderBy('cleaning_assigned_at', 'desc')
             ->get();
@@ -583,6 +584,10 @@ class DashboardController extends Controller {
             'today_movements'        => StockMovement::whereDate('created_at', today())
                 ->whereIn('location_id', $locationIds)
                 ->count(),
+            // Restaurant sales stats
+            'today_orders'           => Order::whereDate('created_at', today())->count(),
+            'today_settled'          => Order::whereDate('settled_at', today())->where('status', 'settled')->count(),
+            'today_revenue'          => (float) Order::whereDate('settled_at', today())->where('status', 'settled')->sum('total'),
         ];
 
         // Low stock across both locations
@@ -634,8 +639,8 @@ class DashboardController extends Controller {
     }
 
     private function waiterDashboard() {
-        $kitchenLocation = StockLocation::kitchen();
-        $barLocation = StockLocation::bar();
+        $kitchenLocation = \App\Models\StockLocation::kitchen();
+        $barLocation = \App\Models\StockLocation::bar();
         $locationIds = collect([$kitchenLocation, $barLocation])->filter()->pluck('id');
 
         $stats = [

@@ -275,8 +275,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('mark-done/{room}', [CleaningController::class, 'markDone'])->name('mark-done');
     });
 
-    // Front desk: mark room as out of order
+    // Maintenance tracking: view out_of_order rooms and their progress
     Route::middleware(['role:front_desk,supervisor,manager'])->group(function () {
+        Route::get('cleaning/maintenance', [CleaningController::class, 'maintenanceIndex'])->name('cleaning.maintenance');
         Route::post('rooms/{room}/out-of-order', [CleaningController::class, 'markOutOfOrder'])->name('rooms.out-of-order');
     });
 
@@ -502,6 +503,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('orders/{order}/cancel',       [OrderController::class, 'cancel'])->name('orders.cancel');
         Route::post('orders/{order}/items',        [OrderController::class, 'addItem'])->name('orders.addItem');
         Route::delete('orders/{order}/items/{orderItem}', [OrderController::class, 'removeItem'])->name('orders.removeItem');
+
+        // ── POS (Restaurant walk-in and guest folio sales) ─────────────────
+        Route::get('pos',                          [OrderController::class, 'pos'])->name('pos');
+        Route::post('pos',                         [OrderController::class, 'storePos'])->name('pos.store');
 
         // ── Reports (restaurant_manager / admin only) ─────────────────────
         Route::get('reports/daily-sales',    [RestaurantReportController::class, 'dailySales'])->name('reports.dailySales')

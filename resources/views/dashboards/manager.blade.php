@@ -328,7 +328,7 @@
             </div>
             <div class="text-center p-3 bg-yellow-50 rounded-xl">
                 <p class="font-bold text-yellow-700">{{ $stats['dirty_rooms'] ?? 0 }}</p>
-                <p class="text-yellow-600 text-xs">{{ __('dashboard.room_status.needs_cleaning') }}</p>
+                <p class="text-yellow-600 text-xs">{{ __('dashboard.room_status.dirty') }}</p>
             </div>
         </div>
     </div>
@@ -416,7 +416,7 @@
                 'available' => ['bg' => 'bg-green-50', 'border' => 'border-green-200', 'text' => 'text-green-700', 'label' => __('dashboard.room_status.available')],
                 'occupied' => ['bg' => 'bg-red-50', 'border' => 'border-red-200', 'text' => 'text-red-700', 'label' => __('dashboard.room_status.occupied')],
                 'reserved' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text' => 'text-blue-700', 'label' => __('dashboard.room_status.reserved')],
-                'needs_cleaning' => ['bg' => 'bg-yellow-50', 'border' => 'border-yellow-200', 'text' => 'text-yellow-700', 'label' => __('dashboard.room_status.needs_cleaning')],
+                'dirty' => ['bg' => 'bg-yellow-50', 'border' => 'border-yellow-200', 'text' => 'text-yellow-700', 'label' => __('dashboard.room_status.dirty')],
                 'out_of_order' => ['bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text' => 'text-gray-700', 'label' => __('dashboard.room_status.out_of_order')],
             ];
         @endphp

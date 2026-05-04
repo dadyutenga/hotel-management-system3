@@ -82,6 +82,7 @@ return [
         'awaiting_confirmation' => 'Inasubiri uthibitisho',
         'categories_configured' => 'Makundi yaliyowekwa',
         'active_staff' => 'Wafanyakazi wanaofanya kazi',
+        'dirty' => 'Inahitaji Kusafishwa',
         'needs_cleaning' => 'Inahitaji Kusafishwa',
         'out_of_order' => 'Haifanyi Kazi',
         'total' => 'Jumla',
@@ -262,8 +263,10 @@ return [
         'cleaning' => 'Inasafishwa',
         'maintenance' => 'Matengenezo',
         'reserved' => 'Imehifadhiwa',
+        'dirty' => 'Inahitaji Usafi',
         'out_of_order' => 'Haifanyi Kazi',
     ],
+
     
     // Table headers
     'table' => [

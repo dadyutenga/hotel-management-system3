@@ -11,7 +11,7 @@ use Illuminate\View\View;
 
 class CleaningController extends Controller
 {
-    const ATTENTION_STATUSES = ['needs_cleaning', 'out_of_order'];
+    const ATTENTION_STATUSES = ['dirty', 'out_of_order'];
 
     /**
      * Supervisor: list rooms needing cleaning or maintenance.
@@ -106,17 +106,30 @@ class CleaningController extends Controller
     }
 
     /**
+     * Front desk / Supervisor / Manager: view all out_of_order rooms and their maintenance status.
+     */
+    public function maintenanceIndex(): View
+    {
+        $maintenanceRooms = Room::with(['floor.building', 'roomType', 'cleaningAssignee', 'outOfOrderBy'])
+            ->where('status', 'out_of_order')
+            ->orderBy('room_number')
+            ->get();
+
+        return view('cleaning.maintenance', compact('maintenanceRooms'));
+    }
+
+    /**
      * Front desk: mark room as out of order with a reason.
      */
     public function markOutOfOrder(Request $request, Room $room): RedirectResponse
     {
-        abort_if(!in_array($room->status, ['available', 'needs_cleaning']), 422, 'Only available or needs_cleaning rooms can be marked out of order.');
+        abort_if(!in_array($room->status, ['available', 'dirty']), 422, 'Only available or dirty rooms can be marked out of order.');
 
         $data = $request->validate([
             'reason' => 'required|string|max:500',
         ]);
 
-        // Clear cleaning assignment if transitioning from needs_cleaning
+        // Clear cleaning assignment if transitioning from dirty
         $updates = [
             'status' => 'out_of_order',
             'out_of_order_reason' => $data['reason'],
@@ -124,7 +137,7 @@ class CleaningController extends Controller
             'out_of_order_set_at' => now(),
         ];
 
-        if ($room->status === 'needs_cleaning') {
+        if ($room->status === 'dirty') {
             $updates['cleaning_assigned_to'] = null;
             $updates['cleaning_assigned_at'] = null;
             $updates['cleaning_completed_at'] = null;
@@ -132,7 +145,7 @@ class CleaningController extends Controller
 
         $room->update($updates);
 
-        return redirect()->route('rooms.index')
+        return redirect()->route('cleaning.maintenance')
             ->with('success', "Room {$room->room_number} marked as out of order.");
     }
 }

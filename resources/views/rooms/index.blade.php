@@ -75,8 +75,8 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['needs_cleaning'] ?? 0 }}</div>
-                    <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.needs_cleaning') }}</div>
+                    <div class="text-2xl font-extrabold text-secondary">{{ $statusCounts['dirty'] ?? 0 }}</div>
+                    <div class="text-xs text-gray-500 font-medium">{{ __('rooms.status.dirty') }}</div>
                 </div>
             </div>
         </div>
@@ -153,12 +153,12 @@
                                 <button type="submit" class="text-red-600 hover:text-red-700 font-semibold" onclick="return confirm(&quot;{{ __('rooms.actions.confirm_delete') }}&quot;)">{{ __('rooms.actions.delete') }}</button>
                             </form>
                             @endif
-                            @if(in_array($room->status, ['available', 'needs_cleaning']))
+                            @if(in_array($room->status, ['available', 'dirty']))
                             <button onclick="document.getElementById('ooo-modal-{{ $room->id }}').classList.remove('hidden')" class="text-orange-600 hover:text-orange-700 font-semibold text-xs">{{ __('rooms.actions.out_of_order') }}</button>
                             @endif
                         </div>
                         {{-- Out of Order Modal --}}
-                        @if(in_array($room->status, ['available', 'needs_cleaning']))
+                        @if(in_array($room->status, ['available', 'dirty']))
                         <div id="ooo-modal-{{ $room->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center">
                             <div class="absolute inset-0 bg-black bg-opacity-40" onclick="this.parentElement.classList.add('hidden')"></div>
                             <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
