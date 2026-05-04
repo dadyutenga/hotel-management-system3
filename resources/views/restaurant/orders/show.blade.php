@@ -1,7 +1,8 @@
 {{-- resources/views/restaurant/orders/show.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', 'Order ' . $order->order_number)
+@section('page-title', 'Order ' . $order->order_number)
 
 @section('content')
 <div class="max-w-4xl mx-auto">
@@ -9,7 +10,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">{{ $order->order_number }}</h1>
+            <h1 class="text-2xl font-extrabold text-gray-800">{{ $order->order_number }}</h1>
             <p class="text-sm text-gray-400">
                 {{ $order->location->name ?? '—' }}
                 @if($order->table) &middot; Table {{ $order->table->table_number }} @endif
@@ -55,7 +56,7 @@
         {{-- Main content --}}
         <div class="lg:col-span-2 space-y-6">
             {{-- Order items --}}
-            <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 <div class="bg-gray-50 px-4 py-3 border-b font-semibold text-gray-700 text-sm flex justify-between items-center">
                     <span>Items ({{ $order->items->where('status', '!=', 'cancelled')->count() }})</span>
                     @if($order->status === 'open')
@@ -131,7 +132,7 @@
 
             {{-- Add item form (open orders only) --}}
             @if($order->status === 'open')
-            <div class="bg-white rounded-lg shadow p-5" x-data="addItemForm(@js($menuCategories))">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5" x-data="addItemForm(@js($menuCategories))">
                 <button @click="showAdd = !showAdd" class="text-sm text-primary hover:underline font-medium">
                     + Add Item to Order
                 </button>
@@ -185,7 +186,7 @@
         {{-- Sidebar --}}
         <div class="space-y-6">
             {{-- Order info --}}
-            <div class="bg-white rounded-lg shadow p-5 space-y-3 text-sm">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 space-y-3 text-sm">
                 <h3 class="font-semibold text-gray-700">Order Info</h3>
                 <div class="flex justify-between">
                     <span class="text-gray-500">Type</span>
@@ -235,7 +236,7 @@
 
             {{-- Workflow actions --}}
             @if(!in_array($order->status, ['settled', 'charged', 'cancelled']))
-            <div class="bg-white rounded-lg shadow p-5 space-y-3">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 text-sm">Actions</h3>
 
                 @if($order->status === 'open')
@@ -317,7 +318,7 @@
             </div>
             @elseif($order->status === 'charged')
             {{-- Order is charged but not yet settled at checkout --}}
-            <div class="bg-white rounded-lg shadow p-5 space-y-3">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 text-sm">Order Charged to Folio</h3>
                 <p class="text-sm text-gray-600">
                     This order has been added to the guest's folio. Payment pending at checkout.

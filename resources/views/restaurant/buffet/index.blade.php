@@ -1,17 +1,18 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.restaurant.buffet.sales'))
+@section('page-title', __('general.restaurant.buffet.sales'))
 
 @section('content')
 <div class="max-w-6xl mx-auto space-y-6">
     <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">{{ __('general.restaurant.buffet.sales') }}</h1>
+        <h1 class="text-2xl font-extrabold text-gray-800">{{ __('general.restaurant.buffet.sales') }}</h1>
         <a href="{{ route('restaurant.buffet.create') }}" class="bg-primary text-white px-4 py-2 rounded text-sm">
             {{ __('general.restaurant.buffet.new_sale') }}
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
         <form method="GET" class="flex gap-3 items-end">
             <div>
                 <label class="text-xs text-gray-500">{{ __('general.date') }}</label>
@@ -34,7 +35,7 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-x-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50">
                 <tr>

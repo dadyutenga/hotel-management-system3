@@ -1,10 +1,11 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.restaurant.categories.title'))
+@section('page-title', __('general.restaurant.categories.title'))
 
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white rounded-lg shadow p-5">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
         <h1 class="text-xl font-bold text-gray-800 mb-4">{{ __('general.restaurant.categories.title') }}</h1>
         <form method="POST" action="{{ route('restaurant.menu.categories.store') }}" class="space-y-3">
             @csrf
@@ -40,7 +41,7 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-5">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
         <h2 class="text-lg font-semibold mb-4">{{ __('general.restaurant.categories.existing') }}</h2>
         <div class="space-y-3 max-h-[70vh] overflow-y-auto">
             @forelse($categories as $category)

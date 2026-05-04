@@ -1,10 +1,11 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.restaurant.options.title'))
+@section('page-title', __('general.restaurant.options.title'))
 
 @section('content')
 <div class="space-y-6" x-data="menuOptionsPage()">
-    <div class="bg-white rounded-lg shadow p-5">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
         <h1 class="text-xl font-bold mb-4">{{ __('general.restaurant.options.title') }}</h1>
         <form method="POST" action="{{ route('restaurant.menu.options.store') }}" class="space-y-4">
             @csrf
@@ -66,7 +67,7 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-5">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
         <h2 class="text-lg font-semibold mb-3">{{ __('general.restaurant.options.existing') }}</h2>
         <div class="space-y-3">
             @forelse($groups as $group)

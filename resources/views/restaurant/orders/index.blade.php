@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/orders/index.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', 'Orders')
+@section('page-title', 'Orders')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Orders</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800">Orders</h1>
     <a href="{{ route('restaurant.orders.create') }}"
        class="bg-primary text-white px-4 py-2 rounded text-sm hover:opacity-90">
         + New Order
@@ -13,14 +14,14 @@
 </div>
 
 {{-- Filters --}}
-<div class="bg-white rounded-lg shadow p-4 mb-6">
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 mb-6">
     <form method="GET" action="{{ route('restaurant.orders.index') }}" class="flex flex-wrap gap-3 items-end">
         {{-- Status tabs --}}
         <div>
             <label class="text-xs text-gray-500 block mb-1">Status</label>
             <select name="status" class="border-gray-300 rounded px-3 py-2 text-sm">
                 <option value="">All</option>
-                @foreach(['open','sent','ready','served','settled','cancelled'] as $s)
+                @foreach(['open','sent','ready','served','charged','settled','cancelled'] as $s)
                 <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>
                     {{ ucfirst($s) }}
                 </option>
@@ -54,7 +55,7 @@
 </div>
 
 {{-- Orders table --}}
-<div class="bg-white rounded-lg shadow overflow-x-auto">
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
     <table class="w-full text-sm">
         <thead class="bg-gray-50 text-left">
             <tr>
@@ -89,6 +90,7 @@
                             'sent'      => 'bg-blue-100 text-blue-700',
                             'ready'     => 'bg-indigo-100 text-indigo-700',
                             'served'    => 'bg-green-100 text-green-700',
+                            'charged'   => 'bg-purple-100 text-purple-700',
                             'settled'   => 'bg-gray-200 text-gray-600',
                             'cancelled' => 'bg-red-100 text-red-700',
                         ];

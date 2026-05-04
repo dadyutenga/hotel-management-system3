@@ -1,10 +1,11 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.restaurant.buffet.new_sale'))
+@section('page-title', __('general.restaurant.buffet.new_sale'))
 
 @section('content')
-<div class="max-w-3xl mx-auto bg-white rounded-lg shadow p-5">
-    <h1 class="text-xl font-bold mb-4">{{ __('general.restaurant.buffet.new_sale') }}</h1>
+<div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+    <h1 class="text-xl font-extrabold mb-4">{{ __('general.restaurant.buffet.new_sale') }}</h1>
 
     <form method="POST" action="{{ route('restaurant.buffet.store') }}" class="space-y-4" x-data="{ saleType: 'walkin' }">
         @csrf

@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/menu/items/edit.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.edit') . ': ' . $menuItem->name)
+@section('page-title', __('general.edit') . ': ' . $menuItem->name)
 
 @section('content')
 <div class="max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('general.restaurant.menu.edit_item') }}</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800 mb-6">{{ __('general.restaurant.menu.edit_item') }}</h1>
 
     <form method="POST" action="{{ route('restaurant.menu.update', $menuItem) }}" x-data="menuItemForm()" class="space-y-6">
         @csrf @method('PUT')

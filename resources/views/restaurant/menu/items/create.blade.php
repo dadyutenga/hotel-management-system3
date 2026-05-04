@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/menu/items/create.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.restaurant.menu.new_item'))
+@section('page-title', __('general.restaurant.menu.new_item'))
 
 @section('content')
 <div class="max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('general.restaurant.menu.new_item') }}</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800 mb-6">{{ __('general.restaurant.menu.new_item') }}</h1>
 
     <form method="POST" action="{{ route('restaurant.menu.store') }}" x-data="menuItemForm()" class="space-y-6">
         @csrf

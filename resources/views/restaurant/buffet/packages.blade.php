@@ -1,17 +1,18 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.restaurant.buffet.nav'))
+@section('page-title', __('general.restaurant.buffet.nav'))
 
 @section('content')
 <div class="max-w-6xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-800">{{ __('general.restaurant.buffet.nav') }}</h1>
+        <h1 class="text-2xl font-extrabold text-gray-800">{{ __('general.restaurant.buffet.nav') }}</h1>
         <a href="{{ route('restaurant.buffet.create') }}" class="px-4 py-2 bg-primary text-white rounded text-sm">
             {{ __('general.restaurant.buffet.new_sale') }}
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-5">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
         <h2 class="font-semibold text-gray-700 mb-3">{{ __('general.restaurant.buffet.package_setup') }}</h2>
         <form method="POST" action="{{ route('restaurant.buffet.packages.store') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3">
             @csrf
@@ -34,7 +35,7 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-x-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50">
                 <tr>

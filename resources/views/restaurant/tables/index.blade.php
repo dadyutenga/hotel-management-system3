@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/tables/index.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', 'Tables')
+@section('page-title', 'Tables')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Tables</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800">Tables</h1>
 </div>
 
 {{-- Location tabs --}}
@@ -39,7 +40,7 @@
             'cleaning'   => 'text-gray-600',
         ];
     @endphp
-    <div class="border-2 rounded-lg p-4 text-center {{ $statusColors[$table->status] ?? 'border-gray-200 bg-white' }}">
+    <div class="border-2 rounded-2xl shadow-lg p-4 text-center {{ $statusColors[$table->status] ?? 'border-gray-200 bg-white' }}">
         <p class="text-2xl font-bold text-gray-800">{{ $table->table_number }}</p>
         <p class="text-xs text-gray-400 mb-1">{{ $table->location->name }} &middot; {{ $table->capacity }} seats</p>
         <p class="text-xs font-semibold mb-3 {{ $statusText[$table->status] ?? 'text-gray-600' }}">
@@ -79,7 +80,7 @@
 
 {{-- Add new table --}}
 @if(auth()->user()->hasAnyRole(['RESTAURANT_MANAGER', 'ADMIN']))
-<div class="bg-white rounded-lg shadow p-5 max-w-md">
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 max-w-md">
     <h2 class="font-semibold text-gray-700 mb-3">Add New Table</h2>
     <form method="POST" action="{{ route('restaurant.tables.store') }}" class="space-y-3">
         @csrf

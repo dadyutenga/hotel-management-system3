@@ -1,15 +1,16 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', $buffetSale->sale_number)
+@section('page-title', $buffetSale->sale_number)
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6">
-    <div class="bg-white rounded-lg shadow p-5">
-        <h1 class="text-2xl font-bold text-gray-800">{{ $buffetSale->sale_number }}</h1>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+        <h1 class="text-2xl font-extrabold text-gray-800">{{ $buffetSale->sale_number }}</h1>
         <p class="text-sm text-gray-500">{{ $buffetSale->package_name_snapshot }}</p>
     </div>
 
-        <div class="bg-white rounded-lg shadow p-5 grid grid-cols-2 gap-4 text-sm">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 grid grid-cols-2 gap-4 text-sm">
             <div><span class="text-gray-500">{{ __('general.restaurant.buffet.fields.sale_type') }}:</span> {{ __('general.restaurant.buffet.sale_type.' . $buffetSale->sale_type) }}</div>
             <div><span class="text-gray-500">{{ __('general.status') }}:</span> {{ ucfirst($buffetSale->status) }}</div>
             <div><span class="text-gray-500">{{ __('general.restaurant.buffet.fields.pax') }}:</span> {{ $buffetSale->adults_count }}A / {{ $buffetSale->children_count }}C</div>
@@ -22,7 +23,7 @@
         </div>
 
     @if($buffetSale->status === 'settled' && $buffetSale->receipt)
-        <div class="bg-white rounded-lg shadow p-5">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
             <a href="{{ route('receipts.show', $buffetSale->receipt->uuid) }}" target="_blank" class="px-4 py-2 bg-green-600 text-white rounded text-sm">
                 {{ __('general.restaurant.buffet.actions.print_receipt') }}
             </a>
@@ -33,7 +34,7 @@
     @endif
 
     @if($buffetSale->status === 'pending')
-        <div class="bg-white rounded-lg shadow p-5 space-y-3">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 space-y-3">
             @if($buffetSale->sale_type === 'booking')
                 <form method="POST" action="{{ route('restaurant.buffet.charge-booking', $buffetSale) }}">
                     @csrf

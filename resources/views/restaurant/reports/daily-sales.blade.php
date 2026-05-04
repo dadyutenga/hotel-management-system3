@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/reports/daily-sales.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', 'Daily Sales Report')
+@section('page-title', 'Daily Sales Report')
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Daily Sales Report</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800 mb-6">Daily Sales Report</h1>
 
     {{-- Date picker --}}
     <form method="GET" action="{{ route('restaurant.reports.dailySales') }}" class="flex gap-3 items-end mb-6">
@@ -19,30 +20,30 @@
 
     {{-- Summary cards --}}
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div class="bg-white rounded-lg shadow p-4 text-center">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Total Orders</p>
             <p class="text-2xl font-bold text-gray-800">{{ $summary['total_orders'] }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 text-center">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Total Revenue</p>
             <p class="text-2xl font-bold text-primary">@currency($summary['total_revenue'], 'TZS')</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 text-center">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Cash</p>
             <p class="text-xl font-bold text-green-600">{{ number_format($summary['cash_revenue'], 0) }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 text-center">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Card</p>
             <p class="text-xl font-bold text-blue-600">{{ number_format($summary['card_revenue'], 0) }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 text-center">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">Guest Charges</p>
             <p class="text-xl font-bold text-purple-600">{{ number_format($summary['guest_charges'], 0) }}</p>
         </div>
     </div>
 
     {{-- Orders table --}}
-    <div class="bg-white rounded-lg shadow overflow-x-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 text-left">
                 <tr>

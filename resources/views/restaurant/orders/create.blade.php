@@ -1,15 +1,16 @@
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.nav.new_order'))
+@section('page-title', __('general.nav.new_order'))
 
 @section('content')
 <div class="max-w-5xl mx-auto" x-data="orderForm(@js($categories))">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('general.nav.new_order') }}</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800 mb-6">{{ __('general.nav.new_order') }}</h1>
 
     <form method="POST" action="{{ route('restaurant.orders.store') }}" class="space-y-6">
         @csrf
 
-        <div class="bg-white rounded-lg shadow p-5 space-y-4">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 space-y-4">
             <h2 class="font-semibold text-gray-700 text-lg">{{ __('general.details') }}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -54,14 +55,14 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="font-semibold text-gray-700 text-lg">{{ __('general.restaurant.menu.items') }}</h2>
                 <button type="button" @click="addItem()" class="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded">+ {{ __('general.add') }}</button>
             </div>
 
             <template x-for="(item, idx) in items" :key="idx">
-                <div class="border rounded p-3 mb-3 bg-gray-50 space-y-3">
+                <div class="border border-gray-200 rounded-xl p-3 mb-3 bg-gray-50 space-y-3">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
                         <div class="md:col-span-3">
                             <select :name="'items['+idx+'][menu_item_id]'" x-model="item.menu_item_id" @change="onMenuItemChanged(idx)" required class="w-full border-gray-300 rounded px-3 py-2 text-sm">

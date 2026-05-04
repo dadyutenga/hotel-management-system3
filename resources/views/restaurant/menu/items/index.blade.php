@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/menu/items/index.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', __('general.nav.menu'))
+@section('page-title', __('general.nav.menu'))
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">{{ __('general.nav.menu') }}</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800">{{ __('general.nav.menu') }}</h1>
     @if(auth()->user()->hasAnyRole(['restaurant_manager','manager','admin']))
     <a href="{{ route('restaurant.menu.create') }}"
        class="bg-primary text-white px-4 py-2 rounded text-sm hover:opacity-90">
@@ -31,7 +32,7 @@
 @forelse($categories as $category)
 <div class="mb-8">
     <div class="flex items-center gap-3 mb-4">
-        <h2 class="text-lg font-bold text-gray-700">{{ $category->name }}</h2>
+        <h2 class="text-lg font-extrabold text-gray-700">{{ $category->name }}</h2>
         <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{{ $category->location->name }}</span>
         <span class="text-xs text-gray-400">{{ $category->menuItems->count() }} {{ __('general.restaurant.menu.items') }}</span>
     </div>
@@ -39,7 +40,7 @@
     @if($category->menuItems->count())
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @foreach($category->menuItems as $item)
-        <div class="bg-white rounded-lg shadow border p-4 {{ !$item->is_available ? 'opacity-60' : '' }}">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 {{ !$item->is_available ? 'opacity-60' : '' }}">
             <div class="flex justify-between items-start mb-2">
                 <div>
                     <h3 class="font-semibold text-gray-800">{{ $item->name }}</h3>

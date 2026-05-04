@@ -1,11 +1,12 @@
 {{-- resources/views/restaurant/reports/popular-items.blade.php --}}
-@extends('restaurant.layout')
+@extends('layouts.app')
 
 @section('title', 'Popular Items')
+@section('page-title', 'Popular Items')
 
 @section('content')
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Popular Items</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800 mb-6">Popular Items</h1>
 
     {{-- Date range --}}
     <form method="GET" action="{{ route('restaurant.reports.popularItems') }}" class="flex gap-3 items-end mb-6">
@@ -23,7 +24,7 @@
     </form>
 
     {{-- Top items --}}
-    <div class="bg-white rounded-lg shadow overflow-x-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 text-left">
                 <tr>
