@@ -18,6 +18,11 @@ class RoomController extends Controller {
         return view('rooms.index', compact('rooms', 'statusCounts'));
     }
 
+    public function show(Room $room) {
+        $room->load(['floor.building', 'roomType', 'cleaningAssignee', 'outOfOrderBy', 'cleaningConfirmer']);
+        return view('rooms.show', compact('room'));
+    }
+
     public function create() {
         $floors = Floor::with('building')->where('is_active', true)->get();
         $roomTypes = RoomType::all();

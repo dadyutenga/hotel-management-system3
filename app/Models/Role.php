@@ -39,7 +39,6 @@ class Role extends Model {
         self::RESTAURANT_MANAGER => 'Bar and restaurant inventory, menus, transfers, damage',
         self::WAITER             => 'Can view menus and create restaurant orders',
         self::BAR_TENDER         => 'Bar order taking and stock view',
-        self::LAUNDRY_MANAGER    => 'Manages laundry pricing, reports, and full order oversight',
         self::ACCOUNTANT         => 'Full financial records, reports, payroll, reconciliation',
     ];
 

@@ -17,7 +17,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
             </svg>
             <span>My Cleaning Rooms</span>
-            @php $myCount = \App\Models\Room::whereIn('status', ['needs_cleaning', 'out_of_order'])->where('cleaning_assigned_to', auth()->id())->count(); @endphp
+            @php $myCount = \App\Models\Room::whereIn('status', ['dirty', 'out_of_order'])->where('cleaning_assigned_to', auth()->id())->count(); @endphp
             @if($myCount > 0)
                 <span class="ml-auto bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">{{ $myCount }}</span>
             @endif
