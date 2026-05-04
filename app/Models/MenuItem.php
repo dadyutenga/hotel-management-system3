@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class MenuItem extends Model
+class MenuItem extends Model implements HasMedia
 {
-    use HasUuid;
+    use HasUuid, InteractsWithMedia;
 
     protected $fillable = [
         'category_id', 'name', 'description',
@@ -20,6 +23,48 @@ class MenuItem extends Model
         'is_active'     => 'boolean',
         'varieties'     => 'array',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('menu_item_image')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(150)
+            ->height(150)
+            ->sharpen(10)
+            ->performOnCollections('menu_item_image')
+            ->nonQueued();
+
+        $this->addMediaConversion('medium')
+            ->width(300)
+            ->height(300)
+            ->sharpen(10)
+            ->performOnCollections('menu_item_image')
+            ->nonQueued();
+    }
+
+    public function getImageAttribute(): string
+    {
+        if ($this->hasMedia('menu_item_image')) {
+            return $this->getFirstMediaUrl('menu_item_image', 'medium')
+                ?: $this->getFirstMediaUrl('menu_item_image');
+        }
+        return '';
+    }
+
+    public function getThumbAttribute(): string
+    {
+        if ($this->hasMedia('menu_item_image')) {
+            return $this->getFirstMediaUrl('menu_item_image', 'thumb')
+                ?: $this->getFirstMediaUrl('menu_item_image');
+        }
+        return '';
+    }
 
     public function category()    { return $this->belongsTo(MenuCategory::class, 'category_id'); }
     public function ingredients() { return $this->hasMany(MenuItemIngredient::class); }

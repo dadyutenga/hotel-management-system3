@@ -169,20 +169,7 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-    <a href="{{ route('restaurant.pos') }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="font-bold text-secondary">Restaurant POS</p>
-                <p class="text-xs text-gray-500">Quick walk-in and folio sales</p>
-            </div>
-        </div>
-    </a>
+<div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
     <a href="{{ route('restaurant.reports.dailySales') }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">

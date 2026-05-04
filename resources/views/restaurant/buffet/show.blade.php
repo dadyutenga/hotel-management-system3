@@ -6,8 +6,15 @@
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6">
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
-        <h1 class="text-2xl font-extrabold text-gray-800">{{ $buffetSale->sale_number }}</h1>
-        <p class="text-sm text-gray-500">{{ $buffetSale->package_name_snapshot }}</p>
+        <div class="flex gap-4 items-start">
+            @if($buffetSale->package?->hasMedia('buffet_image'))
+            <img src="{{ $buffetSale->package->getFirstMediaUrl('buffet_image', 'medium') }}" class="w-24 h-24 rounded-xl object-cover border">
+            @endif
+            <div>
+                <h1 class="text-2xl font-extrabold text-gray-800">{{ $buffetSale->sale_number }}</h1>
+                <p class="text-sm text-gray-500">{{ $buffetSale->package_name_snapshot }}</p>
+            </div>
+        </div>
     </div>
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 grid grid-cols-2 gap-4 text-sm">

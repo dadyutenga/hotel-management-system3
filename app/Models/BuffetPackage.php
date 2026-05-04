@@ -6,10 +6,13 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class BuffetPackage extends Model
+class BuffetPackage extends Model implements HasMedia
 {
-    use HasUuid;
+    use HasUuid, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -28,6 +31,48 @@ class BuffetPackage extends Model
         'available_days' => 'array',
         'is_active' => 'boolean',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('buffet_image')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(150)
+            ->height(150)
+            ->sharpen(10)
+            ->performOnCollections('buffet_image')
+            ->nonQueued();
+
+        $this->addMediaConversion('medium')
+            ->width(400)
+            ->height(250)
+            ->sharpen(10)
+            ->performOnCollections('buffet_image')
+            ->nonQueued();
+    }
+
+    public function getImageAttribute(): string
+    {
+        if ($this->hasMedia('buffet_image')) {
+            return $this->getFirstMediaUrl('buffet_image', 'medium')
+                ?: $this->getFirstMediaUrl('buffet_image');
+        }
+        return '';
+    }
+
+    public function getThumbAttribute(): string
+    {
+        if ($this->hasMedia('buffet_image')) {
+            return $this->getFirstMediaUrl('buffet_image', 'thumb')
+                ?: $this->getFirstMediaUrl('buffet_image');
+        }
+        return '';
+    }
 
     public function creator(): BelongsTo
     {

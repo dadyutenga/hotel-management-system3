@@ -19,12 +19,14 @@
     <div class="flex items-center gap-3">
         <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600 text-sm">&larr; {{ __('general.back') }} {{ __('general.nav.dashboard') }}</a>
         <span class="text-gray-300">|</span>
-        <div class="font-bold text-lg text-gray-800">🍸🍽️ {{ __('general.nav.bar_restaurant') }}</div>
+        <div class="font-bold text-lg text-gray-800">🍽️ {{ __('general.nav.restaurant') }}</div>
     </div>
     <div class="flex gap-4 text-sm">
         <a href="{{ route('restaurant.orders.index') }}"  class="{{ request()->routeIs('restaurant.orders.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.orders') }}</a>
+        @if(auth()->user()->isWaiter())
         <a href="{{ route('restaurant.orders.create') }}" class="{{ request()->routeIs('restaurant.orders.create') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.new_order') }}</a>
         <a href="{{ route('restaurant.pos') }}" class="{{ request()->routeIs('restaurant.pos') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">POS</a>
+        @endif
         <a href="{{ route('restaurant.tables.index') }}"  class="{{ request()->routeIs('restaurant.tables.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.tables') }}</a>
         @if(auth()->user()->hasAnyRole(['restaurant_manager', 'manager', 'admin']))
         <a href="{{ route('restaurant.menu.index') }}" class="{{ request()->routeIs('restaurant.menu.index') || request()->routeIs('restaurant.menu.create') || request()->routeIs('restaurant.menu.edit') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-blue-600' }}">{{ __('general.nav.menu') }}</a>

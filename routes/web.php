@@ -447,6 +447,10 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('menu/{menuItem}',     [MenuItemController::class, 'destroy'])->name('menu.destroy')
              ->middleware('role:restaurant_manager,manager,admin');
 
+        // Sync store beverages/products as menu items
+        Route::post('menu/sync-beverages', [MenuItemController::class, 'syncBeverages'])->name('menu.sync-beverages')
+             ->middleware('role:restaurant_manager,manager,admin');
+
         Route::get('menu/categories', [MenuCategoryController::class, 'index'])->name('menu.categories.index')
             ->middleware('role:restaurant_manager,manager,admin');
         Route::post('menu/categories', [MenuCategoryController::class, 'store'])->name('menu.categories.store')
@@ -492,8 +496,10 @@ Route::middleware(['auth'])->group(function () {
 
         // ── Orders ────────────────────────────────────────────────────────
         Route::get('orders',                       [OrderController::class, 'index'])->name('orders.index');
-        Route::get('orders/create',                [OrderController::class, 'create'])->name('orders.create');
-        Route::post('orders',                      [OrderController::class, 'store'])->name('orders.store');
+        Route::get('orders/create',                [OrderController::class, 'create'])->name('orders.create')
+             ->middleware('role:waiter');
+        Route::post('orders',                      [OrderController::class, 'store'])->name('orders.store')
+             ->middleware('role:waiter');
         Route::get('orders/{order}',               [OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{order}/send',         [OrderController::class, 'send'])->name('orders.send');
         Route::post('orders/{order}/ready',        [OrderController::class, 'ready'])->name('orders.ready');
@@ -505,8 +511,10 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('orders/{order}/items/{orderItem}', [OrderController::class, 'removeItem'])->name('orders.removeItem');
 
         // ── POS (Restaurant walk-in and guest folio sales) ─────────────────
-        Route::get('pos',                          [OrderController::class, 'pos'])->name('pos');
-        Route::post('pos',                         [OrderController::class, 'storePos'])->name('pos.store');
+        Route::get('pos',                          [OrderController::class, 'pos'])->name('pos')
+             ->middleware('role:waiter');
+        Route::post('pos',                         [OrderController::class, 'storePos'])->name('pos.store')
+             ->middleware('role:waiter');
 
         // ── Reports (restaurant_manager / admin only) ─────────────────────
         Route::get('reports/daily-sales',    [RestaurantReportController::class, 'dailySales'])->name('reports.dailySales')
@@ -516,10 +524,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ═══ BARTENDER MODULE ═══
+    // Bar stock is also viewable by restaurant_manager (bar products only)
+    Route::get('bartender/stock', [BartenderController::class, 'stock'])
+        ->middleware('role:bar_tender,manager,admin,restaurant_manager')
+        ->name('bartender.stock');
+
     Route::prefix('bartender')->name('bartender.')->middleware('role:bar_tender,manager,admin')->group(function () {
         Route::get('/', [BartenderController::class, 'dashboard'])->name('dashboard');
-
-        Route::get('stock', [BartenderController::class, 'stock'])->name('stock');
 
         // ═══ BAR POS ═══
         Route::get('pos', [BartenderController::class, 'pos'])->name('pos');
@@ -561,7 +572,7 @@ Route::middleware(['auth'])->group(function () {
 
         // ── Walk-in Payments ──────────────────────────────────────────────────────
         Route::get('payments',         [FinancePaymentController::class, 'index'])->name('payments.index')
-             ->middleware('role:store_manager,ACCOUNTANT');
+             ->middleware('role:store_manager,ACCOUNTANT,manager');
         Route::post('payments/walkin', [FinancePaymentController::class, 'storeWalkin'])->name('payments.walkin')
              ->middleware('role:bar_tender,restaurant_manager');
         

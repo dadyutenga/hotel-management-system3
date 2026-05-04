@@ -37,9 +37,10 @@ class BuffetController extends Controller
             'start_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i|after:start_time',
             'is_active' => 'nullable|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        BuffetPackage::create([
+        $package = BuffetPackage::create([
             'name' => $data['name'],
             'adult_price' => $data['adult_price'],
             'child_price' => $data['child_price'] ?? 0,
@@ -49,6 +50,10 @@ class BuffetController extends Controller
             'is_active' => (bool) ($data['is_active'] ?? true),
             'created_by' => auth()->id(),
         ]);
+
+        if ($request->hasFile('image')) {
+            $package->addMediaFromRequest('image')->toMediaCollection('buffet_image');
+        }
 
         return back()->with('success', __('general.restaurant.buffet.messages.package_created'));
     }
@@ -64,6 +69,8 @@ class BuffetController extends Controller
             'start_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i|after:start_time',
             'is_active' => 'nullable|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'remove_image' => 'nullable|boolean',
         ]);
 
         $buffetPackage->update([
@@ -75,6 +82,13 @@ class BuffetController extends Controller
             'end_time' => $data['end_time'] ?? null,
             'is_active' => (bool) ($data['is_active'] ?? false),
         ]);
+
+        if ($request->hasFile('image')) {
+            $buffetPackage->clearMediaCollection('buffet_image');
+            $buffetPackage->addMediaFromRequest('image')->toMediaCollection('buffet_image');
+        } elseif ($request->boolean('remove_image')) {
+            $buffetPackage->clearMediaCollection('buffet_image');
+        }
 
         return back()->with('success', __('general.restaurant.buffet.messages.package_updated'));
     }

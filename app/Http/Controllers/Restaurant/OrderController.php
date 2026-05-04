@@ -95,7 +95,21 @@ class OrderController extends Controller
             }
         }
 
-        return view('restaurant.pos', compact('categories', 'stockMap'));
+        // Build image map for menu items that have media
+        $imageMap = [];
+        foreach ($categories as $cat) {
+            foreach ($cat->menuItems as $item) {
+                if ($item->hasMedia('menu_item_image')) {
+                    $url = $item->getFirstMediaUrl('menu_item_image', 'thumb')
+                        ?: $item->getFirstMediaUrl('menu_item_image');
+                    if ($url) {
+                        $imageMap[$item->id] = $url;
+                    }
+                }
+            }
+        }
+
+        return view('restaurant.pos', compact('categories', 'stockMap', 'imageMap'));
     }
 
     /**

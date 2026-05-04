@@ -1,4 +1,4 @@
-@extends('finance.layout')
+@extends('layouts.app')
 @section('title', 'Payments')
 
 @section('content')

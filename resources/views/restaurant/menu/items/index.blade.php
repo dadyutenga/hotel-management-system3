@@ -8,10 +8,27 @@
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-extrabold text-gray-800">{{ __('general.nav.menu') }}</h1>
     @if(auth()->user()->hasAnyRole(['restaurant_manager','manager','admin']))
-    <a href="{{ route('restaurant.menu.create') }}"
-       class="bg-primary text-white px-4 py-2 rounded text-sm hover:opacity-90">
-        + {{ __('general.restaurant.menu.new_item') }}
-    </a>
+    <div class="flex gap-2">
+        <form method="POST" action="{{ route('restaurant.menu.sync-beverages') }}" class="flex gap-2" x-data="{ catId: '' }">
+            @csrf
+            <select name="category_id" x-model="catId" required
+                    class="border-gray-300 rounded px-3 py-2 text-sm">
+                <option value="">— Pick category —</option>
+                @foreach($categories as $cat)
+                <option value="{{ $cat->id }}">{{ $cat->name }} ({{ $cat->location->name }})</option>
+                @endforeach
+            </select>
+            <button type="submit" :disabled="!catId"
+                    class="bg-amber-600 text-white px-4 py-2 rounded text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Add all store beverages to the selected category">
+                ⚡ Sync Beverages
+            </button>
+        </form>
+        <a href="{{ route('restaurant.menu.create') }}"
+           class="bg-primary text-white px-4 py-2 rounded text-sm hover:opacity-90">
+            + {{ __('general.restaurant.menu.new_item') }}
+        </a>
+    </div>
     @endif
 </div>
 
@@ -40,7 +57,13 @@
     @if($category->menuItems->count())
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @foreach($category->menuItems as $item)
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 {{ !$item->is_available ? 'opacity-60' : '' }}">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden {{ !$item->is_available ? 'opacity-60' : '' }}">
+            @if($item->hasMedia('menu_item_image'))
+            <div class="h-32 overflow-hidden bg-gray-100">
+                <img src="{{ $item->getFirstMediaUrl('menu_item_image', 'medium') }}" alt="{{ $item->name }}" class="w-full h-full object-cover">
+            </div>
+            @endif
+            <div class="p-4">
             <div class="flex justify-between items-start mb-2">
                 <div>
                     <h3 class="font-semibold text-gray-800">{{ $item->name }}</h3>
@@ -90,6 +113,7 @@
                 </div>
             </div>
             @endif
+            </div>{{-- /p-4 --}}
         </div>
         @endforeach
     </div>

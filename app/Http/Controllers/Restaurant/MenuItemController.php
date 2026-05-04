@@ -59,7 +59,9 @@ class MenuItemController extends Controller
             'name'                     => 'required|string|max:150',
             'description'              => 'nullable|string',
             'selling_price'            => 'required|numeric|min:0.01',
+            'linked_product_id'        => 'nullable|uuid|exists:products,id',
             'service_location_tag'     => 'nullable|string|max:50',
+            'image'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'option_group_ids'         => 'nullable|array',
             'option_group_ids.*'       => 'uuid|exists:menu_option_groups,id',
             'ingredients'              => 'nullable|array',
@@ -68,7 +70,7 @@ class MenuItemController extends Controller
             'ingredients.*.unit'       => 'required_with:ingredients|string|max:30',
         ]);
 
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data, $request) {
             $item = MenuItem::create([
                 'category_id'   => $data['category_id'],
                 'name'          => $data['name'],
@@ -79,6 +81,21 @@ class MenuItemController extends Controller
                 'is_active'     => true,
                 'created_by'    => auth()->id(),
             ]);
+
+            if ($request->hasFile('image')) {
+                $item->addMediaFromRequest('image')->toMediaCollection('menu_item_image');
+            }
+
+            // Auto-create ingredient from linked product if no manual ingredients provided
+            if (empty($data['ingredients']) && !empty($data['linked_product_id'])) {
+                $product = Product::findOrFail($data['linked_product_id']);
+                MenuItemIngredient::create([
+                    'menu_item_id' => $item->id,
+                    'product_id'   => $product->id,
+                    'quantity'     => 1,
+                    'unit'         => $product->unit,
+                ]);
+            }
 
             if (!empty($data['ingredients'])) {
                 foreach ($data['ingredients'] as $ing) {
@@ -132,6 +149,8 @@ class MenuItemController extends Controller
             'selling_price'            => 'sometimes|numeric|min:0.01',
             'is_available'             => 'sometimes|boolean',
             'service_location_tag'     => 'sometimes|nullable|string|max:50',
+            'image'                    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'remove_image'             => 'nullable|boolean',
             'option_group_ids'         => 'nullable|array',
             'option_group_ids.*'       => 'uuid|exists:menu_option_groups,id',
             'ingredients'              => 'nullable|array',
@@ -140,7 +159,7 @@ class MenuItemController extends Controller
             'ingredients.*.unit'       => 'required_with:ingredients|string|max:30',
         ]);
 
-        DB::transaction(function () use ($data, $menuItem) {
+        DB::transaction(function () use ($data, $menuItem, $request) {
             $menuItem->update([
                 'name'          => $data['name']          ?? $menuItem->name,
                 'description'   => $data['description']   ?? $menuItem->description,
@@ -148,6 +167,13 @@ class MenuItemController extends Controller
                 'is_available'  => $data['is_available']  ?? $menuItem->is_available,
                 'service_location_tag' => $data['service_location_tag'] ?? $menuItem->service_location_tag,
             ]);
+
+            if ($request->hasFile('image')) {
+                $menuItem->clearMediaCollection('menu_item_image');
+                $menuItem->addMediaFromRequest('image')->toMediaCollection('menu_item_image');
+            } elseif ($request->boolean('remove_image')) {
+                $menuItem->clearMediaCollection('menu_item_image');
+            }
 
             // Replace ingredients entirely if provided
             if (isset($data['ingredients'])) {
@@ -187,5 +213,67 @@ class MenuItemController extends Controller
         return redirect()
             ->route('restaurant.menu.index')
             ->with('success', 'Menu item removed from menu.');
+    }
+
+    /**
+     * POST /restaurant/menu/sync-beverages
+     * Sync store bar products as menu items in a given category.
+     */
+    public function syncBeverages(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'category_id' => 'required|uuid|exists:menu_categories,id',
+        ]);
+
+        $category = MenuCategory::findOrFail($data['category_id']);
+
+        $barProducts = Product::query()
+            ->where('product_type', 'bar')
+            ->where('is_active', true)
+            ->get();
+
+        if ($barProducts->isEmpty()) {
+            return redirect()
+                ->route('restaurant.menu.index')
+                ->with('info', 'No active store beverages found to sync.');
+        }
+
+        $created = 0;
+
+        DB::transaction(function () use ($barProducts, $category, &$created) {
+            foreach ($barProducts as $product) {
+                $exists = MenuItem::where('name', $product->name)
+                    ->where('category_id', $category->id)
+                    ->exists();
+
+                if ($exists) {
+                    continue;
+                }
+
+                $item = MenuItem::create([
+                    'category_id'   => $category->id,
+                    'name'          => $product->name,
+                    'description'   => $product->description,
+                    'selling_price' => $product->selling_price,
+                    'is_available'  => true,
+                    'is_active'     => true,
+                    'varieties'     => $product->varieties,
+                    'created_by'    => auth()->id(),
+                ]);
+
+                MenuItemIngredient::create([
+                    'menu_item_id' => $item->id,
+                    'product_id'   => $product->id,
+                    'quantity'     => 1,
+                    'unit'         => $product->unit,
+                ]);
+
+                $created++;
+            }
+        });
+
+        return redirect()
+            ->route('restaurant.menu.index', ['location_id' => $category->location_id])
+            ->with('success', "{$created} store beverages synced to '{$category->name}'.");
     }
 }

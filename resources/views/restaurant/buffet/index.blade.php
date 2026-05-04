@@ -39,6 +39,7 @@
         <table class="w-full text-sm">
             <thead class="bg-gray-50">
                 <tr>
+                    <th class="px-4 py-2 text-left w-10"></th>
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.sale_no') }}</th>
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.package_name') }}</th>
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.sale_type') }}</th>
@@ -50,7 +51,12 @@
             </thead>
             <tbody class="divide-y">
                 @foreach($sales as $sale)
-                    <tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">
+                            @if($sale->package?->hasMedia('buffet_image'))
+                                <img src="{{ $sale->package->getFirstMediaUrl('buffet_image', 'thumb') }}" class="w-8 h-8 rounded-lg object-cover border">
+                            @endif
+                        </td>
                         <td class="px-4 py-2 font-mono text-xs">{{ $sale->sale_number }}</td>
                         <td class="px-4 py-2">{{ $sale->package_name_snapshot }}</td>
                         <td class="px-4 py-2">{{ __('general.restaurant.buffet.sale_type.' . $sale->sale_type) }}</td>

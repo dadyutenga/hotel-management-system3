@@ -55,9 +55,13 @@
                             class="cursor-pointer hover:border-blue-300 hover:bg-blue-50/50 active:scale-95 p-3 rounded-lg border border-gray-100 transition-all relative"
                             title="{{ $item->name }} - @currency($item->selling_price, 'TZS')">
                             <div class="w-full h-16 mb-2 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                                @if($item->hasMedia('menu_item_image'))
+                                <img src="{{ $item->getFirstMediaUrl('menu_item_image', 'thumb') }}" alt="{{ $item->name }}" class="w-full h-full object-cover">
+                                @else
                                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                 </svg>
+                                @endif
                             </div>
                             <div class="text-xs font-semibold text-gray-800 truncate">{{ $item->name }}</div>
                             @if(!empty($item->varieties))

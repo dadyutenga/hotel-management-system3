@@ -14,13 +14,14 @@
 
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
         <h2 class="font-semibold text-gray-700 mb-3">{{ __('general.restaurant.buffet.package_setup') }}</h2>
-        <form method="POST" action="{{ route('restaurant.buffet.packages.store') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <form method="POST" action="{{ route('restaurant.buffet.packages.store') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3" enctype="multipart/form-data">
             @csrf
             <input name="name" class="border-gray-300 rounded px-3 py-2 text-sm md:col-span-2" placeholder="{{ __('general.restaurant.buffet.fields.package_name') }}" required>
             <input type="number" step="0.01" min="0.01" name="adult_price" class="border-gray-300 rounded px-3 py-2 text-sm" placeholder="{{ __('general.restaurant.buffet.fields.adult_price') }}" required>
             <input type="number" step="0.01" min="0" name="child_price" class="border-gray-300 rounded px-3 py-2 text-sm" placeholder="{{ __('general.restaurant.buffet.fields.child_price') }}">
             <input type="time" name="start_time" class="border-gray-300 rounded px-3 py-2 text-sm">
             <input type="time" name="end_time" class="border-gray-300 rounded px-3 py-2 text-sm">
+            <input type="file" name="image" accept="image/jpeg,image/png,image/jpg,image/webp" class="border-gray-300 rounded px-3 py-2 text-sm md:col-span-6">
             <div class="md:col-span-6 grid grid-cols-2 md:grid-cols-7 gap-2">
                 @foreach(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as $day)
                     <label class="text-xs inline-flex items-center gap-1">
@@ -43,6 +44,7 @@
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.adult_price') }}</th>
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.child_price') }}</th>
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.schedule') }}</th>
+                    <th class="px-4 py-2 text-left">Image</th>
                     <th class="px-4 py-2 text-left">{{ __('general.status') }}</th>
                     <th class="px-4 py-2"></th>
                 </tr>
@@ -50,8 +52,8 @@
             <tbody class="divide-y">
                 @foreach($packages as $package)
                     <tr>
-                        <td colspan="6" class="px-4 py-3">
-                            <form method="POST" action="{{ route('restaurant.buffet.packages.update', $package) }}" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-start">
+                        <td colspan="7" class="px-4 py-3">
+                            <form method="POST" action="{{ route('restaurant.buffet.packages.update', $package) }}" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-start" enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
                                 <input name="name" value="{{ $package->name }}" class="border-gray-300 rounded px-3 py-2 text-sm md:col-span-2" required>
@@ -59,6 +61,15 @@
                                 <input type="number" step="0.01" min="0" name="child_price" value="{{ $package->child_price }}" class="border-gray-300 rounded px-3 py-2 text-sm">
                                 <input type="time" name="start_time" value="{{ $package->start_time ? substr((string) $package->start_time, 0, 5) : '' }}" class="border-gray-300 rounded px-3 py-2 text-sm">
                                 <input type="time" name="end_time" value="{{ $package->end_time ? substr((string) $package->end_time, 0, 5) : '' }}" class="border-gray-300 rounded px-3 py-2 text-sm">
+                                <div class="md:col-span-2 flex items-center gap-2">
+                                    @if($package->hasMedia('buffet_image'))
+                                        <img src="{{ $package->getFirstMediaUrl('buffet_image', 'thumb') }}" class="w-10 h-10 rounded object-cover border">
+                                        <label class="text-xs text-red-500 cursor-pointer">
+                                            <input type="checkbox" name="remove_image" value="1"> Remove
+                                        </label>
+                                    @endif
+                                    <input type="file" name="image" accept="image/jpeg,image/png,image/jpg,image/webp" class="border-gray-300 rounded px-2 py-1 text-xs flex-1">
+                                </div>
                                 <div class="md:col-span-4 grid grid-cols-2 md:grid-cols-7 gap-2 text-xs text-gray-600">
                                     @foreach(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as $day)
                                         <label class="inline-flex items-center gap-1">
