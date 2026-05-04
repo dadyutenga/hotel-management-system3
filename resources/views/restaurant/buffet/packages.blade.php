@@ -22,6 +22,15 @@
             <input type="time" name="start_time" class="border-gray-300 rounded px-3 py-2 text-sm">
             <input type="time" name="end_time" class="border-gray-300 rounded px-3 py-2 text-sm">
             <input type="file" name="image" accept="image/jpeg,image/png,image/jpg,image/webp" class="border-gray-300 rounded px-3 py-2 text-sm md:col-span-6">
+            <div class="md:col-span-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Buffet Items</label>
+                <select name="menu_item_ids[]" multiple class="w-full border-gray-300 rounded px-3 py-2 text-sm h-28">
+                    @foreach($allMenuItems as $mi)
+                        <option value="{{ $mi->id }}">{{ $mi->name }} — {{ number_format($mi->selling_price) }} TZS</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Items included in this buffet package</p>
+            </div>
             <div class="md:col-span-6 grid grid-cols-2 md:grid-cols-7 gap-2">
                 @foreach(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as $day)
                     <label class="text-xs inline-flex items-center gap-1">
@@ -45,6 +54,7 @@
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.child_price') }}</th>
                     <th class="px-4 py-2 text-left">{{ __('general.restaurant.buffet.fields.schedule') }}</th>
                     <th class="px-4 py-2 text-left">Image</th>
+                    <th class="px-4 py-2 text-left">Items</th>
                     <th class="px-4 py-2 text-left">{{ __('general.status') }}</th>
                     <th class="px-4 py-2"></th>
                 </tr>
@@ -52,7 +62,7 @@
             <tbody class="divide-y">
                 @foreach($packages as $package)
                     <tr>
-                        <td colspan="7" class="px-4 py-3">
+                        <td colspan="8" class="px-4 py-3">
                             <form method="POST" action="{{ route('restaurant.buffet.packages.update', $package) }}" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-start" enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
@@ -69,6 +79,16 @@
                                         </label>
                                     @endif
                                     <input type="file" name="image" accept="image/jpeg,image/png,image/jpg,image/webp" class="border-gray-300 rounded px-2 py-1 text-xs flex-1">
+                                </div>
+                                <div class="md:col-span-6">
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">Items</label>
+                                    <select name="menu_item_ids[]" multiple class="w-full border-gray-300 rounded px-3 py-2 text-xs h-24">
+                                        @foreach($allMenuItems as $mi)
+                                            <option value="{{ $mi->id }}" @selected($package->menuItems->contains('id', $mi->id))>
+                                                {{ $mi->name }} — {{ number_format($mi->selling_price) }} TZS
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="md:col-span-4 grid grid-cols-2 md:grid-cols-7 gap-2 text-xs text-gray-600">
                                     @foreach(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as $day)

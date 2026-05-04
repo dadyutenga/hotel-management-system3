@@ -7,10 +7,12 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-extrabold text-gray-800">Orders</h1>
+    @if(auth()->user()->isWaiter())
     <a href="{{ route('restaurant.orders.create') }}"
        class="bg-primary text-white px-4 py-2 rounded text-sm hover:opacity-90">
         + New Order
     </a>
+    @endif
 </div>
 
 {{-- Filters --}}

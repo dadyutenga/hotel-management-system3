@@ -40,11 +40,19 @@
                     <span class="text-xs text-gray-400">({{ $cat->menuItems->count() }})</span>
                 </button>
                 @endforeach
+                <div class="border-t border-gray-100 my-1"></div>
+                <button @click="activeCategory = 'buffet'"
+                    :class="activeCategory === 'buffet' ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-amber-600 hover:bg-amber-50'"
+                    class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                    🍽️ Buffet Sale
+                </button>
             </div>
 
             <!-- Products Grid -->
             <div class="flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-y-auto">
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {{-- Menu Items --}}
+                    <template x-if="activeCategory !== 'buffet'">
                     @foreach($categories as $cat)
                         @foreach($cat->menuItems as $item)
                         @php
@@ -71,6 +79,27 @@
                         </div>
                         @endforeach
                     @endforeach
+                    </template>
+                    {{-- Buffet Packages --}}
+                    <template x-if="activeCategory === 'buffet'">
+                        @foreach($buffetPackages as $pkg)
+                        <div @click="selectBuffetPackage('{{ $pkg->id }}', '{{ addslashes($pkg->name) }}', {{ $pkg->adult_price }}, {{ $pkg->child_price }})"
+                            class="cursor-pointer hover:border-amber-300 hover:bg-amber-50/50 active:scale-95 p-3 rounded-lg border border-amber-200 transition-all relative bg-amber-50/30">
+                            <div class="w-full h-16 mb-2 overflow-hidden rounded-md bg-amber-100 flex items-center justify-center">
+                                @if($pkg->hasMedia('buffet_image'))
+                                <img src="{{ $pkg->getFirstMediaUrl('buffet_image', 'thumb') }}" alt="{{ $pkg->name }}" class="w-full h-full object-cover">
+                                @else
+                                <span class="text-2xl">🍽️</span>
+                                @endif
+                            </div>
+                            <div class="text-xs font-semibold text-gray-800 truncate">{{ $pkg->name }}</div>
+                            <div class="text-xs text-gray-500 mt-0.5">Adult {{ number_format($pkg->adult_price) }} TZS</div>
+                            @if($pkg->child_price > 0)
+                            <div class="text-xs text-gray-400">Child {{ number_format($pkg->child_price) }} TZS</div>
+                            @endif
+                        </div>
+                        @endforeach
+                    </template>
                 </div>
                 <div x-show="displayedCount() === 0" class="text-center py-8 text-gray-400 text-sm">
                     No menu items found.
@@ -94,13 +123,25 @@
                 <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-medium text-gray-800 truncate" x-text="item.name"></div>
-                        <div class="text-xs text-gray-500" x-text="formatCurrency(item.unit_price) + ' / unit'"></div>
+                        <div class="text-xs text-gray-500">
+                            <template x-if="item._type === 'buffet'">
+                                <span x-text="item.adults + 'A / ' + item.children + 'C — ' + formatCurrency(item.unit_price) + ' total'"></span>
+                            </template>
+                            <template x-if="item._type !== 'buffet'">
+                                <span x-text="formatCurrency(item.unit_price) + ' / unit'"></span>
+                            </template>
+                        </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button @click="decrementQty(idx)" class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-bold transition-colors">−</button>
+                        <template x-if="item._type !== 'buffet'">
+                            <button @click="decrementQty(idx)" class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-bold transition-colors">−</button>
+                        </template>
                         <input type="number" x-model.number="item.quantity" @input="updateQty(idx)" min="1" max="999"
+                            :disabled="item._type === 'buffet'"
                             class="w-14 text-center border border-gray-200 rounded-lg text-sm py-1">
-                        <button @click="incrementQty(idx)" class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-bold transition-colors">+</button>
+                        <template x-if="item._type !== 'buffet'">
+                            <button @click="incrementQty(idx)" class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-bold transition-colors">+</button>
+                        </template>
                     </div>
                     <div class="text-sm font-bold text-gray-800 w-20 text-right" x-text="formatCurrency(lineSubtotal(item))"></div>
                     <button @click="removeFromCart(idx)" class="text-red-400 hover:text-red-600 px-1">✕</button>
@@ -171,7 +212,36 @@
         </div>
     </div>
 
-    <!-- Variety Selection Modal -->
+    <!-- Buffet Package Selection Modal -->
+    <div x-show="showBuffetModal" class="fixed inset-0 z-50 flex items-center justify-center" x-cloak>
+        <div class="absolute inset-0 bg-black bg-opacity-40" @click="showBuffetModal = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800" x-text="'Buffet: ' + (buffetPackage?.name ?? '')"></h3>
+                <button @click="showBuffetModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <p class="text-sm text-gray-600" x-text="'Adult: ' + formatCurrency(buffetPackage?.adult_price || 0) + ' / Child: ' + formatCurrency(buffetPackage?.child_price || 0)"></p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Adults</label>
+                        <input type="number" x-model.number="buffetAdults" min="0" value="1"
+                            class="w-full border-gray-300 rounded-lg text-sm px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Children</label>
+                        <input type="number" x-model.number="buffetChildren" min="0" value="0"
+                            class="w-full border-gray-300 rounded-lg text-sm px-3 py-2">
+                    </div>
+                </div>
+                <div class="text-right text-sm font-semibold text-gray-700" x-text="'Total: ' + formatCurrency(buffetTotal())"></div>
+                <button @click="addBuffetToCart()" :disabled="buffetAdults < 1"
+                    class="w-full bg-amber-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    Add to Order
+                </button>
+            </div>
+        </div>
+    </div>
     <div x-show="showVarietyModal" class="fixed inset-0 z-50 flex items-center justify-center" x-cloak>
         <div class="absolute inset-0 bg-black bg-opacity-40" @click="showVarietyModal = false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
@@ -236,6 +306,12 @@ function restaurantPos() {
         cart: [],
         orderNotes: '',
 
+        // Buffet
+        showBuffetModal: false,
+        buffetPackage: null,
+        buffetAdults: 1,
+        buffetChildren: 0,
+
         // Payment
         paymentMethod: '',
         chargeToBooking: false,
@@ -299,12 +375,43 @@ function restaurantPos() {
             }
         },
 
-        lineSubtotal(item) { return Number(item.unit_price || 0) * Number(item.quantity || 0); },
+        lineSubtotal(item) {
+            if (item._type === 'buffet') return Number(item.unit_price || 0);
+            return Number(item.unit_price || 0) * Number(item.quantity || 0);
+        },
         grandTotal() { return this.cart.reduce((sum, i) => sum + this.lineSubtotal(i), 0); },
         taxAmount() { return Math.round(this.grandTotal() * 0.18); },
         totalWithTax() { return this.grandTotal() + this.taxAmount(); },
         displayedCount() {
             return 1;
+        },
+
+        selectBuffetPackage(id, name, adultPrice, childPrice) {
+            this.buffetPackage = { id, name, adult_price: adultPrice, child_price: childPrice };
+            this.buffetAdults = 1;
+            this.buffetChildren = 0;
+            this.showBuffetModal = true;
+        },
+
+        buffetTotal() {
+            if (!this.buffetPackage) return 0;
+            return (this.buffetAdults * this.buffetPackage.adult_price)
+                + (this.buffetChildren * this.buffetPackage.child_price);
+        },
+
+        addBuffetToCart() {
+            if (!this.buffetPackage || this.buffetAdults < 1) return;
+            this.cart.push({
+                _type: 'buffet',
+                buffet_package_id: this.buffetPackage.id,
+                name: 'Buffet: ' + this.buffetPackage.name,
+                adults: this.buffetAdults,
+                children: this.buffetChildren,
+                unit_price: this.buffetTotal(),
+                quantity: 1,
+            });
+            this.showBuffetModal = false;
+            this.buffetPackage = null;
         },
 
         saveOrder() {
@@ -362,7 +469,8 @@ function restaurantPos() {
                 form.appendChild(notesInput);
             }
 
-            this.cart.forEach((item, idx) => {
+            const menuItems = this.cart.filter(i => i._type !== 'buffet');
+            menuItems.forEach((item, idx) => {
                 const menuId = document.createElement('input');
                 menuId.type = 'hidden';
                 menuId.name = `items[${idx}][menu_item_id]`;
@@ -374,6 +482,27 @@ function restaurantPos() {
                 qty.name = `items[${idx}][quantity]`;
                 qty.value = item.quantity;
                 form.appendChild(qty);
+            });
+
+            const buffetItems = this.cart.filter(i => i._type === 'buffet');
+            buffetItems.forEach((item, bi) => {
+                const pkgInput = document.createElement('input');
+                pkgInput.type = 'hidden';
+                pkgInput.name = `buffet_items[${bi}][buffet_package_id]`;
+                pkgInput.value = item.buffet_package_id;
+                form.appendChild(pkgInput);
+
+                const adultsInput = document.createElement('input');
+                adultsInput.type = 'hidden';
+                adultsInput.name = `buffet_items[${bi}][adults]`;
+                adultsInput.value = item.adults;
+                form.appendChild(adultsInput);
+
+                const childrenInput = document.createElement('input');
+                childrenInput.type = 'hidden';
+                childrenInput.name = `buffet_items[${bi}][children]`;
+                childrenInput.value = item.children;
+                form.appendChild(childrenInput);
             });
 
             document.body.appendChild(form);

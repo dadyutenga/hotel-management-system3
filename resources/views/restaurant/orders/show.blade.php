@@ -59,7 +59,7 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 <div class="bg-gray-50 px-4 py-3 border-b font-semibold text-gray-700 text-sm flex justify-between items-center">
                     <span>Items ({{ $order->items->where('status', '!=', 'cancelled')->count() }})</span>
-                    @if($order->status === 'open')
+                    @if($order->status === 'open' && auth()->user()->isWaiter())
                     <span class="text-xs text-gray-400">You can add/remove items</span>
                     @endif
                 </div>
@@ -71,7 +71,7 @@
                             <th class="px-4 py-2 text-right">Price</th>
                             <th class="px-4 py-2 text-right">Subtotal</th>
                             <th class="px-4 py-2">Status</th>
-                            @if($order->status === 'open')
+                            @if($order->status === 'open' && auth()->user()->isWaiter())
                             <th class="px-4 py-2"></th>
                             @endif
                         </tr>
@@ -101,7 +101,7 @@
                                     {{ ucfirst($item->status) }}
                                 </span>
                             </td>
-                            @if($order->status === 'open')
+                            @if($order->status === 'open' && auth()->user()->isWaiter())
                             <td class="px-4 py-3 text-right">
                                 @if($item->status !== 'cancelled')
                                 <form method="POST" action="{{ route('restaurant.orders.removeItem', [$order, $item]) }}"
@@ -131,7 +131,7 @@
             </div>
 
             {{-- Add item form (open orders only) --}}
-            @if($order->status === 'open')
+            @if($order->status === 'open' && auth()->user()->isWaiter())
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5" x-data="addItemForm(@js($menuCategories))">
                 <button @click="showAdd = !showAdd" class="text-sm text-primary hover:underline font-medium">
                     + Add Item to Order
@@ -239,31 +239,33 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 space-y-3">
                 <h3 class="font-semibold text-gray-700 text-sm">Actions</h3>
 
-                @if($order->status === 'open')
-                <form method="POST" action="{{ route('restaurant.orders.send', $order) }}">
-                    @csrf
-                    <button class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700">
-                        Send to Kitchen/Bar
-                    </button>
-                </form>
-                @endif
+                @if(auth()->user()->isWaiter())
+                    @if($order->status === 'open')
+                    <form method="POST" action="{{ route('restaurant.orders.send', $order) }}">
+                        @csrf
+                        <button class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700">
+                            Send to Kitchen/Bar
+                        </button>
+                    </form>
+                    @endif
 
-                @if($order->status === 'sent')
-                <form method="POST" action="{{ route('restaurant.orders.ready', $order) }}">
-                    @csrf
-                    <button class="w-full bg-indigo-600 text-white py-2 rounded text-sm hover:bg-indigo-700">
-                        Mark Ready
-                    </button>
-                </form>
-                @endif
+                    @if($order->status === 'sent')
+                    <form method="POST" action="{{ route('restaurant.orders.ready', $order) }}">
+                        @csrf
+                        <button class="w-full bg-indigo-600 text-white py-2 rounded text-sm hover:bg-indigo-700">
+                            Mark Ready
+                        </button>
+                    </form>
+                    @endif
 
-                @if($order->status === 'ready')
-                <form method="POST" action="{{ route('restaurant.orders.serve', $order) }}">
-                    @csrf
-                    <button class="w-full bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700">
-                        Mark Served
-                    </button>
-                </form>
+                    @if($order->status === 'ready')
+                    <form method="POST" action="{{ route('restaurant.orders.serve', $order) }}">
+                        @csrf
+                        <button class="w-full bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700">
+                            Mark Served
+                        </button>
+                    </form>
+                    @endif
                 @endif
 
                 {{-- Settlement/Checkout --}}
@@ -308,6 +310,7 @@
                 @endif
 
                 {{-- Cancel --}}
+                @if(auth()->user()->isWaiter())
                 <form method="POST" action="{{ route('restaurant.orders.cancel', $order) }}"
                       onsubmit="return confirm('Cancel this order?')">
                     @csrf
@@ -315,6 +318,7 @@
                         Cancel Order
                     </button>
                 </form>
+                @endif
             </div>
             @elseif($order->status === 'charged')
             {{-- Order is charged but not yet settled at checkout --}}

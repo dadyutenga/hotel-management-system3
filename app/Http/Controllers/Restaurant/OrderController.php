@@ -16,6 +16,8 @@ use App\Services\Billing\ModuleBillingService;
 use App\Services\Bartender\BarOrderStockService;
 use App\Services\AccountingService;      // Added for POS accounting posting
 use App\Services\ReceiptService;          // Added for POS receipt creation
+use App\Models\BuffetPackage;
+use App\Models\BuffetSale;
 use App\Models\FinancePayment;            // Added for POS walk-in payments
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -109,7 +111,9 @@ class OrderController extends Controller
             }
         }
 
-        return view('restaurant.pos', compact('categories', 'stockMap', 'imageMap'));
+        $buffetPackages = BuffetPackage::where('is_active', true)->orderBy('name')->get();
+
+        return view('restaurant.pos', compact('categories', 'stockMap', 'imageMap', 'buffetPackages'));
     }
 
     /**
@@ -127,10 +131,19 @@ class OrderController extends Controller
             'payment_method' => 'required|in:cash,mobile,card,charge_to_booking',
             'booking_id'     => 'required_if:payment_method,charge_to_booking|uuid|exists:bookings,id',
             'notes'          => 'nullable|string|max:500',
-            'items'          => 'required|array|min:1',
+            'items'          => 'nullable|array|min:1',
             'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
             'items.*.quantity'     => 'required|integer|min:1',
+            'buffet_items'          => 'nullable|array',
+            'buffet_items.*.buffet_package_id' => 'required|uuid|exists:buffet_packages,id',
+            'buffet_items.*.adults'            => 'required|integer|min:1',
+            'buffet_items.*.children'          => 'nullable|integer|min:0',
         ]);
+
+        $hasItems = !empty($data['items']);
+        $hasBuffet = !empty($data['buffet_items']);
+
+        abort_if(!$hasItems && !$hasBuffet, 422, 'At least one item or buffet package is required.');
 
         // Validate the booking is checked in if charging to folio
         $isChargeToBooking = $data['payment_method'] === 'charge_to_booking';
@@ -140,116 +153,198 @@ class OrderController extends Controller
             abort_if($booking->status !== 'checked_in', 422, 'Can only charge to a checked-in booking.');
         }
 
-        $order = DB::transaction(function () use ($data, $kitchen, $isChargeToBooking) {
+        $order = DB::transaction(function () use ($data, $kitchen, $isChargeToBooking, $hasItems, $hasBuffet) {
             $customerName = $data['customer_name'] ?: ($isChargeToBooking ? 'Guest' : 'Walk-in Guest');
             $customerPhone = $data['customer_phone'] ?? null;
 
-            $order = Order::create([
-                'location_id'    => $kitchen->id,
-                'order_type'     => $isChargeToBooking ? 'guest' : 'walkin',
-                'order_source'   => 'walkin',
-                'booking_id'     => $isChargeToBooking ? $data['booking_id'] : null,
-                'customer_name'  => $customerName,
-                'customer_phone' => $customerPhone,
-                'status'         => 'open',
-                'payment_method' => $data['payment_method'],
-                'notes'          => $data['notes'] ?? null,
-                'created_by'     => (string) Auth::id(),
-            ]);
+            $order = null;
+            $buffetSales = [];
 
-            foreach ($data['items'] as $line) {
-                $menuItem = MenuItem::findOrFail($line['menu_item_id']);
-                OrderItem::create([
-                    'order_id'       => $order->id,
-                    'menu_item_id'   => $menuItem->id,
-                    'item_name_snapshot' => $menuItem->name,
-                    'quantity'       => $line['quantity'],
-                    'base_unit_price' => (float) $menuItem->selling_price,
-                    'unit_price'     => (float) $menuItem->selling_price,
-                    'subtotal'       => (float) $menuItem->selling_price * $line['quantity'],
-                    'status'         => 'pending',
+            if ($hasItems) {
+                $order = Order::create([
+                    'location_id'    => $kitchen->id,
+                    'order_type'     => $isChargeToBooking ? 'guest' : 'walkin',
+                    'order_source'   => 'walkin',
+                    'booking_id'     => $isChargeToBooking ? $data['booking_id'] : null,
+                    'customer_name'  => $customerName,
+                    'customer_phone' => $customerPhone,
+                    'status'         => 'open',
+                    'payment_method' => $data['payment_method'],
+                    'notes'          => $data['notes'] ?? null,
+                    'created_by'     => (string) Auth::id(),
                 ]);
+
+                foreach ($data['items'] as $line) {
+                    $menuItem = MenuItem::findOrFail($line['menu_item_id']);
+                    OrderItem::create([
+                        'order_id'       => $order->id,
+                        'menu_item_id'   => $menuItem->id,
+                        'item_name_snapshot' => $menuItem->name,
+                        'quantity'       => $line['quantity'],
+                        'base_unit_price' => (float) $menuItem->selling_price,
+                        'unit_price'     => (float) $menuItem->selling_price,
+                        'subtotal'       => (float) $menuItem->selling_price * $line['quantity'],
+                        'status'         => 'pending',
+                    ]);
+                }
+
+                $order->recalculate();
+                app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
             }
 
-            $order->recalculate();
+            if ($hasBuffet) {
+                foreach ($data['buffet_items'] as $bi) {
+                    $package = BuffetPackage::findOrFail($bi['buffet_package_id']);
+                    $children = (int) ($bi['children'] ?? 0);
+                    $total = ((int) $bi['adults'] * (float) $package->adult_price)
+                        + ($children * (float) $package->child_price);
 
-            // Deduct stock via BarOrderStockService
-            app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
+                    $sale = BuffetSale::create([
+                        'buffet_package_id'    => $package->id,
+                        'booking_id'           => $isChargeToBooking ? ($data['booking_id'] ?? null) : null,
+                        'sale_type'            => $isChargeToBooking ? 'booking' : 'walkin',
+                        'adults_count'         => (int) $bi['adults'],
+                        'children_count'       => $children,
+                        'package_name_snapshot' => $package->name,
+                        'adult_price_snapshot'  => $package->adult_price,
+                        'child_price_snapshot'  => $package->child_price,
+                        'total_amount'          => $total,
+                        'status'                => 'pending',
+                        'notes'                 => $data['notes'] ?? null,
+                        'served_by'             => (string) Auth::id(),
+                    ]);
+
+                    $buffetSales[] = $sale;
+                }
+            }
 
             if ($isChargeToBooking) {
-                // Charge to guest folio — settled at checkout
-                $order->update([
-                    'status'             => 'charged',
-                    'billed_to_folio_at' => now(),
-                ]);
+                if ($order) {
+                    $order->update([
+                        'status'             => 'charged',
+                        'billed_to_folio_at' => now(),
+                    ]);
+                    app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());
+                }
 
-                app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());
+                foreach ($buffetSales as $sale) {
+                    $exchangeRate = CurrencyHelper::getExchangeRate();
+                    $amountUsd = round(((float) $sale->total_amount) / $exchangeRate, 2);
+
+                    BookingCharge::updateOrCreate(
+                        [
+                            'booking_id' => $data['booking_id'],
+                            'source' => 'restaurant',
+                            'reference_id' => $sale->id,
+                        ],
+                        [
+                            'charge_type' => 'restaurant',
+                            'order_id' => null,
+                            'description' => "Buffet {$sale->package_name_snapshot} ({$sale->adults_count}A/{$sale->children_count}C)",
+                            'amount' => $amountUsd,
+                            'currency' => 'USD',
+                            'amount_tzs' => $sale->total_amount,
+                            'status' => 'unpaid',
+                            'created_by' => (string) Auth::id(),
+                        ]
+                    );
+
+                    $sale->update(['status' => 'charged']);
+                }
+
+                app(ReceiptService::class)->getOrCreateReceipt($order ?? $buffetSales[0] ?? null);
             } else {
                 // Walk-in — settled immediately
                 $paymentMethod = $data['payment_method'] === 'mobile' ? 'mobile_money' : $data['payment_method'];
+                $totalAmount = 0;
 
-                $order->update([
-                    'status'         => 'settled',
-                    'payment_method' => $paymentMethod,
-                    'settled_by'     => (string) Auth::id(),
-                    'settled_at'     => now(),
-                ]);
+                if ($order) {
+                    $totalAmount += (float) $order->total;
+                    $order->update([
+                        'status'         => 'settled',
+                        'payment_method' => $paymentMethod,
+                        'settled_by'     => (string) Auth::id(),
+                        'settled_at'     => now(),
+                    ]);
+                }
 
-                // Post to accounting
-                app(AccountingService::class)->postRestaurantSettlement(
-                    orderNo: $order->order_number,
-                    orderId: $order->id,
-                    amount: (float) $order->total,
-                    paymentMethod: $paymentMethod,
-                    actorId: (string) Auth::id()
-                );
+                foreach ($buffetSales as $sale) {
+                    $totalAmount += (float) $sale->total_amount;
+                    $sale->update([
+                        'status'           => 'settled',
+                        'payment_method'   => $paymentMethod,
+                        'settled_by'       => (string) Auth::id(),
+                        'settled_at'       => now(),
+                    ]);
+                }
 
-                // Record finance payment
-                $exchangeRate = CurrencyHelper::getExchangeRate();
-                $amountUsd = FinancePayment::toUsd((float) $order->total, 'TZS', $exchangeRate);
+                if ($totalAmount > 0) {
+                    app(AccountingService::class)->postRestaurantSettlement(
+                        orderNo: $order?->order_number ?? $buffetSales[0]->sale_number,
+                        orderId: $order?->id ?? $buffetSales[0]->id,
+                        amount: $totalAmount,
+                        paymentMethod: $paymentMethod,
+                        actorId: (string) Auth::id()
+                    );
 
-                FinancePayment::create([
-                    'payment_type'  => 'walkin',
-                    'checkout_id'   => null,
-                    'order_id'      => $order->id,
-                    'method'        => $paymentMethod,
-                    'amount'        => (float) $order->total,
-                    'currency'      => 'TZS',
-                    'amount_usd'    => $amountUsd,
-                    'exchange_rate' => $exchangeRate,
-                    'status'        => 'paid',
-                    'created_by'    => (string) Auth::id(),
-                    'paid_at'       => now(),
-                ]);
+                    $exchangeRate = CurrencyHelper::getExchangeRate();
+                    $amountUsd = FinancePayment::toUsd($totalAmount, 'TZS', $exchangeRate);
 
-                // Record financial transaction
-                \App\Models\FinancialTransaction::record([
-                    'type'            => 'payment',
-                    'source_module'   => 'restaurant',
-                    'payment_id'      => null,
-                    'order_id'        => $order->id,
-                    'currency'        => 'TZS',
-                    'amount'          => (float) $order->total,
-                    'amount_usd'      => $amountUsd,
-                    'exchange_rate'   => $exchangeRate,
-                    'payment_method'  => $paymentMethod,
-                    'description'     => "Walk-in restaurant order {$order->order_number}",
-                ], (string) Auth::id());
+                    FinancePayment::create([
+                        'payment_type'  => 'walkin',
+                        'checkout_id'   => null,
+                        'order_id'      => $order?->id,
+                        'method'        => $paymentMethod,
+                        'amount'        => $totalAmount,
+                        'currency'      => 'TZS',
+                        'amount_usd'    => $amountUsd,
+                        'exchange_rate' => $exchangeRate,
+                        'status'        => 'paid',
+                        'created_by'    => (string) Auth::id(),
+                        'paid_at'       => now(),
+                    ]);
+
+                    \App\Models\FinancialTransaction::record([
+                        'type'            => 'payment',
+                        'source_module'   => 'restaurant',
+                        'payment_id'      => null,
+                        'order_id'        => $order?->id,
+                        'currency'        => 'TZS',
+                        'amount'          => $totalAmount,
+                        'amount_usd'      => $amountUsd,
+                        'exchange_rate'   => $exchangeRate,
+                        'payment_method'  => $paymentMethod,
+                        'description'     => 'POS sale with ' . count($buffetSales) . ' buffet(s)',
+                    ], (string) Auth::id());
+                }
+
+                app(ReceiptService::class)->getOrCreateReceipt($order ?? $buffetSales[0] ?? null);
             }
 
-            // Generate receipt
-            app(ReceiptService::class)->getOrCreateReceipt($order);
-
-            return $order;
+            return ['order' => $order, 'buffetSales' => $buffetSales];
         });
 
         if ($isChargeToBooking) {
-            return redirect()->route('restaurant.orders.show', $order)
-                ->with('success', "Order {$order->order_number} charged to guest folio. Payment pending at checkout.");
+            $msg = $order ? "Order {$order->order_number} " : '';
+            $msg .= 'charged to guest folio.';
+            if (count($buffetSales) > 0) {
+                $msg .= ' ' . count($buffetSales) . ' buffet sale(s) added.';
+            }
+            $redirectRoute = $order
+                ? redirect()->route('restaurant.orders.show', $order)
+                : redirect()->route('restaurant.buffet.show', $buffetSales[0]);
+            return $redirectRoute->with('success', trim($msg));
         }
 
-        return redirect()->route('restaurant.orders.show', $order)
-            ->with('success', "Order {$order->order_number} completed successfully.");
+        $msg = 'Sale completed successfully.';
+        if ($order) $msg = "Order {$order->order_number} " . $msg;
+        if (count($buffetSales) > 0) {
+            $msg .= ' ' . count($buffetSales) . ' buffet sale(s) created.';
+        }
+        $redirectRoute = $order
+            ? redirect()->route('restaurant.orders.show', $order)
+            : redirect()->route('restaurant.buffet.show', $buffetSales[0]);
+        return $redirectRoute->with('success', trim($msg));
     }
 
     /**

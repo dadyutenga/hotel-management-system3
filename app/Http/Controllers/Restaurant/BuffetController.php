@@ -10,6 +10,7 @@ use App\Models\BuffetPackage;
 use App\Models\BuffetSale;
 use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
+use App\Models\MenuItem;
 use App\Services\AccountingService;
 use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
@@ -21,9 +22,10 @@ class BuffetController extends Controller
 {
     public function packages(): View
     {
-        $packages = BuffetPackage::orderBy('name')->paginate(20);
+        $packages = BuffetPackage::with(['menuItems'])->orderBy('name')->paginate(20);
+        $allMenuItems = MenuItem::where('is_active', true)->orderBy('name')->get();
 
-        return view('restaurant.buffet.packages', compact('packages'));
+        return view('restaurant.buffet.packages', compact('packages', 'allMenuItems'));
     }
 
     public function storePackage(Request $request): RedirectResponse
@@ -38,6 +40,8 @@ class BuffetController extends Controller
             'end_time' => 'nullable|date_format:H:i|after:start_time',
             'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'menu_item_ids' => 'nullable|array',
+            'menu_item_ids.*' => 'uuid|exists:menu_items,id',
         ]);
 
         $package = BuffetPackage::create([
@@ -53,6 +57,10 @@ class BuffetController extends Controller
 
         if ($request->hasFile('image')) {
             $package->addMediaFromRequest('image')->toMediaCollection('buffet_image');
+        }
+
+        if (!empty($data['menu_item_ids'])) {
+            $package->menuItems()->sync($data['menu_item_ids']);
         }
 
         return back()->with('success', __('general.restaurant.buffet.messages.package_created'));
@@ -71,6 +79,8 @@ class BuffetController extends Controller
             'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'remove_image' => 'nullable|boolean',
+            'menu_item_ids' => 'nullable|array',
+            'menu_item_ids.*' => 'uuid|exists:menu_items,id',
         ]);
 
         $buffetPackage->update([
@@ -88,6 +98,10 @@ class BuffetController extends Controller
             $buffetPackage->addMediaFromRequest('image')->toMediaCollection('buffet_image');
         } elseif ($request->boolean('remove_image')) {
             $buffetPackage->clearMediaCollection('buffet_image');
+        }
+
+        if (array_key_exists('menu_item_ids', $data)) {
+            $buffetPackage->menuItems()->sync($data['menu_item_ids'] ?? []);
         }
 
         return back()->with('success', __('general.restaurant.buffet.messages.package_updated'));

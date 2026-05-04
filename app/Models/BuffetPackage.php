@@ -81,7 +81,12 @@ class BuffetPackage extends Model implements HasMedia
 
     public function buffetSales(): HasMany
     {
-        return $this->hasMany(BuffetSale::class);
+        return $this->hasMany(BuffetSale::class, 'buffet_package_id');
+    }
+
+    public function menuItems()
+    {
+        return $this->belongsToMany(MenuItem::class, 'buffet_package_menu_item');
     }
 }
 

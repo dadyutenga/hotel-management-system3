@@ -67,13 +67,17 @@
                         <div class="md:col-span-3">
                             <select :name="'items['+idx+'][menu_item_id]'" x-model="item.menu_item_id" @change="onMenuItemChanged(idx)" required class="w-full border-gray-300 rounded px-3 py-2 text-sm">
                                 <option value="">{{ __('general.restaurant.placeholders.select_item') }}</option>
-                                <template x-for="category in filteredCategories" :key="category.id">
-                                    <optgroup :label="category.name">
-                                        <template x-for="menu in category.menu_items" :key="menu.id">
-                                            <option :value="menu.id" :disabled="!menu.is_available" x-text="menu.name + ' — ' + money(menu.selling_price) + (menu.is_available ? '' : ' ({{ __('general.restaurant.status.unavailable') }})')"></option>
-                                        </template>
+                                @foreach($categories as $cat)
+                                    @if($cat->menuItems->count())
+                                    <optgroup label="{{ $cat->name }}" data-location-id="{{ $cat->location_id }}" x-show="!locationId || locationId === '{{ $cat->location_id }}'">
+                                        @foreach($cat->menuItems as $mi)
+                                            <option value="{{ $mi->id }}" {{ !$mi->is_available ? 'disabled' : '' }}>
+                                                {{ $mi->name }} — {{ number_format($mi->selling_price) }}{{ !$mi->is_available ? ' (' . __('general.restaurant.status.unavailable') . ')' : '' }}
+                                            </option>
+                                        @endforeach
                                     </optgroup>
-                                </template>
+                                    @endif
+                                @endforeach
                             </select>
                         </div>
                         <div>
@@ -157,7 +161,7 @@ function orderForm(categories) {
             item.option_groups = menu?.option_groups ?? [];
         },
         findMenuItem(menuItemId) {
-            for (const category of this.filteredCategories) {
+            for (const category of this.allCategories) {
                 const found = (category.menu_items || []).find(m => m.id === menuItemId);
                 if (found) return found;
             }
