@@ -80,7 +80,7 @@ class CleaningController extends Controller
      */
     public function myRooms(): View
     {
-        $assignedRooms = Room::with(['floor.building', 'roomType'])
+        $assignedRooms = Room::with(['floor.building', 'roomType', 'outOfOrderBy'])
             ->whereIn('status', self::ATTENTION_STATUSES)
             ->where('cleaning_assigned_to', (string) Auth::id())
             ->orderBy('room_number')
@@ -132,7 +132,7 @@ class CleaningController extends Controller
 
         $room->update($updates);
 
-        return redirect()->route('cleaning.index')
+        return redirect()->route('rooms.index')
             ->with('success', "Room {$room->room_number} marked as out of order.");
     }
 }

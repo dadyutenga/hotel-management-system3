@@ -12,6 +12,21 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+            <div class="text-xs text-gray-500 font-medium uppercase">Total Assigned</div>
+            <div class="text-2xl font-extrabold text-secondary mt-1">{{ $assignedRooms->count() }}</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+            <div class="text-xs text-gray-500 font-medium uppercase">Pending</div>
+            <div class="text-2xl font-extrabold text-yellow-600 mt-1">{{ $assignedRooms->whereNull('cleaning_completed_at')->count() }}</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+            <div class="text-xs text-gray-500 font-medium uppercase">Done</div>
+            <div class="text-2xl font-extrabold text-green-600 mt-1">{{ $assignedRooms->whereNotNull('cleaning_completed_at')->count() }}</div>
+        </div>
+    </div>
+
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         @if($assignedRooms->isNotEmpty())
         <div class="overflow-x-auto">
@@ -21,8 +36,10 @@
                         <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Room</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Type</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Floor</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Room Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Reason</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Assigned At</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Progress</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -41,6 +58,15 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $room->roomType->name ?? '—' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">{{ $room->floor->name ?? '—' }}</td>
+                        <td class="px-6 py-4">@include('components.room-status-badge', ['status' => $room->status])</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                            @if($room->status === 'out_of_order')
+                                <span class="text-red-600">{{ $room->out_of_order_reason }}</span>
+                                <div class="text-xs text-gray-400 mt-0.5">by {{ $room->outOfOrderBy?->name ?? '—' }} {{ $room->out_of_order_set_at?->diffForHumans() }}</div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 text-sm text-gray-500">{{ $room->cleaning_assigned_at?->format('d M Y H:i') }}</td>
                         <td class="px-6 py-4">
                             @if($room->cleaning_completed_at)
@@ -53,10 +79,10 @@
                             @if(!$room->cleaning_completed_at)
                                 <form method="POST" action="{{ route('cleaning.mark-done', $room) }}">
                                     @csrf
-                                    <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">Mark as Cleaned</button>
+                                    <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors">Mark Done</button>
                                 </form>
                             @else
-                                <span class="text-xs text-gray-400">Waiting for supervisor confirmation</span>
+                                <span class="text-xs text-gray-400">Awaiting supervisor</span>
                             @endif
                         </td>
                     </tr>
@@ -72,7 +98,7 @@
                 </svg>
             </div>
             <h3 class="text-lg font-bold text-secondary">No rooms assigned</h3>
-            <p class="mt-2 text-sm text-gray-500">You have no rooms assigned for cleaning right now.</p>
+            <p class="mt-2 text-sm text-gray-500">You have no rooms assigned for cleaning or maintenance right now.</p>
         </div>
         @endif
     </div>

@@ -153,7 +153,7 @@ class User extends Authenticatable
             Role::normalizeName(Role::STORE_KEEPER) => 'shared.sidebar.store-keeper',
             Role::normalizeName(Role::RESTAURANT_MANAGER) => 'shared.sidebar.restaurant-manager',
             Role::normalizeName(Role::BAR_TENDER) => 'shared.sidebar.bar-tender',
-            Role::normalizeName(Role::WAITER) => 'shared.sidebar.front-desk',
+            Role::normalizeName(Role::WAITER) => 'shared.sidebar.waiter',
             Role::normalizeName(Role::ACCOUNTANT) => 'shared.sidebar.accountant',
             default => 'shared.sidebar.front-desk',
         };

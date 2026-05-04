@@ -49,6 +49,8 @@ class DashboardController extends Controller {
             return $this->restaurantManagerDashboard();
         } elseif ($user->isBarTender()) {
             return $this->barTenderDashboard();
+        } elseif ($user->isWaiter()) {
+            return $this->waiterDashboard();
         } else {
             return $this->frontDeskDashboard();
         }
@@ -629,6 +631,31 @@ class DashboardController extends Controller {
             ->get();
 
         return view('dashboards.bar-tender', compact('stats', 'stockLevels'));
+    }
+
+    private function waiterDashboard() {
+        $kitchenLocation = StockLocation::kitchen();
+        $barLocation = StockLocation::bar();
+        $locationIds = collect([$kitchenLocation, $barLocation])->filter()->pluck('id');
+
+        $stats = [
+            'today_orders'  => Order::whereDate('created_at', today())->count(),
+            'pending_orders' => Order::whereIn('status', ['open', 'sent', 'ready'])
+                ->when($locationIds->isNotEmpty(), fn($q) => $q->whereIn('location_id', $locationIds))
+                ->count(),
+            'served_today'  => Order::whereDate('created_at', today())
+                ->whereIn('status', ['served', 'settled'])
+                ->count(),
+            'occupied_tables' => \App\Models\Table::where('status', 'occupied')->count(),
+        ];
+
+        $recentOrders = Order::with(['table', 'location'])
+            ->whereDate('created_at', today())
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        return view('dashboards.waiter', compact('stats', 'recentOrders'));
     }
 
 }

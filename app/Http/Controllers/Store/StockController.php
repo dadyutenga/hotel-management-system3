@@ -17,15 +17,32 @@ class StockController extends Controller
     // GET /store/stock/levels
     public function levels(Request $request): View
     {
-        $locations = StockLocation::where('is_active', true)->get();
+        $user = auth()->user();
+        $isRestaurantManager = $user->hasRole('restaurant_manager');
 
-        $levels = StockLevel::with(['product', 'location'])
+        // Restaurant manager only sees bar location
+        if ($isRestaurantManager) {
+            $barLocation = StockLocation::bar();
+            $locations = collect([$barLocation]);
+        } else {
+            $locations = StockLocation::where('is_active', true)->get();
+        }
+
+        $query = StockLevel::with(['product', 'location'])
             ->join('products', 'stock_levels.product_id', '=', 'products.id')
-            ->where('products.is_active', true)
-            ->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id))
-            ->when($request->search, fn ($q) => $q->where('products.name', 'like', '%' . $request->search . '%'))
-            ->select('stock_levels.*')
-            ->paginate(30);
+            ->where('products.is_active', true);
+
+        // Restaurant manager: scope to bar location + bar products only
+        if ($isRestaurantManager) {
+            $query->where('stock_levels.location_id', $barLocation->id)
+                  ->where('products.product_type', 'bar');
+        } else {
+            $query->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id));
+        }
+
+        $query->when($request->search, fn ($q) => $q->where('products.name', 'like', '%' . $request->search . '%'));
+
+        $levels = $query->select('stock_levels.*')->paginate(30);
 
         return view('store.stock.levels', compact('levels', 'locations'));
     }
@@ -70,8 +87,22 @@ class StockController extends Controller
     // GET /store/stock/damage
     public function damageForm(): View
     {
-        $products  = Product::where('is_active', true)->orderBy('name')->get();
-        $locations = StockLocation::where('is_active', true)->get();
+        $user = auth()->user();
+        $isRestaurantManager = $user->hasRole('restaurant_manager');
+
+        if ($isRestaurantManager) {
+            // Restaurant manager only sees bar and kitchen locations + bar products
+            $barId = StockLocation::bar()->id;
+            $kitchenId = StockLocation::kitchen()->id;
+            $locations = StockLocation::whereIn('id', [$barId, $kitchenId])->get();
+            $products = Product::where('is_active', true)
+                ->where('product_type', 'bar')
+                ->orderBy('name')
+                ->get();
+        } else {
+            $products = Product::where('is_active', true)->orderBy('name')->get();
+            $locations = StockLocation::where('is_active', true)->get();
+        }
 
         return view('store.stock.damage', compact('products', 'locations'));
     }

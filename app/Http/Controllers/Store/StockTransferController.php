@@ -25,8 +25,19 @@ class StockTransferController extends Controller
     // GET /store/transfers
     public function index(Request $request): View
     {
-        $transfers = StockTransfer::with(['product', 'fromLocation', 'toLocation', 'requester', 'approver', 'rejecter', 'fulfiller'])
-            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+        $query = StockTransfer::with(['product', 'fromLocation', 'toLocation', 'requester', 'approver', 'rejecter', 'fulfiller']);
+
+        // Restaurant manager only sees transfers involving bar or kitchen
+        if (auth()->user()->hasRole('restaurant_manager')) {
+            $barId = StockLocation::bar()->id;
+            $kitchenId = StockLocation::kitchen()->id;
+            $query->where(function ($q) use ($barId, $kitchenId) {
+                $q->whereIn('from_location_id', [$barId, $kitchenId])
+                  ->orWhereIn('to_location_id', [$barId, $kitchenId]);
+            });
+        }
+
+        $transfers = $query->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
 

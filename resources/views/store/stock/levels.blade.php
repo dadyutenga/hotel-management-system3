@@ -4,8 +4,11 @@
 @section('page-title', 'Stock Levels')
 
 @section('content')
+@php $isRestaurantManager = auth()->user()->hasRole('restaurant_manager'); @endphp
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Stock Levels</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800">
+        @if($isRestaurantManager) Bar Stock @else Stock Levels @endif
+    </h1>
     <div class="flex gap-2">
         @if(auth()->user()->hasAnyRole(['STORE_KEEPER']))
         <a href="{{ route('store.stock.restock-form') }}"
@@ -23,12 +26,16 @@
     <input type="text" name="search" value="{{ request('search') }}"
            placeholder="Search by product name..."
            class="border border-gray-200 rounded-xl px-3 py-2 text-sm flex-1 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+    @if($isRestaurantManager)
+        <input type="hidden" name="location_id" value="{{ $locations->first()->id }}">
+    @else
     <select name="location_id" class="border border-gray-200 rounded-xl px-3 py-2 text-sm">
         <option value="">All Locations</option>
         @foreach($locations as $loc)
         <option value="{{ $loc->id }}" {{ request('location_id') === $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
         @endforeach
     </select>
+    @endif
     <button class="bg-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-300 font-medium">Filter</button>
 </form>
 

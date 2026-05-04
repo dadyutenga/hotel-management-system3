@@ -15,7 +15,16 @@ class ReportController extends Controller
     // GET /store/reports/stock-snapshot
     public function stockSnapshot(Request $request): View
     {
-        $locations = StockLocation::where('is_active', true)->orderBy('name')->get();
+        $user = auth()->user();
+        $isRestaurantManager = $user->hasRole('restaurant_manager');
+
+        if ($isRestaurantManager) {
+            $barLocation = StockLocation::bar();
+            $locations = collect([$barLocation]);
+        } else {
+            $locations = StockLocation::where('is_active', true)->orderBy('name')->get();
+        }
+
         $categories = Product::query()
             ->where('is_active', true)
             ->whereNotNull('category')
@@ -23,19 +32,28 @@ class ReportController extends Controller
             ->orderBy('category')
             ->pluck('category');
 
-        $levels = StockLevel::with(['product', 'location'])
+        $levelsQuery = StockLevel::with(['product', 'location'])
             ->join('products', 'stock_levels.product_id', '=', 'products.id')
-            ->where('products.is_active', true)
-            ->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id))
-            ->when($request->category, fn ($q) => $q->where('products.category', $request->category))
-            ->select('stock_levels.*')
-            ->paginate(30);
+            ->where('products.is_active', true);
 
         $summaryQuery = StockLevel::query()
             ->join('products', 'stock_levels.product_id', '=', 'products.id')
-            ->where('products.is_active', true)
-            ->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id))
-            ->when($request->category, fn ($q) => $q->where('products.category', $request->category));
+            ->where('products.is_active', true);
+
+        if ($isRestaurantManager) {
+            $levelsQuery->where('stock_levels.location_id', $barLocation->id)
+                        ->where('products.product_type', 'bar');
+            $summaryQuery->where('stock_levels.location_id', $barLocation->id)
+                         ->where('products.product_type', 'bar');
+        } else {
+            $levelsQuery->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id));
+            $summaryQuery->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id));
+        }
+
+        $levelsQuery->when($request->category, fn ($q) => $q->where('products.category', $request->category));
+        $summaryQuery->when($request->category, fn ($q) => $q->where('products.category', $request->category));
+
+        $levels = $levelsQuery->select('stock_levels.*')->paginate(30);
 
         $totalProducts = (clone $summaryQuery)->count();
         $lowStockCount = (clone $summaryQuery)

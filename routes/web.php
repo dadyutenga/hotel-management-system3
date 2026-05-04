@@ -371,7 +371,7 @@ Route::middleware(['auth'])->group(function () {
 
         // ── Stock ─────────────────────────────────────────────────────────
         Route::get('stock/levels',              [StockController::class, 'levels'])->name('stock.levels')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,restaurant_manager');
         Route::get('stock/restock',             [StockController::class, 'restockForm'])->name('stock.restock-form')
              ->middleware('role:store_keeper');
         Route::post('stock/restock',            [StockController::class, 'restock'])->name('stock.restock')
@@ -409,7 +409,7 @@ Route::middleware(['auth'])->group(function () {
 
         // ── Stock Transfers ───────────────────────────────────────────────
         Route::get('transfers',                [StockTransferController::class, 'index'])->name('transfers.index')
-             ->middleware('role:store_manager,store_keeper,manager,admin');
+             ->middleware('role:store_manager,store_keeper,manager,admin,restaurant_manager');
         Route::get('transfers/create',         [StockTransferController::class, 'create'])->name('transfers.create')
              ->middleware('role:store_keeper');
         Route::post('transfers',               [StockTransferController::class, 'store'])->name('transfers.store')
@@ -423,7 +423,7 @@ Route::middleware(['auth'])->group(function () {
 
         // ── Reports ───────────────────────────────────────────────────────
         Route::get('reports/stock-snapshot',   [ReportController::class, 'stockSnapshot'])->name('reports.stock-snapshot')
-             ->middleware('role:store_manager,store_keeper');
+             ->middleware('role:store_manager,store_keeper,restaurant_manager');
         Route::get('reports/movements',        [ReportController::class, 'movements'])->name('reports.movements')
              ->middleware('role:store_manager,store_keeper');
         Route::get('reports/damage',           [ReportController::class, 'damage'])->name('reports.damage')
