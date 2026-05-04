@@ -12,14 +12,25 @@
     <div class="pt-4">
         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{{ __('general.nav.my_tasks') }}</p>
         
-        <a href="{{ route('cleaning.my-rooms') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('cleaning.*') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+        <a href="{{ route('cleaning.my-rooms') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('cleaning.my-rooms') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
             </svg>
             <span>My Cleaning Rooms</span>
-            @php $myCount = \App\Models\Room::whereIn('status', ['dirty', 'out_of_order'])->where('cleaning_assigned_to', auth()->id())->count(); @endphp
+            @php $myCount = \App\Models\Room::whereIn('status', ['needs_cleaning', 'out_of_order'])->where('cleaning_assigned_to', auth()->id())->count(); @endphp
             @if($myCount > 0)
                 <span class="ml-auto bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">{{ $myCount }}</span>
+            @endif
+        </a>
+
+        <a href="{{ route('cleaning.maintenance') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('cleaning.maintenance') ? 'bg-blue-50 text-primary' : 'text-gray-700 hover:bg-gray-50' }} transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>Room Maintenance</span>
+            @php $oooCount = \App\Models\Room::where('status', 'out_of_order')->count(); @endphp
+            @if($oooCount > 0)
+                <span class="ml-auto bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full">{{ $oooCount }}</span>
             @endif
         </a>
 

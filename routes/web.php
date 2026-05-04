@@ -276,7 +276,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Maintenance tracking: view out_of_order rooms and their progress
-    Route::middleware(['role:front_desk,supervisor,manager'])->group(function () {
+    Route::middleware(['role:front_desk,supervisor,manager,house_help'])->group(function () {
         Route::get('cleaning/maintenance', [CleaningController::class, 'maintenanceIndex'])->name('cleaning.maintenance');
         Route::post('rooms/{room}/out-of-order', [CleaningController::class, 'markOutOfOrder'])->name('rooms.out-of-order');
     });
