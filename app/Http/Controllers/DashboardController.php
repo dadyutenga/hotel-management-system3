@@ -604,7 +604,7 @@ class DashboardController extends Controller {
             }
         }
 
-        $recentMovements = StockMovement::with(['product', 'location', 'user'])
+        $recentMovements = StockMovement::with(['product', 'location', 'actor'])
             ->whereIn('location_id', $locationIds)
             ->latest()
             ->limit(10)

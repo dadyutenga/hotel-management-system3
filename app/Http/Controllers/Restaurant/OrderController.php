@@ -299,7 +299,7 @@ class OrderController extends Controller
                         'currency'      => 'TZS',
                         'amount_usd'    => $amountUsd,
                         'exchange_rate' => $exchangeRate,
-                        'status'        => 'paid',
+                        'status'        => 'completed',
                         'created_by'    => (string) Auth::id(),
                         'paid_at'       => now(),
                     ]);

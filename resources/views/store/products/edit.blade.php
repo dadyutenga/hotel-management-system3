@@ -1,3 +1,5 @@
+@php use App\Helpers\CurrencyHelper; @endphp
+
 @extends('layouts.app')
 
 @section('title', 'Edit Product')

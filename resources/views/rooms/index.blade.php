@@ -145,7 +145,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <div class="flex items-center gap-3">
                             <a href="{{ route('rooms.show', $room) }}" class="text-primary hover:text-blue-700 font-semibold">{{ __('rooms.actions.view') }}</a>
-        @if(auth()->user()->hasAnyRole(['admin', 'manager']))
+        @if(auth()->user()->hasAnyRole(['admin']))
                             <a href="{{ route('rooms.edit', $room) }}" class="text-primary hover:text-blue-700 font-semibold">{{ __('rooms.actions.edit') }}</a>
                             <form method="POST" action="{{ route('rooms.destroy', $room) }}" class="inline">
                                 @csrf
