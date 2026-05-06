@@ -95,13 +95,6 @@ Route::get('/features', function () {
     return view('welcome.features');
 })->name('features');
 
-// Guest Booking Routes (public - no authentication required, rate-limited)
-Route::get('/booking', [BookingController::class, 'showBookingPage'])->name('booking');
-Route::get('/booking/search', [BookingController::class, 'searchAvailability'])->name('booking.search')->middleware('throttle:30,1');
-Route::get('/booking/room/{room}', [BookingController::class, 'showRoom'])->name('booking.room');
-Route::post('/booking', [BookingController::class, 'store'])->name('booking.store')->middleware('throttle:10,60');
-Route::get('/booking/confirmation/{reservation}', [BookingController::class, 'showConfirmation'])->name('booking.confirmation');
-
 // ═══ PAYMENT WEBHOOKS (no auth — called by payment provider servers) ═══
 Route::post('/payments/webhook/snippe', [SnippePaymentController::class, 'webhook'])
     ->name('payments.webhook.snippe')
@@ -140,11 +133,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', UserController::class);
     });
 
-    // Rooms — supervisor: view only, admin: full CRUD
+    // Rooms — supervisor & manager: view only, admin: full CRUD
     Route::get('rooms', [RoomController::class, 'index'])->name('rooms.index')
-        ->middleware('role:admin,supervisor');
+        ->middleware('role:admin,supervisor,manager');
     Route::get('rooms/{room}', [RoomController::class, 'show'])->name('rooms.show')
-        ->middleware('role:admin,supervisor');
+        ->middleware('role:admin,supervisor,manager');
     Route::middleware(['role:admin'])->group(function () {
         Route::get('rooms/create', [RoomController::class, 'create'])->name('rooms.create');
         Route::post('rooms', [RoomController::class, 'store'])->name('rooms.store');
@@ -262,8 +255,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ═══ CLEANING WORKFLOW ═══
-    // Supervisor: manage room cleaning queue
-    Route::middleware(['role:supervisor'])->prefix('cleaning')->name('cleaning.')->group(function () {
+    // Supervisor & Manager: manage room cleaning queue
+    Route::middleware(['role:supervisor,manager'])->prefix('cleaning')->name('cleaning.')->group(function () {
         Route::get('/', [CleaningController::class, 'index'])->name('index');
         Route::post('assign/{room}', [CleaningController::class, 'assign'])->name('assign');
         Route::post('confirm/{room}', [CleaningController::class, 'confirm'])->name('confirm');
@@ -276,7 +269,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Maintenance tracking: view out_of_order rooms and their progress
-    Route::middleware(['role:front_desk,supervisor,manager,house_help'])->group(function () {
+    Route::middleware(['role:admin,front_desk,supervisor,manager,house_help'])->group(function () {
         Route::get('cleaning/maintenance', [CleaningController::class, 'maintenanceIndex'])->name('cleaning.maintenance');
         Route::post('rooms/{room}/out-of-order', [CleaningController::class, 'markOutOfOrder'])->name('rooms.out-of-order');
     });

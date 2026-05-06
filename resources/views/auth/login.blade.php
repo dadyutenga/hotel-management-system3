@@ -196,7 +196,7 @@
                         <div>
                             <p class="font-semibold text-secondary mb-1">{{ __('auth.guest_booking.title') }}</p>
                             <p class="text-sm text-gray-600 mb-2">{{ __('auth.guest_booking.description') }}</p>
-                            <a href="{{ url('/booking') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700 transition-colors">
+                            <a href="{{ url('/contact') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700 transition-colors">
                                 {{ __('auth.guest_booking.link') }}
                                 <svg class="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />

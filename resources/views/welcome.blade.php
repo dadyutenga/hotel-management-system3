@@ -49,34 +49,15 @@
                         Discover exceptional hospitality across East Africa. From business travel to leisure getaways, we provide comfort, service, and memorable experiences.
                     </p>
                     
-                    <!-- Quick Booking Form -->
-                    <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-200 max-w-2xl">
-                        <form class="flex flex-wrap items-end gap-4">
-                            <div class="flex-1 basis-[180px] min-w-[160px]">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Check In</label>
-                                <input type="date" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                            </div>
-                            <div class="flex-1 basis-[180px] min-w-[160px]">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Check Out</label>
-                                <input type="date" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                            </div>
-                            <div class="flex-1 basis-[160px] min-w-[140px]">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
-                                <select class="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                                    <option value="1">1 Guest</option>
-                                    <option value="2" selected>2 Guests</option>
-                                    <option value="3">3 Guests</option>
-                                    <option value="4">4+ Guests</option>
-                                </select>
-                            </div>
-                            <div class="flex-none w-full sm:w-auto">
-                                <a href="{{ url('/booking') }}" class="w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary to-blue-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
-                                    Check Availability
-                                </a>
-                            </div>
-                        </form>
+                    <!-- Contact CTA -->
+                    <div class="mt-6">
+                        <a href="{{ url('/contact') }}" class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary to-blue-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                            Contact Us for Reservations
+                            <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </a>
                     </div>
-                    
                     <!-- Trust Indicators -->
                     <div class="flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-gray-600 mt-8">
                         <div class="flex items-center gap-2">
@@ -223,8 +204,8 @@
                             <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">Queen Bed</span>
                             <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">City View</span>
                         </div>
-                        <a href="{{ url('/booking') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700">
-                            Book Now
+                        <a href="{{ url('/contact') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700">
+                            Inquire Now
                             <svg class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
@@ -250,8 +231,8 @@
                             <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">King Bed</span>
                             <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">Pool View</span>
                         </div>
-                        <a href="{{ url('/booking') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700">
-                            Book Now
+                        <a href="{{ url('/contact') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700">
+                            Inquire Now
                             <svg class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
@@ -277,8 +258,8 @@
                             <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">King Bed</span>
                             <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">Ocean View</span>
                         </div>
-                        <a href="{{ url('/booking') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700">
-                            Book Now
+                        <a href="{{ url('/contact') }}" class="inline-flex items-center text-sm font-semibold text-primary hover:text-blue-700">
+                            Inquire Now
                             <svg class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
@@ -288,8 +269,8 @@
             </div>
             
             <div class="text-center mt-12">
-                <a href="{{ url('/rooms') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg hover:shadow-xl transition-all">
-                    View All Rooms
+                <a href="{{ url('/about') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg hover:shadow-xl transition-all">
+                    Learn More About Us
                     <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -495,19 +476,19 @@
                     </div>
                 </div>
                 
-                <!-- Guest Booking -->
+                <!-- Contact -->
                 <div class="bg-secondary rounded-2xl p-8 text-white shadow-xl">
                     <div class="flex items-start gap-4">
                         <div class="bg-white/10 p-3 rounded-xl">
                             <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <div class="flex-1">
-                            <h3 class="text-2xl font-bold mb-2">Guest Booking</h3>
-                            <p class="text-white/80 mb-4">Book your stay directly online. Check room availability, view rates, and make your reservation in minutes.</p>
-                            <a href="{{ url('/booking') }}" class="inline-flex items-center bg-white text-secondary px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg">
-                                Book Your Stay
+                            <h3 class="text-2xl font-bold mb-2">Contact Us</h3>
+                            <p class="text-white/80 mb-4">Have questions about our rooms and rates? Reach out to our team and we'll assist you with your reservation needs.</p>
+                            <a href="{{ url('/contact') }}" class="inline-flex items-center bg-white text-secondary px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg">
+                                Get in Touch
                                 <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>

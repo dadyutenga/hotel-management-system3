@@ -31,7 +31,7 @@
             <div>
                 <h4 class="text-white font-semibold mb-6">Quick Links</h4>
                 <ul class="space-y-3">
-                    <li><a href="{{ url('/booking') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Room Booking</a></li>
+
                     <li><a href="{{ url('/services') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Hotel Services</a></li>
                     <li><a href="{{ url('/dining') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Restaurant & Bar</a></li>
                     <li><a href="{{ url('/events') }}" class="text-gray-400 hover:text-white text-sm transition-colors">Events & Conferences</a></li>

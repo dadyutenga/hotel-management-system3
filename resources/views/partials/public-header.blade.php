@@ -14,7 +14,7 @@
             <!-- Desktop Navigation -->
             <nav class="hidden md:flex items-center gap-8">
                 <a href="{{ url('/') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Home</a>
-                <a href="{{ url('/booking') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Rooms & Booking</a>
+
                 <a href="{{ url('/about') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">About</a>
                 <a href="{{ url('/contact') }}" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Contact</a>
             </nav>
@@ -29,9 +29,7 @@
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="hidden sm:inline text-sm font-medium text-gray-700 hover:text-primary transition-colors">Staff Login</a>
-                    <a href="{{ url('/booking') }}" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white hover:shadow-lg transition-all">
-                        Book Now
-                    </a>
+
                 @endauth
                 
                 <!-- Mobile Menu Button -->
@@ -48,7 +46,7 @@
     <div x-data="{ open: false }" x-on:toggle-mobile-menu.window="open = !open" x-show="open" x-cloak class="md:hidden border-t border-gray-100">
         <nav class="container mx-auto px-6 py-4 space-y-3">
             <a href="{{ url('/') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Home</a>
-            <a href="{{ url('/booking') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Rooms & Booking</a>
+
             <a href="{{ url('/about') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">About</a>
             <a href="{{ url('/contact') }}" class="block text-sm font-medium text-gray-700 hover:text-primary">Contact</a>
             <hr class="border-gray-200">

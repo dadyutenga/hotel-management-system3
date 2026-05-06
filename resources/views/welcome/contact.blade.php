@@ -337,8 +337,8 @@
                     Book your stay today and discover why our guests return again and again.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ url('/booking') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl bg-white text-primary shadow-lg hover:shadow-xl transition-shadow">
-                        Book a Room
+                    <a href="{{ url('/contact') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold rounded-xl bg-white text-primary shadow-lg hover:shadow-xl transition-shadow">
+                        Contact Us
                         <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
