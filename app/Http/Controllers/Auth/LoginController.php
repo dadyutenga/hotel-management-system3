@@ -2,8 +2,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -16,25 +18,41 @@ class LoginController extends Controller {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
+            'property_code' => ['nullable', 'string', 'max:50'],
         ]);
 
-        if (!Auth::attempt($credentials, $request->filled('remember'))) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => __('These credentials do not match our records.'),
             ]);
         }
 
-        // Check if user is active
-        if (!Auth::user()->is_active) {
-            Auth::logout();
+        if (!$user->is_active) {
             throw ValidationException::withMessages([
                 'email' => __('Your account has been deactivated.'),
             ]);
         }
 
+        if (config('hms_auth.property_code_required', true) && !empty($user->property_code)) {
+            if (empty($credentials['property_code']) || $user->property_code !== $credentials['property_code']) {
+                throw ValidationException::withMessages([
+                    'property_code' => __('The property code does not match.'),
+                ]);
+            }
+        }
+
+        if (!in_array($user->login_type ?? 'full', ['full', 'both'])) {
+            throw ValidationException::withMessages([
+                'email' => __('This account is not authorized for management login. Use the staff login instead.'),
+            ]);
+        }
+
+        Auth::login($user, $request->filled('remember'));
         $request->session()->regenerate();
 
-        if (Auth::user()->must_change_password) {
+        if ($user->must_change_password) {
             Log::info('User logged in with temporary password and must rotate password.', [
                 'user_id' => Auth::id(),
                 'ip' => $request->ip(),
@@ -55,7 +73,6 @@ class LoginController extends Controller {
 
         $response = redirect()->route('login');
 
-        // Prevent browser from caching the previous authenticated page
         $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
         $response->headers->set('Pragma', 'no-cache');
         $response->headers->set('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');

@@ -41,6 +41,12 @@ use App\Http\Controllers\Store\AdjustmentController;
 use App\Http\Controllers\Store\InternalRequestController;
 use App\Http\Controllers\Store\StockTransferController;
 use App\Http\Controllers\Store\ReportController;
+use App\Http\Controllers\Store\BeverageController;
+use App\Http\Controllers\Store\StockReceivingController;
+use App\Http\Controllers\Store\StockTakeController;
+use App\Http\Controllers\Store\BarcodeScanController;
+use App\Http\Controllers\Auth\StaffPasskeyLoginController;
+use App\Http\Controllers\Admin\UserPasskeyController;
 use App\Http\Controllers\Restaurant\MenuItemController;
 use App\Http\Controllers\Restaurant\MenuCategoryController;
 use App\Http\Controllers\Restaurant\MenuOptionGroupController;
@@ -71,6 +77,8 @@ use App\Http\Controllers\Manager\OversightController;
 use App\Http\Controllers\Finance\PettyCashController;
 use App\Http\Controllers\Bartender\BartenderController;
 use App\Http\Controllers\BuffetPosController;
+use App\Http\Controllers\Pos\PosOrderController;
+use App\Http\Controllers\Pos\PosCashierController;
 use App\Http\Controllers\Reception\DrinkRequestController;
 use App\Http\Controllers\CleaningController;
 
@@ -128,6 +136,30 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update')->middleware('throttle:5,1');
 });
 
+// ═══ STAFF PASSKEY LOGIN (Public) ═══
+Route::middleware('guest')->group(function () {
+    Route::get('/staff/login', [StaffPasskeyLoginController::class, 'showLoginForm'])->name('staff.login');
+    Route::post('/staff/login', [StaffPasskeyLoginController::class, 'login'])->name('staff.login.submit')->middleware('throttle:10,1');
+});
+
+// ═══ POS / STAFF SESSION ROUTES ═══
+Route::prefix('pos')->name('pos.')->middleware('staff.session')->group(function () {
+    Route::post('/logout', [StaffPasskeyLoginController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', function () {
+        return view('pos.dashboard');
+    })->name('dashboard');
+    Route::post('/waiters/{user}/force-logout', [StaffPasskeyLoginController::class, 'forceLogout'])->name('waiters.force-logout');
+
+    // Waiter order entry
+    Route::get('/orders/create', [PosOrderController::class, 'create'])->name('orders.create');
+    Route::post('/orders', [PosOrderController::class, 'store'])->name('orders.store');
+
+    // Cashier settlement
+    Route::get('/cashier/orders', [PosCashierController::class, 'index'])->name('cashier.index');
+    Route::post('/cashier/orders/{order}/settle', [PosCashierController::class, 'settle'])->name('cashier.settle');
+    Route::post('/cashier/orders/{order}/cancel', [PosCashierController::class, 'cancel'])->name('cashier.cancel');
+});
+
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -147,20 +179,36 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('room-types', RoomTypeController::class);
         Route::delete('room-types/{room_type}/media/{media}', [RoomTypeController::class, 'removeMedia'])->name('room-types.media.destroy');
         Route::resource('users', UserController::class);
+
+        Route::get('users/{user}/passkey', [UserPasskeyController::class, 'edit'])->name('users.passkey.edit')
+            ->where('user', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::post('users/{user}/reset-passkey', [UserPasskeyController::class, 'resetPasskey'])->name('users.passkey.reset')
+            ->where('user', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::post('users/{user}/unlock-passkey', [UserPasskeyController::class, 'unlock'])->name('users.passkey.unlock')
+            ->where('user', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::post('users/{user}/toggle-passkey', [UserPasskeyController::class, 'togglePasskey'])->name('users.passkey.toggle')
+            ->where('user', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
     });
 
     // Rooms — supervisor & manager: view only, admin: full CRUD
     Route::get('rooms', [RoomController::class, 'index'])->name('rooms.index')
         ->middleware('role:admin,supervisor,manager');
-    Route::get('rooms/{room}', [RoomController::class, 'show'])->name('rooms.show')
-        ->middleware('role:admin,supervisor,manager');
     Route::middleware(['role:admin'])->group(function () {
         Route::get('rooms/create', [RoomController::class, 'create'])->name('rooms.create');
         Route::post('rooms', [RoomController::class, 'store'])->name('rooms.store');
-        Route::get('rooms/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
-        Route::put('rooms/{room}', [RoomController::class, 'update'])->name('rooms.update');
-        Route::delete('rooms/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
-        Route::post('rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
+    });
+    Route::get('rooms/{room}', [RoomController::class, 'show'])->name('rooms.show')
+        ->where('room', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+        ->middleware('role:admin,supervisor,manager');
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('rooms/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit')
+            ->where('room', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::put('rooms/{room}', [RoomController::class, 'update'])->name('rooms.update')
+            ->where('room', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::delete('rooms/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy')
+            ->where('room', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::post('rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status')
+            ->where('room', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
     });
 
     // Profile routes
@@ -557,6 +605,77 @@ Route::middleware(['auth'])->group(function () {
              ->middleware('role:store_manager,store_keeper');
         Route::get('reports/damage',           [ReportController::class, 'damage'])->name('reports.damage')
              ->middleware('role:store_manager,store_keeper,supervisor');
+
+        // ── Beverages ─────────────────────────────────────────────────────
+        Route::get('beverages',                [BeverageController::class, 'index'])->name('beverages.index')
+             ->middleware('role:store_manager,store_keeper,admin');
+        Route::get('beverages/create',         [BeverageController::class, 'create'])->name('beverages.create')
+             ->middleware('role:store_manager,admin');
+        Route::post('beverages',              [BeverageController::class, 'store'])->name('beverages.store')
+             ->middleware('role:store_manager,admin');
+        Route::get('beverages/categories',    [BeverageController::class, 'manageCategories'])->name('beverages.categories')
+             ->middleware('role:store_manager,admin');
+        Route::post('beverages/categories',   [BeverageController::class, 'storeCategory'])->name('beverages.categories.store')
+             ->middleware('role:store_manager,admin');
+        Route::get('beverages/{beverage}',    [BeverageController::class, 'show'])->name('beverages.show')
+             ->where('beverage', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,store_keeper,admin');
+        Route::get('beverages/{beverage}/edit', [BeverageController::class, 'edit'])->name('beverages.edit')
+             ->where('beverage', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+        Route::put('beverages/{beverage}',    [BeverageController::class, 'update'])->name('beverages.update')
+             ->where('beverage', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+        Route::delete('beverages/{beverage}', [BeverageController::class, 'destroy'])->name('beverages.destroy')
+             ->where('beverage', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+
+        // ── Barcode Scan (shared endpoint) ────────────────────────────────
+        Route::post('scan-barcode',           [BarcodeScanController::class, 'scan'])->name('scan-barcode')
+             ->middleware('role:store_manager,store_keeper,stock_controller,admin')
+             ->middleware('throttle:60,1');
+
+        // ── Stock Receivings ──────────────────────────────────────────────
+        Route::get('receivings',              [StockReceivingController::class, 'index'])->name('receivings.index')
+             ->middleware('role:store_manager,admin');
+        Route::get('receivings/create',       [StockReceivingController::class, 'create'])->name('receivings.create')
+             ->middleware('role:store_manager,admin');
+        Route::post('receivings/{receiving}/scan', [StockReceivingController::class, 'scan'])->name('receivings.scan')
+             ->where('receiving', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+        Route::put('receiving-items/{item}',  [StockReceivingController::class, 'updateItem'])->name('receiving-items.update')
+             ->where('item', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+        Route::delete('receiving-items/{item}', [StockReceivingController::class, 'removeItem'])->name('receiving-items.remove')
+             ->where('item', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+        Route::post('receivings/{receiving}/confirm', [StockReceivingController::class, 'confirm'])->name('receivings.confirm')
+             ->where('receiving', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+        Route::get('receivings/{receiving}',  [StockReceivingController::class, 'show'])->name('receivings.show')
+             ->where('receiving', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:store_manager,admin');
+
+        // ── Stock Takes ───────────────────────────────────────────────────
+        Route::get('stock-takes',             [StockTakeController::class, 'index'])->name('stock-takes.index')
+             ->middleware('role:stock_controller,store_manager,admin');
+        Route::get('stock-takes/create',      [StockTakeController::class, 'create'])->name('stock-takes.create')
+             ->middleware('role:stock_controller,store_manager,admin');
+        Route::post('stock-takes/{stockTake}/scan', [StockTakeController::class, 'scan'])->name('stock-takes.scan')
+             ->where('stockTake', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:stock_controller,store_manager,admin');
+        Route::put('stock-take-items/{item}', [StockTakeController::class, 'updateCount'])->name('stock-take-items.update')
+             ->where('item', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:stock_controller,store_manager,admin');
+        Route::post('stock-takes/{stockTake}/complete', [StockTakeController::class, 'complete'])->name('stock-takes.complete')
+             ->where('stockTake', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:stock_controller,store_manager,admin');
+        Route::post('stock-takes/{stockTake}/cancel', [StockTakeController::class, 'cancel'])->name('stock-takes.cancel')
+             ->where('stockTake', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:stock_controller,store_manager,admin');
+        Route::get('stock-takes/{stockTake}', [StockTakeController::class, 'show'])->name('stock-takes.show')
+             ->where('stockTake', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+             ->middleware('role:stock_controller,store_manager,admin');
     });
 
     // ═══ BAR & RESTAURANT MODULE ═══
@@ -1028,7 +1147,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Rooms
         Route::get('rooms/archived', [RoomController::class, 'archived'])->name('rooms.archived');
-        Route::patch('rooms/{room}/restore', [RoomController::class, 'restore'])->name('rooms.restore');
+        Route::patch('rooms/{room}/restore', [RoomController::class, 'restore'])->name('rooms.restore')
+            ->where('room', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
 
         // Bookings
         Route::get('bookings/archived', [BookingController::class, 'archived'])->name('bookings.archived');

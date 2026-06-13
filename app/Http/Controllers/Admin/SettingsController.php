@@ -185,7 +185,7 @@ class SettingsController extends Controller
                 'max:255',
                 Rule::requiredIf(fn () => $request->boolean('azampesa_is_enabled') && !$hasClientId),
             ],
-            'azampesa_client_secret' => ['nullable', 'string', 'max:255'],
+            'azampesa_client_secret' => ['nullable', 'string', 'max:1024'],
             'azampesa_base_url' => ['nullable', 'url'],
             'azampesa_auth_url' => ['nullable', 'url'],
         ]);

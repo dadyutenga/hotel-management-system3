@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +15,14 @@ use App\Policies\BookingPolicy;
 use App\Observers\ReservationObserver;
 use App\Observers\BookingObserver;
 use App\Helpers\CurrencyHelper;
+use App\Events\StockReceived;
+use App\Events\StaffLoggedIn;
+use App\Events\StaffLoggedOut;
+use App\Events\PasskeyLockout;
+use App\Listeners\UpdateLowStockAlerts;
+use App\Listeners\LogStaffLogin;
+use App\Listeners\LogStaffLogout;
+use App\Listeners\NotifyAdminOfLockout;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +43,11 @@ class AppServiceProvider extends ServiceProvider
         Reservation::observe(ReservationObserver::class);
         Booking::observe(BookingObserver::class);
         Gate::policy(Booking::class, BookingPolicy::class);
+
+        Event::listen(StockReceived::class, UpdateLowStockAlerts::class);
+        Event::listen(StaffLoggedIn::class, LogStaffLogin::class);
+        Event::listen(StaffLoggedOut::class, LogStaffLogout::class);
+        Event::listen(PasskeyLockout::class, NotifyAdminOfLockout::class);
 
         // Register Blade directives for currency formatting
         Blade::directive('currency', function ($expression) {

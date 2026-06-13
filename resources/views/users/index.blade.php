@@ -144,6 +144,9 @@
                             <a href="{{ route('users.edit', $user) }}" class="text-primary hover:text-blue-700 font-semibold">
                                 {{ __('users.actions.edit') }}
                             </a>
+                            <a href="{{ route('users.passkey.edit', $user) }}" class="text-emerald-600 hover:text-emerald-700 font-semibold">
+                                Passkey
+                            </a>
                             @if($user->id !== auth()->id())
                                 <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline">
                                     @csrf

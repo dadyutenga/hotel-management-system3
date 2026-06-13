@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -17,9 +18,6 @@ class User extends Authenticatable
 
     protected $fillable = ['name', 'email', 'password', 'phone'];
 
-    /**
-     * Guard sensitive attributes from mass assignment.
-     */
     protected $guarded = [
         'role_id',
         'is_active',
@@ -29,7 +27,7 @@ class User extends Authenticatable
         'password_reset_phone',
         'email_verified_at',
     ];
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'passkey'];
 
     protected function casts(): array
     {
@@ -38,6 +36,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
+            'passkey_enabled' => 'boolean',
+            'failed_passkey_attempts' => 'integer',
+            'passkey_locked_until' => 'datetime',
+            'last_passkey_login' => 'datetime',
             'password_reset_requested_at' => 'datetime',
             'password_reset_completed_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -201,5 +203,35 @@ class User extends Authenticatable
         return StoreNotification::where('user_id', $this->id)
             ->where('is_read', false)
             ->count();
+    }
+
+    public function passkeySessions(): HasMany
+    {
+        return $this->hasMany(PasskeySession::class);
+    }
+
+    public function activePasskeySession(): ?PasskeySession
+    {
+        return $this->passkeySessions()->active()->latest('logged_in_at')->first();
+    }
+
+    public function isPasskeyLocked(): bool
+    {
+        return $this->passkey_locked_until !== null && $this->passkey_locked_until->isFuture();
+    }
+
+    public function passkeyAttemptsRemaining(): int
+    {
+        return max(0, config('hms_auth.passkey.max_attempts', 5) - $this->failed_passkey_attempts);
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->hasRole('cashier');
+    }
+
+    public function isStockController(): bool
+    {
+        return $this->hasRole('stock_controller');
     }
 }

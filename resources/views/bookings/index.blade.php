@@ -121,22 +121,9 @@
                 </select>
             </div>
             <div>
-                <select name="source" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
-                    <option value="">{{ __('bookings.filters.all_sources') }}</option>
-                    <option value="online" {{ request('source') === 'online' ? 'selected' : '' }}>{{ __('bookings.sources.online') }}</option>
-                    <option value="frontdesk" {{ request('source') === 'frontdesk' ? 'selected' : '' }}>{{ __('bookings.sources.frontdesk') }}</option>
-                    <option value="phone" {{ request('source') === 'phone' ? 'selected' : '' }}>{{ __('bookings.sources.phone') }}</option>
-                    <option value="walkin" {{ request('source') === 'walkin' ? 'selected' : '' }}>{{ __('bookings.sources.walkin') }}</option>
-                </select>
-            </div>
-            <div>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="{{ __('bookings.filters.from_date') }}"
-                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm transition-all">
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">
-                    {{ __('bookings.filter') }}
-                </button>
+                            <x-empty-state title="No bookings found" message="Get started by creating your first booking.">
+                                <a href="{{ route('bookings.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">Create Booking</a>
+                            </x-empty-state>
                 <a href="{{ route('bookings.index') }}" class="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-all">
                     {{ __('bookings.reset') }}
                 </a>

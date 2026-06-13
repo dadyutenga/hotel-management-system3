@@ -96,22 +96,9 @@
         </form>
     </div>
 
-    <!-- Current Guests List -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gradient-to-r from-blue-50 to-white">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.booking') }}</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.guest') }}</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.room') }}</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.check_in') }}</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.check_out') }}</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.amount') }}</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('bookings.table.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                            <x-empty-state title="No current guests" message="There are no guests currently checked in at the hotel.">
+                                <a href="{{ route('bookings.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all">Create Booking</a>
+                            </x-empty-state>
                     @forelse($currentGuests as $booking)
                     <tr class="hover:bg-blue-50/50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">

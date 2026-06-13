@@ -194,6 +194,86 @@
                         @enderror
                     </div>
 
+                    <!-- Login Type -->
+                    <div class="mb-6">
+                        <label for="login_type" class="block text-sm font-semibold text-secondary mb-2">
+                            Login Type <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="login_type"
+                            id="login_type"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('login_type') border-red-500 @enderror"
+                            required>
+                            <option value="full" {{ old('login_type', $user->login_type) == 'full' ? 'selected' : '' }}>Full (management only)</option>
+                            <option value="both" {{ old('login_type', $user->login_type) == 'both' ? 'selected' : '' }}>Both (management + passkey)</option>
+                            <option value="staff" {{ old('login_type', $user->login_type) == 'staff' ? 'selected' : '' }}>Staff (passkey only)</option>
+                        </select>
+                        @error('login_type')
+                            <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    <!-- Property Code -->
+                    <div class="mb-6">
+                        <label for="property_code" class="block text-sm font-semibold text-secondary mb-2">
+                            Property Code
+                        </label>
+                        <input
+                            type="text"
+                            name="property_code"
+                            id="property_code"
+                            value="{{ old('property_code', $user->property_code) }}"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('property_code') border-red-500 @enderror"
+                            placeholder="e.g. HOTEL-01">
+                        @error('property_code')
+                            <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    <!-- 4-Digit Passkey -->
+                    <div class="mb-6">
+                        <label for="passkey" class="block text-sm font-semibold text-secondary mb-2">
+                            Reset 4-Digit Passkey PIN
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <input
+                                type="password"
+                                name="passkey"
+                                id="passkey"
+                                maxlength="4"
+                                pattern="[0-9]{4}"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('passkey') border-red-500 @enderror"
+                                placeholder="Leave blank to keep current">
+                            <input
+                                type="password"
+                                name="passkey_confirmation"
+                                id="passkey_confirmation"
+                                maxlength="4"
+                                pattern="[0-9]{4}"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                placeholder="Confirm new PIN">
+                        </div>
+                        <p class="mt-1.5 text-xs text-gray-500">Leave blank to keep the current PIN. Only numbers, 4 digits.</p>
+                        @error('passkey')
+                            <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
                     <!-- Active Status -->
                     <div class="flex items-center gap-3">
                         <input 

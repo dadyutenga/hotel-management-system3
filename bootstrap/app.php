@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'staff.session' => \App\Http\Middleware\CheckStaffSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

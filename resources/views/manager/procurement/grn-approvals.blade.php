@@ -125,9 +125,7 @@
                 </tr>
                 @endif
                 @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-16 text-center text-sm text-gray-500">No GRNs matched your filters.</td>
-                </tr>
+                <x-empty-state table colspan="6" title="No GRNs matched your filters" message="Broaden the filters or receive a new GRN to continue." />
                 @endforelse
             </tbody>
         </table>
