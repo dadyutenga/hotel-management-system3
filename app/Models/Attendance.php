@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\HasSoftDelete;
 use Illuminate\Support\Str;
 
 class Attendance extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'event_id',
@@ -151,7 +151,10 @@ class Attendance extends Model
 
     public function markAsNoShow(): bool
     {
-        if ($this->registration_status !== 'confirmed') return false;
+        if ($this->registration_status !== 'confirmed') {
+            return false;
+        }
+
         return (bool) $this->update(['registration_status' => 'no_show']);
     }
 
@@ -182,6 +185,7 @@ class Attendance extends Model
         $array['event_title'] = $this->event?->title;
         $array['pass_tier_name'] = $this->eventPass?->tier_name;
         $array['pass_type'] = $this->pass_type;
+
         return $array;
     }
 
@@ -196,6 +200,7 @@ class Attendance extends Model
         }
         $year = date('Y');
         $sequence = str_pad(self::where('event_id', $eventId)->count() + 1, 5, '0', STR_PAD_LEFT);
+
         return "{$prefix}-{$year}-{$sequence}";
     }
 }

@@ -13,9 +13,11 @@ class SystemSetting extends Model
     use HasSoftDelete;
 
     public $incrementing = false;
+
     public $timestamps = true;
 
     protected $primaryKey = 'key';
+
     protected $keyType = 'string';
 
     protected $fillable = ['id', 'key', 'value', 'description', 'updated_by', 'updated_at'];
@@ -103,7 +105,7 @@ class SystemSetting extends Model
     {
         $stringValue = $value === null ? '' : (string) $value;
 
-        if (!static::shouldEncrypt($key) || $stringValue === '') {
+        if (! static::shouldEncrypt($key) || $stringValue === '') {
             return $stringValue;
         }
 

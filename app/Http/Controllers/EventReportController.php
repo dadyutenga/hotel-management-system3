@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
-use App\Models\Attendance;
 use App\Models\CheckIn;
+use App\Models\Event;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 
@@ -115,6 +114,7 @@ class EventReportController extends Controller
 
         $sessionBreakdown = $event->schedules->map(function ($schedule) {
             $checkIns = CheckIn::where('event_schedule_id', $schedule->id)->count();
+
             return [
                 'session' => $schedule,
                 'check_ins' => $checkIns,

@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Schema;
 
@@ -109,7 +109,7 @@ trait HasSoftDelete
     public function scopeOnlyDeleted(Builder $query): Builder
     {
         return $query->withoutGlobalScope('soft_delete_filter')
-            ->where($this->getTable() . '.is_deleted', true);
+            ->where($this->getTable().'.is_deleted', true);
     }
 
     /**

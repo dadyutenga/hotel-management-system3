@@ -46,7 +46,7 @@ class NotificationController extends Controller
     public function markRead(StoreNotification $notification): RedirectResponse
     {
         abort_if($notification->user_id !== auth()->id(), 403);
-        
+
         // Use service to mark as read (updates cache & broadcasts)
         $this->notificationService->markAsRead($notification);
 

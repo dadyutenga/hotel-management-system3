@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('invoice_id')
-                  ->references('id')->on('invoices')->cascadeOnDelete();
+                ->references('id')->on('invoices')->cascadeOnDelete();
         });
     }
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -9,12 +10,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
-class LoginController extends Controller {
-    public function showLoginForm() {
+class LoginController extends Controller
+{
+    public function showLoginForm()
+    {
         return view('auth.login');
     }
 
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -23,19 +27,19 @@ class LoginController extends Controller {
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => __('These credentials do not match our records.'),
             ]);
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             throw ValidationException::withMessages([
                 'email' => __('Your account has been deactivated.'),
             ]);
         }
 
-        if (config('hms_auth.property_code_required', true) && !empty($user->property_code)) {
+        if (config('hms_auth.property_code_required', true) && ! empty($user->property_code)) {
             if (empty($credentials['property_code']) || $user->property_code !== $credentials['property_code']) {
                 throw ValidationException::withMessages([
                     'property_code' => __('The property code does not match.'),
@@ -43,7 +47,7 @@ class LoginController extends Controller {
             }
         }
 
-        if (!in_array($user->login_type ?? 'full', ['full', 'both'])) {
+        if (! in_array($user->login_type ?? 'full', ['full', 'both'])) {
             throw ValidationException::withMessages([
                 'email' => __('This account is not authorized for management login. Use the staff login instead.'),
             ]);
@@ -66,7 +70,8 @@ class LoginController extends Controller {
         return redirect()->intended(route(Auth::user()->dashboardRouteName()));
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

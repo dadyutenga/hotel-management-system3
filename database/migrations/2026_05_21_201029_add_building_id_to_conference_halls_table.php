@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::table('conference_halls', function (Blueprint $table) {
             $table->foreignUuid('building_id')
-                  ->nullable()
-                  ->after('name')
-                  ->constrained('buildings')
-                  ->nullOnDelete();
+                ->nullable()
+                ->after('name')
+                ->constrained('buildings')
+                ->nullOnDelete();
         });
     }
 

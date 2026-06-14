@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/GoodsReceivedNote.php
 
 namespace App\Models;
@@ -14,13 +15,18 @@ use Illuminate\Support\Facades\DB;
 
 class GoodsReceivedNote extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_SUBMITTED = 'submitted';
+
     public const STATUS_CONFIRMED_BY_STOREKEEPER = 'confirmed_by_storekeeper';
+
     public const STATUS_PENDING_MANAGER_APPROVAL = 'pending_manager_approval';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
@@ -64,7 +70,7 @@ class GoodsReceivedNote extends Model implements ReceiptPrintable
         static::creating(function (GoodsReceivedNote $grn) {
             if (empty($grn->grn_number)) {
                 $count = self::whereDate('created_at', today())->count() + 1;
-                $grn->grn_number = 'GRN-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $grn->grn_number = 'GRN-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -73,7 +79,7 @@ class GoodsReceivedNote extends Model implements ReceiptPrintable
     {
         $subtotal = $this->items->sum('subtotal');
         $tax = round($subtotal * 0.18, 2);
-        
+
         $this->update([
             'subtotal' => $subtotal,
             'tax_amount' => $tax,
@@ -89,7 +95,7 @@ class GoodsReceivedNote extends Model implements ReceiptPrintable
     {
         DB::transaction(function () use ($actorId) {
             foreach ($this->items as $item) {
-                if (!$item->product_id) {
+                if (! $item->product_id) {
                     continue; // Skip items not linked to inventory
                 }
 
@@ -167,33 +173,33 @@ class GoodsReceivedNote extends Model implements ReceiptPrintable
 
         $items = $this->items->map(function ($item) {
             return [
-                'name'       => $item->product?->name ?? $item->item_name ?? 'Item',
-                'details'    => $item->description ?? '',
-                'quantity'   => $item->quantity_received ?? 1,
+                'name' => $item->product?->name ?? $item->item_name ?? 'Item',
+                'details' => $item->description ?? '',
+                'quantity' => $item->quantity_received ?? 1,
                 'unit_price' => (float) ($item->unit_price ?? 0),
-                'amount'     => (float) ($item->subtotal ?? 0),
+                'amount' => (float) ($item->subtotal ?? 0),
             ];
         })->toArray();
 
         return [
-            'receipt_no'            => $this->grn_number,
-            'issued_at'             => $this->received_date ? $this->received_date->startOfDay() : $this->created_at,
-            'module'                => 'procurement',
-            'customer_name'         => $this->supplier_name,
-            'customer_phone'        => $this->supplier?->phone ?? null,
-            'items'                 => $items,
-            'subtotal'              => (float) $this->subtotal,
-            'discount'              => 0.0,
-            'tax'                   => (float) $this->tax_amount,
-            'total'                 => (float) $this->grand_total,
-            'amount_paid'           => $this->isPaid() ? (float) $this->grand_total : 0.0,
-            'balance'               => $this->isPaid() ? 0.0 : (float) $this->grand_total,
-            'currency'              => 'TZS',
-            'payment_method'        => null,
-            'payment_status'        => $this->isPaid() ? 'paid' : 'unpaid',
+            'receipt_no' => $this->grn_number,
+            'issued_at' => $this->received_date ? $this->received_date->startOfDay() : $this->created_at,
+            'module' => 'procurement',
+            'customer_name' => $this->supplier_name,
+            'customer_phone' => $this->supplier?->phone ?? null,
+            'items' => $items,
+            'subtotal' => (float) $this->subtotal,
+            'discount' => 0.0,
+            'tax' => (float) $this->tax_amount,
+            'total' => (float) $this->grand_total,
+            'amount_paid' => $this->isPaid() ? (float) $this->grand_total : 0.0,
+            'balance' => $this->isPaid() ? 0.0 : (float) $this->grand_total,
+            'currency' => 'TZS',
+            'payment_method' => null,
+            'payment_status' => $this->isPaid() ? 'paid' : 'unpaid',
             'transaction_reference' => $this->lpo?->lpo_number ?? null,
-            'cashier'               => $this->receiver?->name,
-            'notes'                 => $this->notes,
+            'cashier' => $this->receiver?->name,
+            'notes' => $this->notes,
         ];
     }
 

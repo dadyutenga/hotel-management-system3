@@ -24,12 +24,12 @@ class InstitutionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'contact_person' => 'required|string|max:255',
-            'phone'          => 'required|string|max:30',
-            'email'          => 'nullable|email|max:255',
-            'address'        => 'nullable|string|max:500',
-            'notes'          => 'nullable|string',
+            'phone' => 'required|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:500',
+            'notes' => 'nullable|string',
         ]);
 
         $institution = Institution::create($validated);
@@ -53,12 +53,12 @@ class InstitutionController extends Controller
     public function update(Request $request, Institution $institution)
     {
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'contact_person' => 'required|string|max:255',
-            'phone'          => 'required|string|max:30',
-            'email'          => 'nullable|email|max:255',
-            'address'        => 'nullable|string|max:500',
-            'notes'          => 'nullable|string',
+            'phone' => 'required|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:500',
+            'notes' => 'nullable|string',
         ]);
 
         $institution->update($validated);
@@ -87,12 +87,14 @@ class InstitutionController extends Controller
     public function archived()
     {
         $records = Institution::onlyDeleted()->latest('deleted_at')->paginate(20);
+
         return view('institutions.archived', compact('records'));
     }
 
     public function restore(Institution $institution)
     {
         $this->restoreModel($institution);
+
         return redirect()->route('institutions.index')->with('success', 'Institution restored successfully.');
     }
 }

@@ -76,7 +76,7 @@ return [
     'per_night' => 'kwa usiku',
     'per_hour' => 'kwa saa',
     'grand_total' => 'Jumla Kuu',
-    
+
     // Navigation
     'nav' => [
         'dashboard' => 'Dashibodi',
@@ -128,7 +128,7 @@ return [
         'stock_reports' => 'Ripoti za Hisa',
         'bar_stock' => 'Hisa ya Baa',
     ],
-    
+
     // Messages
     'messages' => [
         'saved_successfully' => 'Imehifadhiwa kikamilifu!',
@@ -142,7 +142,7 @@ return [
         'language_switched_english' => 'Lugha imebadilishwa kuwa Kiingereza',
         'language_switched_swahili' => 'Lugha imebadilishwa kuwa Kiswahili',
     ],
-    
+
     // Time periods
     'periods' => [
         'daily' => 'Kila Siku',
@@ -150,7 +150,7 @@ return [
         'monthly' => 'Kila Mwezi',
         'yearly' => 'Kila Mwaka',
     ],
-    
+
     // Days of week
     'days' => [
         'monday' => 'Jumatatu',
@@ -161,7 +161,7 @@ return [
         'saturday' => 'Jumamosi',
         'sunday' => 'Jumapili',
     ],
-    
+
     // Language
     'language' => 'Lugha',
     'english' => 'Kiingereza',

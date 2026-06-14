@@ -1,11 +1,14 @@
 <?php
+
 namespace Database\Seeders;
 
 use App\Models\RoomType;
 use Illuminate\Database\Seeder;
 
-class RoomTypeSeeder extends Seeder {
-    public function run(): void {
+class RoomTypeSeeder extends Seeder
+{
+    public function run(): void
+    {
         $types = [
             ['name' => 'Standard Single', 'code' => 'STD-SGL', 'base_rate' => 80.00, 'max_occupancy' => 1, 'description' => 'Standard room with single bed'],
             ['name' => 'Standard Double', 'code' => 'STD-DBL', 'base_rate' => 120.00, 'max_occupancy' => 2, 'description' => 'Standard room with double bed'],

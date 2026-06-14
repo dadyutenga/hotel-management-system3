@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Services\BuildingContext;
 use App\Services\NotificationService;
-use App\Traits\HasUuid;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class StockMovement extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     public $timestamps = false;
 
@@ -18,16 +20,16 @@ class StockMovement extends Model
         'product_id', 'location_id', 'type', 'quantity',
         'quantity_before', 'quantity_after', 'unit_cost',
         'reference_type', 'reference_id', 'notes',
-        'approved_by', 'created_by', 'created_at',
+        'approved_by', 'created_by', 'created_at', 'building_id',
     ];
 
     protected $casts = [
-        'quantity'        => 'decimal:3',
+        'quantity' => 'decimal:3',
         'quantity_before' => 'decimal:3',
-        'quantity_after'  => 'decimal:3',
-        'unit_cost'       => 'decimal:2',
-        'created_at'      => 'datetime',
-        'deleted_at'      => 'datetime',
+        'quantity_after' => 'decimal:3',
+        'unit_cost' => 'decimal:2',
+        'created_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -51,6 +53,9 @@ class StockMovement extends Model
             // Re-fetch with a row lock after ensuring the row exists.
             $level = StockLevel::where('id', $level->id)->lockForUpdate()->first();
 
+            $product = $level->product;
+            $buildingId = $params['building_id'] ?? BuildingContext::buildingId() ?? $product?->building_id;
+
             $before = (float) $level->quantity;
 
             $increaseTypes = ['restock', 'transfer_in'];
@@ -62,7 +67,7 @@ class StockMovement extends Model
                 $after = $before - (float) $params['quantity'];
             } else {
                 // adjustment — caller provides the exact target quantity
-                $after              = (float) $params['new_quantity'];
+                $after = (float) $params['new_quantity'];
                 $params['quantity'] = abs($after - $before);
             }
 
@@ -74,23 +79,23 @@ class StockMovement extends Model
             $level->update(['quantity' => $after, 'updated_at' => now()]);
 
             $movement = self::create([
-                'product_id'      => $params['product_id'],
-                'location_id'     => $params['location_id'],
-                'type'            => $params['type'],
-                'quantity'        => $params['quantity'],
+                'product_id' => $params['product_id'],
+                'location_id' => $params['location_id'],
+                'type' => $params['type'],
+                'quantity' => $params['quantity'],
                 'quantity_before' => $before,
-                'quantity_after'  => $after,
-                'unit_cost'       => $params['unit_cost'] ?? null,
-                'reference_type'  => $params['reference_type'] ?? null,
-                'reference_id'    => $params['reference_id'] ?? null,
-                'notes'           => $params['notes'] ?? null,
-                'approved_by'     => $params['approved_by'] ?? null,
-                'created_by'      => $actorId,
-                'created_at'      => now(),
+                'quantity_after' => $after,
+                'unit_cost' => $params['unit_cost'] ?? null,
+                'reference_type' => $params['reference_type'] ?? null,
+                'reference_id' => $params['reference_id'] ?? null,
+                'notes' => $params['notes'] ?? null,
+                'approved_by' => $params['approved_by'] ?? null,
+                'created_by' => $actorId,
+                'created_at' => now(),
+                'building_id' => $buildingId,
             ]);
 
             // Fire low-stock notification if we just crossed below the reorder level
-            $product = $level->product;
             if ($after <= $product->reorder_level && $before > $product->reorder_level) {
                 self::sendLowStockAlert($product, $level->location, $after);
             }
@@ -102,18 +107,18 @@ class StockMovement extends Model
     private static function sendLowStockAlert(Product $product, StockLocation $location, float $qty): void
     {
         $notificationService = app(NotificationService::class);
-        
+
         $managerIds = User::whereHas('role', fn ($q) => $q->where('name', 'store_manager'))
             ->pluck('id')
             ->toArray();
 
         $notificationService->createForUsers($managerIds, [
-            'type'           => 'low_stock',
-            'title'          => 'Low Stock Alert',
-            'body'           => "{$product->name} at {$location->name} is low: {$qty} {$product->unit} remaining.",
+            'type' => 'low_stock',
+            'title' => 'Low Stock Alert',
+            'body' => "{$product->name} at {$location->name} is low: {$qty} {$product->unit} remaining.",
             'reference_type' => 'product',
-            'reference_id'   => $product->id,
-            'action_url'     => route('store.products.show', $product->id),
+            'reference_id' => $product->id,
+            'action_url' => route('store.products.show', $product->id),
         ]);
     }
 
@@ -130,5 +135,10 @@ class StockMovement extends Model
     public function actor()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\BuildingContext;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,10 +26,12 @@ class InternalRequestController extends Controller
     {
         $user = auth()->user();
         $role = $user->role->name;
+        $buildingId = BuildingContext::buildingId();
 
         $requests = InternalUsageRequest::with(['product', 'requester', 'approver', 'fulfiller'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($role === 'house_help', fn ($q) => $q->where('requested_by', $user->id))
+            ->when($buildingId, fn ($q) => $q->whereHas('product', fn ($pq) => $pq->forBuilding($buildingId)))
             ->latest()
             ->paginate(20);
 
@@ -38,15 +41,18 @@ class InternalRequestController extends Controller
     // GET /store/internal-requests/create
     public function create(): View
     {
-        $mainStoreId = StockLocation::mainStore()->id;
+        $buildingId = BuildingContext::buildingId();
+        $mainStoreId = StockLocation::mainStore($buildingId)->id;
 
         $products = Product::where('is_active', true)
+            ->forUserBuilding()
             ->with(['stockLevels' => fn ($q) => $q->where('location_id', $mainStoreId)])
             ->orderBy('name')
             ->get()
             ->map(function ($product) use ($mainStoreId) {
                 $level = $product->stockLevels->firstWhere('location_id', $mainStoreId);
                 $product->available_quantity = (float) ($level?->quantity ?? 0);
+
                 return $product;
             });
 
@@ -58,14 +64,17 @@ class InternalRequestController extends Controller
     {
         $data = $request->validate([
             'product_id' => 'required|uuid|exists:products,id',
-            'quantity'   => 'required|numeric|min:0.001',
+            'quantity' => 'required|numeric|min:0.001',
             'department' => 'required|string|max:100',
-            'reason'     => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
+
+        $product = Product::findOrFail($data['product_id']);
+        BuildingContext::enforce($product->building_id);
 
         $req = InternalUsageRequest::create([
             ...$data,
-            'status'       => 'pending',
+            'status' => 'pending',
             'requested_by' => auth()->id(),
         ]);
 
@@ -75,12 +84,12 @@ class InternalRequestController extends Controller
             ->toArray();
 
         $this->notificationService->createForUsers($supervisorIds, [
-            'type'           => 'pending_request',
-            'title'          => 'New Internal Usage Request',
-            'body'           => "{$req->department} needs: {$req->product->name} × {$req->quantity} {$req->product->unit}",
+            'type' => 'pending_request',
+            'title' => 'New Internal Usage Request',
+            'body' => "{$req->department} needs: {$req->product->name} × {$req->quantity} {$req->product->unit}",
             'reference_type' => 'internal_usage_request',
-            'reference_id'   => $req->id,
-            'action_url'     => route('store.internal-requests.index'),
+            'reference_id' => $req->id,
+            'action_url' => route('store.internal-requests.index'),
         ]);
 
         return redirect()
@@ -91,10 +100,13 @@ class InternalRequestController extends Controller
     // POST /store/internal-requests/{internalUsageRequest}/approve
     public function approve(InternalUsageRequest $internalUsageRequest): RedirectResponse
     {
+        $internalUsageRequest->load('product');
+        BuildingContext::enforce($internalUsageRequest->product->building_id);
+
         abort_if($internalUsageRequest->status !== 'pending', 422, 'Only pending requests can be approved.');
 
         $internalUsageRequest->update([
-            'status'      => 'approved',
+            'status' => 'approved',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
@@ -105,12 +117,12 @@ class InternalRequestController extends Controller
             ->toArray();
 
         $this->notificationService->createForUsers($storeKeeperIds, [
-            'type'           => 'request_approved',
-            'title'          => 'Request Ready to Fulfill',
-            'body'           => "{$internalUsageRequest->product->name} × {$internalUsageRequest->quantity} for {$internalUsageRequest->department}",
+            'type' => 'request_approved',
+            'title' => 'Request Ready to Fulfill',
+            'body' => "{$internalUsageRequest->product->name} × {$internalUsageRequest->quantity} for {$internalUsageRequest->department}",
             'reference_type' => 'internal_usage_request',
-            'reference_id'   => $internalUsageRequest->id,
-            'action_url'     => route('store.internal-requests.index'),
+            'reference_id' => $internalUsageRequest->id,
+            'action_url' => route('store.internal-requests.index'),
         ]);
 
         return redirect()
@@ -121,25 +133,28 @@ class InternalRequestController extends Controller
     // POST /store/internal-requests/{internalUsageRequest}/reject
     public function reject(Request $request, InternalUsageRequest $internalUsageRequest): RedirectResponse
     {
+        $internalUsageRequest->load('product');
+        BuildingContext::enforce($internalUsageRequest->product->building_id);
+
         abort_if($internalUsageRequest->status !== 'pending', 422, 'Only pending requests can be rejected.');
 
         $request->validate(['reason' => 'required|string|max:500']);
 
         $internalUsageRequest->update([
-            'status'          => 'rejected',
-            'approved_by'     => auth()->id(),
+            'status' => 'rejected',
+            'approved_by' => auth()->id(),
             'rejected_reason' => $request->reason,
         ]);
 
         // Notify the requester
         $this->notificationService->create([
-            'user_id'        => $internalUsageRequest->requested_by,
-            'type'           => 'request_rejected',
-            'title'          => 'Your Request Was Rejected',
-            'body'           => "Request for {$internalUsageRequest->product->name} rejected. Reason: {$request->reason}",
+            'user_id' => $internalUsageRequest->requested_by,
+            'type' => 'request_rejected',
+            'title' => 'Your Request Was Rejected',
+            'body' => "Request for {$internalUsageRequest->product->name} rejected. Reason: {$request->reason}",
             'reference_type' => 'internal_usage_request',
-            'reference_id'   => $internalUsageRequest->id,
-            'action_url'     => route('store.internal-requests.index'),
+            'reference_id' => $internalUsageRequest->id,
+            'action_url' => route('store.internal-requests.index'),
         ]);
 
         return redirect()
@@ -150,6 +165,9 @@ class InternalRequestController extends Controller
     // POST /store/internal-requests/{internalUsageRequest}/fulfill
     public function fulfill(InternalUsageRequest $internalUsageRequest): RedirectResponse
     {
+        $internalUsageRequest->load('product');
+        BuildingContext::enforce($internalUsageRequest->product->building_id);
+
         // HARD RULE: Cannot fulfill without supervisor approval
         abort_if(
             $internalUsageRequest->status !== 'approved',
@@ -159,18 +177,18 @@ class InternalRequestController extends Controller
 
         DB::transaction(function () use ($internalUsageRequest) {
             StockMovement::record([
-                'product_id'     => $internalUsageRequest->product_id,
-                'location_id'    => StockLocation::mainStore()->id,
-                'type'           => 'internal_use',
-                'quantity'       => $internalUsageRequest->quantity,
+                'product_id' => $internalUsageRequest->product_id,
+                'location_id' => StockLocation::mainStore(BuildingContext::buildingId())->id,
+                'type' => 'internal_use',
+                'quantity' => $internalUsageRequest->quantity,
                 'reference_type' => 'internal_request',
-                'reference_id'   => $internalUsageRequest->id,
-                'approved_by'    => $internalUsageRequest->approved_by,
-                'notes'          => "Dispatched to {$internalUsageRequest->department}",
+                'reference_id' => $internalUsageRequest->id,
+                'approved_by' => $internalUsageRequest->approved_by,
+                'notes' => "Dispatched to {$internalUsageRequest->department}",
             ], auth()->id());
 
             $internalUsageRequest->update([
-                'status'       => 'fulfilled',
+                'status' => 'fulfilled',
                 'fulfilled_by' => auth()->id(),
                 'fulfilled_at' => now(),
             ]);
@@ -178,13 +196,13 @@ class InternalRequestController extends Controller
 
         // Notify the requester
         $this->notificationService->create([
-            'user_id'        => $internalUsageRequest->requested_by,
-            'type'           => 'request_fulfilled',
-            'title'          => 'Your Request Has Been Fulfilled',
-            'body'           => "{$internalUsageRequest->product->name} dispatched to {$internalUsageRequest->department}.",
+            'user_id' => $internalUsageRequest->requested_by,
+            'type' => 'request_fulfilled',
+            'title' => 'Your Request Has Been Fulfilled',
+            'body' => "{$internalUsageRequest->product->name} dispatched to {$internalUsageRequest->department}.",
             'reference_type' => 'internal_usage_request',
-            'reference_id'   => $internalUsageRequest->id,
-            'action_url'     => route('store.internal-requests.index'),
+            'reference_id' => $internalUsageRequest->id,
+            'action_url' => route('store.internal-requests.index'),
         ]);
 
         return redirect()
@@ -195,6 +213,9 @@ class InternalRequestController extends Controller
     // POST /store/internal-requests/{internalUsageRequest}/cancel
     public function cancel(InternalUsageRequest $internalUsageRequest): RedirectResponse
     {
+        $internalUsageRequest->load('product');
+        BuildingContext::enforce($internalUsageRequest->product->building_id);
+
         abort_if($internalUsageRequest->requested_by !== auth()->id(), 403);
         abort_if($internalUsageRequest->status !== 'pending', 422, 'Only pending requests can be cancelled.');
 

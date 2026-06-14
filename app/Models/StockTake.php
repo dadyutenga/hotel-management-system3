@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -10,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StockTake extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'stock_take_code', 'initiated_by', 'status',
-        'notes', 'started_at', 'completed_at',
+        'notes', 'started_at', 'completed_at', 'building_id',
     ];
 
     protected $casts = [
@@ -28,6 +29,11 @@ class StockTake extends Model
         return $this->belongsTo(User::class, 'initiated_by');
     }
 
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(StockTakeItem::class, 'stock_take_id');
@@ -38,6 +44,6 @@ class StockTake extends Model
         $date = now()->format('Ymd');
         $count = static::whereDate('created_at', today())->count() + 1;
 
-        return "STK-{$date}-" . str_pad($count, 4, '0', STR_PAD_LEFT);
+        return "STK-{$date}-".str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 }

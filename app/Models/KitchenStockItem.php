@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class KitchenStockItem extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
-        'name', 'unit', 'current_quantity', 'minimum_quantity', 'is_active',
+        'building_id', 'name', 'unit', 'current_quantity', 'minimum_quantity', 'is_active',
     ];
 
     protected $casts = [
@@ -24,6 +25,11 @@ class KitchenStockItem extends Model
     public function movements()
     {
         return $this->hasMany(KitchenStockMovement::class)->latest();
+    }
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function isLow(): bool

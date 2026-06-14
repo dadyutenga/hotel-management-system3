@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Procurement/GoodsReceivedNoteController.php
 
 namespace App\Http\Controllers\Procurement;
@@ -8,10 +9,10 @@ use App\Models\GoodsReceivedNote;
 use App\Models\GoodsReceivedNoteItem;
 use App\Models\LocalPurchaseOrder;
 use App\Models\Role;
+use App\Services\ProcurementIntegrationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\ProcurementIntegrationService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -21,7 +22,7 @@ class GoodsReceivedNoteController extends Controller
     public function index(Request $request): View
     {
         $grns = GoodsReceivedNote::with(['lpo', 'supplier', 'receiver', 'confirmer', 'accountingEntry', 'items.stockMovement'])
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
 
@@ -114,9 +115,7 @@ class GoodsReceivedNoteController extends Controller
             'items.stockMovement',
             'receiver',
             'confirmer',
-            'accountingEntry'
-            ,'approver'
-            ,'rejector'
+            'accountingEntry', 'approver', 'rejector',
         ]);
 
         return view('procurement.grn.show', compact('goodsReceivedNote'));
@@ -293,7 +292,7 @@ class GoodsReceivedNoteController extends Controller
             return back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
             return back()->withErrors([
-                'approval' => 'GRN approval failed: ' . $e->getMessage(),
+                'approval' => 'GRN approval failed: '.$e->getMessage(),
             ])->withInput();
         }
 

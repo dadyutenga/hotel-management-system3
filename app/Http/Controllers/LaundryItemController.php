@@ -10,6 +10,7 @@ class LaundryItemController extends Controller
     public function index()
     {
         $items = LaundryItem::orderBy('name')->paginate(20);
+
         return view('laundry-items.index', compact('items'));
     }
 
@@ -68,12 +69,14 @@ class LaundryItemController extends Controller
     public function archived()
     {
         $records = LaundryItem::onlyDeleted()->latest('deleted_at')->paginate(20);
+
         return view('laundry-items.archived', compact('records'));
     }
 
     public function restore(LaundryItem $laundryItem)
     {
         $this->restoreModel($laundryItem);
+
         return redirect()->route('laundry-items.index')->with('success', 'Laundry item restored successfully.');
     }
 }

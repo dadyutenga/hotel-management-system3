@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
 
 class JournalLine extends Model
 {
-    use HasUuids, HasSoftDelete;
+    use HasSoftDelete, HasUuids;
 
     protected $fillable = [
         'journal_entry_id', 'account_id', 'type', 'amount', 'notes',
@@ -16,6 +16,13 @@ class JournalLine extends Model
 
     protected $casts = ['amount' => 'decimal:2', 'deleted_at' => 'datetime'];
 
-    public function entry()   { return $this->belongsTo(JournalEntry::class, 'journal_entry_id'); }
-    public function account() { return $this->belongsTo(Account::class); }
+    public function entry()
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
 }

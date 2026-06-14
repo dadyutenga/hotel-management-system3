@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StoreNotification extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     public $timestamps = false;
 
@@ -20,7 +20,7 @@ class StoreNotification extends Model
     ];
 
     protected $casts = [
-        'is_read'    => 'boolean',
+        'is_read' => 'boolean',
         'created_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];

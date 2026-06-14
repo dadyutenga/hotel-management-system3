@@ -102,8 +102,10 @@ class AccountantReceiptsManagementTest extends TestCase
     {
         $service = app(ReceiptService::class);
 
-        $source = new class extends Model implements ReceiptPrintable {
+        $source = new class extends Model implements ReceiptPrintable
+        {
             protected $table = 'users';
+
             public $timestamps = false;
 
             public function toReceiptData(): array
@@ -170,4 +172,3 @@ class AccountantReceiptsManagementTest extends TestCase
         ]);
     }
 }
-

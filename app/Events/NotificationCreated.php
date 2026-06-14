@@ -15,7 +15,9 @@ class NotificationCreated implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $userId;
+
     public int $unreadCount;
+
     public ?array $notification;
 
     /**
@@ -38,12 +40,12 @@ class NotificationCreated implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('notifications.' . $this->userId),
+            new PrivateChannel('notifications.'.$this->userId),
         ];
     }
 

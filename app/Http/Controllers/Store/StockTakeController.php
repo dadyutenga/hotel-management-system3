@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StockTake;
 use App\Models\StockTakeItem;
 use App\Services\BarcodeStockService;
+use App\Services\BuildingContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,12 +14,12 @@ class StockTakeController extends Controller
 {
     public function __construct(
         protected BarcodeStockService $barcodeService,
-    ) {
-    }
+    ) {}
 
     public function index()
     {
         $stockTakes = StockTake::with('initiator')
+            ->forUserBuilding()
             ->withCount('items')
             ->latest('started_at')
             ->paginate(15);
@@ -29,6 +30,7 @@ class StockTakeController extends Controller
     public function create()
     {
         $stockTake = $this->barcodeService->createStockTake(auth()->id());
+        $stockTake->update(['building_id' => BuildingContext::buildingId()]);
 
         return view('store.stock-takes.create', compact('stockTake'));
     }
@@ -39,8 +41,11 @@ class StockTakeController extends Controller
             'barcode' => 'required|string|min:4|max:100',
         ]);
 
+        BuildingContext::enforce($stockTake->building_id);
+
         try {
             $item = $this->barcodeService->addScanToStockTake($stockTake, $request->barcode);
+            BuildingContext::enforce($item->beverage->building_id);
             $item->load('beverage.category');
 
             $totalScanned = $stockTake->items()->where('physical_count', '>', 0)->count();
@@ -70,6 +75,8 @@ class StockTakeController extends Controller
 
     public function updateCount(Request $request, StockTakeItem $item): JsonResponse
     {
+        BuildingContext::enforce($item->stockTake->building_id);
+
         $request->validate(['physical_count' => 'required|integer|min:0']);
 
         $item->update([
@@ -86,6 +93,8 @@ class StockTakeController extends Controller
 
     public function complete(StockTake $stockTake)
     {
+        BuildingContext::enforce($stockTake->building_id);
+
         if ($stockTake->status === 'completed') {
             return redirect()->route('store.stock-takes.show', $stockTake)
                 ->with('error', 'This stock-take has already been completed.');
@@ -104,6 +113,8 @@ class StockTakeController extends Controller
 
     public function cancel(StockTake $stockTake)
     {
+        BuildingContext::enforce($stockTake->building_id);
+
         $stockTake->update(['status' => 'cancelled']);
 
         return redirect()->route('store.stock-takes.index')
@@ -112,6 +123,8 @@ class StockTakeController extends Controller
 
     public function show(StockTake $stockTake)
     {
+        BuildingContext::enforce($stockTake->building_id);
+
         $stockTake->load('initiator', 'items.beverage.category');
 
         $summary = [

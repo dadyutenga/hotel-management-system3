@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 
@@ -15,14 +16,12 @@ class LanguageController extends Controller
     /**
      * Switch the application language
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $locale
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function switch(Request $request, string $locale)
     {
         // Validate the locale
-        if (!in_array($locale, $this->supportedLocales)) {
+        if (! in_array($locale, $this->supportedLocales)) {
             $locale = 'en';
         }
 
@@ -40,8 +39,6 @@ class LanguageController extends Controller
 
     /**
      * Get available locales
-     *
-     * @return array
      */
     public function getLocales(): array
     {

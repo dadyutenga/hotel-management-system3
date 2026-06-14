@@ -27,17 +27,17 @@ class SendBroadcastJob implements ShouldQueue
         $guests = $this->getTargetGuests();
 
         $emailCount = 0;
-        $smsCount   = 0;
+        $smsCount = 0;
 
         foreach ($guests as $guest) {
             // Email
             if (in_array($this->broadcast->channels, ['email', 'both']) && $guest->email) {
                 Mail::to($guest->email)->queue(new BroadcastMail([
                     'guest_name' => $guest->full_name,
-                    'subject'    => $this->broadcast->title,
-                    'title'      => $this->broadcast->title,
-                    'body'       => $this->broadcast->body,
-                    'type'       => $this->broadcast->type,
+                    'subject' => $this->broadcast->title,
+                    'title' => $this->broadcast->title,
+                    'body' => $this->broadcast->body,
+                    'type' => $this->broadcast->type,
                 ]));
                 $emailCount++;
             }
@@ -52,8 +52,8 @@ class SendBroadcastJob implements ShouldQueue
         }
 
         $this->broadcast->update([
-            'status'           => 'sent',
-            'sent_at'          => now(),
+            'status' => 'sent',
+            'sent_at' => now(),
             'recipients_count' => $guests->count(),
         ]);
     }
@@ -63,16 +63,17 @@ class SendBroadcastJob implements ShouldQueue
         $query = Guest::query();
 
         $validTargets = ['all', 'Silver', 'Gold', 'Platinum', 'walkin', 'guests'];
-        if (!in_array($this->broadcast->target, $validTargets, true)) {
+        if (! in_array($this->broadcast->target, $validTargets, true)) {
             Log::error('Invalid broadcast target', ['target' => $this->broadcast->target]);
+
             return collect();
         }
 
         return match ($this->broadcast->target) {
-            'Silver'   => $query->whereIn('loyalty_tier', ['Silver', 'Gold', 'Platinum'])->get(),
-            'Gold'     => $query->whereIn('loyalty_tier', ['Gold', 'Platinum'])->get(),
+            'Silver' => $query->whereIn('loyalty_tier', ['Silver', 'Gold', 'Platinum'])->get(),
+            'Gold' => $query->whereIn('loyalty_tier', ['Gold', 'Platinum'])->get(),
             'Platinum' => $query->where('loyalty_tier', 'Platinum')->get(),
-            default    => $query->get(),
+            default => $query->get(),
         };
     }
 }

@@ -9,7 +9,6 @@ use App\Services\Payment\StandardizedPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 /**
@@ -60,10 +59,10 @@ class RefundController extends Controller
         if ($search) {
             $paymentsQuery->where(function ($q) use ($search) {
                 $q->where('payment_number', 'like', "%{$search}%")
-                  ->orWhere('provider_reference', 'like', "%{$search}%")
-                  ->orWhereHas('booking', function ($bq) use ($search) {
-                      $bq->where('booking_number', 'like', "%{$search}%");
-                  });
+                    ->orWhere('provider_reference', 'like', "%{$search}%")
+                    ->orWhereHas('booking', function ($bq) use ($search) {
+                        $bq->where('booking_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -90,9 +89,9 @@ class RefundController extends Controller
         if ($search) {
             $walkinQuery->where(function ($q) use ($search) {
                 $q->where('transaction_number', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%")
-                  ->orWhere('order_number', 'like', "%{$search}%")
-                  ->orWhere('provider_reference', 'like', "%{$search}%");
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('order_number', 'like', "%{$search}%")
+                    ->orWhere('provider_reference', 'like', "%{$search}%");
             });
         }
 
@@ -104,20 +103,20 @@ class RefundController extends Controller
         }
 
         // Execute queries based on type filter
-        $payments = ($type === 'all' || $type === 'online') 
+        $payments = ($type === 'all' || $type === 'online')
             ? $paymentsQuery->paginate(15, ['*'], 'payments_page')
             : collect();
 
-        $walkinTransactions = ($type === 'all' || $type === 'walkin') 
+        $walkinTransactions = ($type === 'all' || $type === 'walkin')
             ? $walkinQuery->paginate(15, ['*'], 'walkin_page')
             : collect();
 
         // Statistics
         $stats = [
             'total_refundable_payments' => Payment::where('status', Payment::STATUS_SUCCESSFUL)->count(),
-            'total_refundable_walkin'   => WalkinTransaction::where('status', 'completed')
+            'total_refundable_walkin' => WalkinTransaction::where('status', 'completed')
                 ->whereNotNull('provider_reference')->count(),
-            'total_refunded_today'      => Payment::whereDate('refunded_at', today())->count() +
+            'total_refunded_today' => Payment::whereDate('refunded_at', today())->count() +
                 WalkinTransaction::where('status', 'refunded')
                     ->whereDate('updated_at', today())->count(),
         ];
@@ -165,8 +164,8 @@ class RefundController extends Controller
         $totalRefunded = (float) ($transaction->metadata['total_refunded'] ?? 0);
         $maxRefundable = (float) $transaction->amount - $totalRefunded;
 
-        $canRefund = $transaction->isCompleted() && 
-                     !empty($transaction->provider_reference) && 
+        $canRefund = $transaction->isCompleted() &&
+                     ! empty($transaction->provider_reference) &&
                      $maxRefundable > 0;
 
         return view('finance.refunds.show-walkin', compact(
@@ -183,9 +182,9 @@ class RefundController extends Controller
     public function processPaymentRefund(Request $request, Payment $payment): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
-            'refund_type'   => 'required|in:full,partial',
+            'refund_type' => 'required|in:full,partial',
             'refund_amount' => 'required_if:refund_type,partial|nullable|numeric|min:0.01',
-            'reason'        => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         $amount = $data['refund_type'] === 'full' ? null : (float) $data['refund_amount'];
@@ -218,9 +217,9 @@ class RefundController extends Controller
     public function processWalkinRefund(Request $request, WalkinTransaction $transaction): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
-            'refund_type'   => 'required|in:full,partial',
+            'refund_type' => 'required|in:full,partial',
             'refund_amount' => 'required_if:refund_type,partial|nullable|numeric|min:0.01',
-            'reason'        => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         $amount = $data['refund_type'] === 'full' ? null : (float) $data['refund_amount'];
@@ -259,10 +258,10 @@ class RefundController extends Controller
         $maxRefundable = (float) $payment->amount - $totalRefunded;
 
         return response()->json([
-            'valid'           => $validation['valid'],
-            'error'           => $validation['error'] ?? null,
-            'total_refunded'  => $totalRefunded,
-            'max_refundable'  => $maxRefundable,
+            'valid' => $validation['valid'],
+            'error' => $validation['error'] ?? null,
+            'total_refunded' => $totalRefunded,
+            'max_refundable' => $maxRefundable,
             'original_amount' => (float) $payment->amount,
         ]);
     }
@@ -275,12 +274,12 @@ class RefundController extends Controller
         $totalRefunded = (float) ($transaction->metadata['total_refunded'] ?? 0);
         $maxRefundable = (float) $transaction->amount - $totalRefunded;
 
-        $canRefund = $transaction->isCompleted() && 
-                     !empty($transaction->provider_reference) && 
+        $canRefund = $transaction->isCompleted() &&
+                     ! empty($transaction->provider_reference) &&
                      $maxRefundable > 0;
 
         $error = null;
-        if (!$transaction->isCompleted()) {
+        if (! $transaction->isCompleted()) {
             $error = 'Transaction is not completed';
         } elseif (empty($transaction->provider_reference)) {
             $error = 'No provider reference - cash transactions cannot be refunded via this system';
@@ -295,10 +294,10 @@ class RefundController extends Controller
         }
 
         return response()->json([
-            'valid'           => $canRefund,
-            'error'           => $error,
-            'total_refunded'  => $totalRefunded,
-            'max_refundable'  => $maxRefundable,
+            'valid' => $canRefund,
+            'error' => $error,
+            'total_refunded' => $totalRefunded,
+            'max_refundable' => $maxRefundable,
             'original_amount' => (float) $transaction->amount,
         ]);
     }

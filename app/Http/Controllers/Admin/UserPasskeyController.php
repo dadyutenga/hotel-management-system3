@@ -11,8 +11,7 @@ class UserPasskeyController extends Controller
 {
     public function __construct(
         protected PasskeyAuthService $authService,
-    ) {
-    }
+    ) {}
 
     public function edit(User $user)
     {
@@ -48,6 +47,6 @@ class UserPasskeyController extends Controller
         $user->passkey_enabled = $request->boolean('passkey_enabled');
         $user->save();
 
-        return back()->with('success', 'Passkey login ' . ($request->boolean('passkey_enabled') ? 'enabled' : 'disabled') . " for {$user->name}.");
+        return back()->with('success', 'Passkey login '.($request->boolean('passkey_enabled') ? 'enabled' : 'disabled')." for {$user->name}.");
     }
 }

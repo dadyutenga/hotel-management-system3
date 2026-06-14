@@ -8,10 +8,12 @@ use App\Models\Order;
 use App\Services\AccountingService;
 use App\Services\Bartender\BarOrderStockService;
 use App\Services\Billing\ModuleBillingService;
+use App\Services\BuildingContext;
 use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PosCashierController extends Controller
@@ -22,14 +24,17 @@ class PosCashierController extends Controller
     public function index(Request $request): View
     {
         $staffUser = $request->attributes->get('staffUser');
+        $buildingId = $staffUser?->building_id ?? BuildingContext::buildingId();
 
         $orders = Order::with(['items.menuItem', 'table', 'location', 'creator', 'booking'])
+            ->forBuilding($buildingId)
             ->where('order_source', 'pos_waiter')
             ->whereIn('status', ['open', 'sent', 'ready', 'served'])
             ->latest()
             ->paginate(30);
 
         $activeBookings = Booking::with('guest')
+            ->forBuilding($buildingId)
             ->where('status', 'checked_in')
             ->orderBy('guest_name')
             ->get(['id', 'booking_number', 'guest_name', 'room_id']);
@@ -44,20 +49,28 @@ class PosCashierController extends Controller
     {
         $staffUser = $request->attributes->get('staffUser');
         $staffId = (string) $staffUser->id;
+        $buildingId = $staffUser?->building_id ?? BuildingContext::buildingId();
 
+        BuildingContext::enforce($order->building_id);
         abort_if($order->order_source !== 'pos_waiter', 422, 'This order was not created from the staff POS.');
         abort_if(in_array($order->status, ['settled', 'charged', 'cancelled']), 422, 'Order is already finalised.');
         abort_if(! in_array($order->status, ['open', 'sent', 'ready', 'served']), 422, 'Order cannot be settled.');
 
+        $bookingRule = Rule::exists('bookings', 'id');
+        if ($buildingId) {
+            $bookingRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
             'payment_method' => 'required|in:cash,mobile,card,charge_to_booking',
-            'booking_id' => 'required_if:payment_method,charge_to_booking|nullable|uuid|exists:bookings,id',
+            'booking_id' => ['required_if:payment_method,charge_to_booking', 'nullable', 'uuid', $bookingRule],
         ]);
 
         $isChargeToBooking = $data['payment_method'] === 'charge_to_booking';
 
         if ($isChargeToBooking) {
             $booking = Booking::findOrFail($data['booking_id']);
+            BuildingContext::enforce($booking->building_id);
             abort_if($booking->status !== 'checked_in', 422, 'Can only charge to a checked-in booking.');
         }
 
@@ -123,6 +136,7 @@ class PosCashierController extends Controller
         $staffUser = $request->attributes->get('staffUser');
         $staffId = (string) $staffUser->id;
 
+        BuildingContext::enforce($order->building_id);
         abort_if($order->order_source !== 'pos_waiter', 422, 'This order was not created from the staff POS.');
         abort_if(in_array($order->status, ['settled', 'charged']), 422, 'Paid orders cannot be cancelled.');
 

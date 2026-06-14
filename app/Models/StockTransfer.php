@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\ReceiptPrintable;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -10,20 +11,20 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class StockTransfer extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'from_location_id', 'to_location_id', 'product_id', 'quantity',
         'status', 'reason', 'requested_by', 'approved_by', 'approved_at',
-        'rejected_by', 'rejected_at', 'rejection_reason', 'fulfilled_by', 'completed_at',
+        'rejected_by', 'rejected_at', 'rejection_reason', 'fulfilled_by', 'completed_at', 'building_id',
     ];
 
     protected $casts = [
-        'quantity'     => 'decimal:3',
-        'approved_at'  => 'datetime',
-        'rejected_at'  => 'datetime',
+        'quantity' => 'decimal:3',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'completed_at' => 'datetime',
-        'deleted_at'   => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function product()
@@ -61,6 +62,11 @@ class StockTransfer extends Model implements ReceiptPrintable
         return $this->belongsTo(User::class, 'rejected_by');
     }
 
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+
     public function receipt(): MorphOne
     {
         return $this->morphOne(Receipt::class, 'receiptable');
@@ -71,32 +77,32 @@ class StockTransfer extends Model implements ReceiptPrintable
         $this->loadMissing(['product', 'fromLocation', 'toLocation', 'requester']);
 
         $items = [[
-            'name'       => $this->product?->name ?? 'Product',
-            'details'    => 'Transfer: ' . ($this->fromLocation?->name ?? '—') . ' → ' . ($this->toLocation?->name ?? '—'),
-            'quantity'   => $this->quantity ?? 1,
+            'name' => $this->product?->name ?? 'Product',
+            'details' => 'Transfer: '.($this->fromLocation?->name ?? '—').' → '.($this->toLocation?->name ?? '—'),
+            'quantity' => $this->quantity ?? 1,
             'unit_price' => 0,
-            'amount'     => 0,
+            'amount' => 0,
         ]];
 
         return [
-            'receipt_no'            => $this->uuid,
-            'issued_at'             => $this->completed_at ?? $this->created_at,
-            'module'                => 'store',
-            'customer_name'         => $this->fromLocation?->name ?? 'Stock Location',
-            'customer_phone'        => null,
-            'items'                 => $items,
-            'subtotal'              => 0.0,
-            'discount'              => 0.0,
-            'tax'                   => 0.0,
-            'total'                 => 0.0,
-            'amount_paid'           => 0.0,
-            'balance'               => 0.0,
-            'currency'              => 'TZS',
-            'payment_method'        => null,
-            'payment_status'        => $this->status === 'completed' ? 'paid' : 'unpaid',
+            'receipt_no' => $this->uuid,
+            'issued_at' => $this->completed_at ?? $this->created_at,
+            'module' => 'store',
+            'customer_name' => $this->fromLocation?->name ?? 'Stock Location',
+            'customer_phone' => null,
+            'items' => $items,
+            'subtotal' => 0.0,
+            'discount' => 0.0,
+            'tax' => 0.0,
+            'total' => 0.0,
+            'amount_paid' => 0.0,
+            'balance' => 0.0,
+            'currency' => 'TZS',
+            'payment_method' => null,
+            'payment_status' => $this->status === 'completed' ? 'paid' : 'unpaid',
             'transaction_reference' => null,
-            'cashier'               => $this->requester?->name,
-            'notes'                 => $this->reason,
+            'cashier' => $this->requester?->name,
+            'notes' => $this->reason,
         ];
     }
 

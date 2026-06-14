@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Restaurant;
 
 use App\Http\Controllers\Controller;
 use App\Models\BarTicket;
+use App\Models\Order;
+use App\Services\BuildingContext;
+use App\Services\BuildingModuleGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,7 +15,11 @@ class BarController extends Controller
 {
     public function queue(Request $request): View
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+
         $tickets = BarTicket::with(['order', 'table'])
+            ->forUserBuilding()
             ->whereIn('status', ['pending', 'preparing'])
             ->latest()
             ->get();
@@ -22,7 +29,11 @@ class BarController extends Controller
 
     public function tabs(Request $request): View
     {
-        $tabs = \App\Models\Order::with(['items.menuItem', 'table'])
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+
+        $tabs = Order::with(['items.menuItem', 'table'])
+            ->forUserBuilding()
             ->where('order_type', 'bar_tab')
             ->whereIn('status', ['open', 'sent', 'ready'])
             ->latest()
@@ -33,6 +44,10 @@ class BarController extends Controller
 
     public function markPreparing(BarTicket $ticket): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        BuildingContext::enforce($ticket->building_id);
+
         $ticket->markPreparing();
 
         return redirect()->route('restaurant.bar.queue')
@@ -41,6 +56,10 @@ class BarController extends Controller
 
     public function markReady(BarTicket $ticket): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        BuildingContext::enforce($ticket->building_id);
+
         $ticket->markReady();
 
         return redirect()->route('restaurant.bar.queue')

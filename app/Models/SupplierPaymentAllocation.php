@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SupplierPaymentAllocation extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'supplier_payment_id',
@@ -20,7 +20,7 @@ class SupplierPaymentAllocation extends Model
 
     protected $casts = [
         'allocated_amount' => 'decimal:2',
-        'deleted_at'       => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function payment(): BelongsTo

@@ -99,6 +99,7 @@
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.user') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.email') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.role') }}</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Building</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.status') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.created') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.actions') }}</th>
@@ -128,6 +129,11 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
                             {{ ucwords(str_replace('_', ' ', $user->role->name)) }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-600">
+                            {{ $user->building?->name ?? '—' }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">

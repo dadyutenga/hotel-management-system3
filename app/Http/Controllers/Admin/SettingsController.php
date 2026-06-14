@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
-use App\Helpers\CurrencyHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +25,7 @@ class SettingsController extends Controller
             'sms_sender_id' => SystemSetting::getValue('sms_sender_id', ''),
             'sms_base_url' => SystemSetting::getValue('sms_base_url', ''),
             'sms_is_enabled' => filter_var(SystemSetting::getValue('sms_is_enabled', 'false'), FILTER_VALIDATE_BOOLEAN),
-            'sms_api_key_set' => !empty(SystemSetting::getValue('sms_api_key')),
+            'sms_api_key_set' => ! empty(SystemSetting::getValue('sms_api_key')),
             'mail_driver' => SystemSetting::getValue('mail_driver', 'smtp'),
             'mail_host' => SystemSetting::getValue('mail_host', ''),
             'mail_port' => SystemSetting::getValue('mail_port', '587'),
@@ -34,12 +34,12 @@ class SettingsController extends Controller
             'mail_from_address' => SystemSetting::getValue('mail_from_address', ''),
             'mail_from_name' => SystemSetting::getValue('mail_from_name', ''),
             'mail_is_enabled' => filter_var(SystemSetting::getValue('mail_is_enabled', 'false'), FILTER_VALIDATE_BOOLEAN),
-            'mail_password_set' => !empty(SystemSetting::getValue('mail_password')),
+            'mail_password_set' => ! empty(SystemSetting::getValue('mail_password')),
             'azampesa_base_url' => SystemSetting::getValue('azampesa_base_url', ''),
             'azampesa_is_enabled' => filter_var(SystemSetting::getValue('azampesa_is_enabled', 'false'), FILTER_VALIDATE_BOOLEAN),
-            'azampesa_app_name_set' => !empty(SystemSetting::getValue('azampesa_app_name')),
-            'azampesa_client_id_set' => !empty(SystemSetting::getValue('azampesa_client_id')),
-            'azampesa_client_secret_set' => !empty(SystemSetting::getValue('azampesa_client_secret')),
+            'azampesa_app_name_set' => ! empty(SystemSetting::getValue('azampesa_app_name')),
+            'azampesa_client_id_set' => ! empty(SystemSetting::getValue('azampesa_client_id')),
+            'azampesa_client_secret_set' => ! empty(SystemSetting::getValue('azampesa_client_secret')),
         ];
 
         $currencies = CurrencyHelper::getCurrencyOptions();
@@ -84,22 +84,22 @@ class SettingsController extends Controller
      */
     public function updateSmsSettings(Request $request)
     {
-        $hasSmsApiKey = !empty(SystemSetting::getValue('sms_api_key', ''));
-        $hasSmsProviderKey = !empty(SystemSetting::getValue('sms_provider_key', ''));
+        $hasSmsApiKey = ! empty(SystemSetting::getValue('sms_api_key', ''));
+        $hasSmsProviderKey = ! empty(SystemSetting::getValue('sms_provider_key', ''));
 
         $validated = $request->validate([
             'sms_provider_key' => [
                 'nullable',
                 'string',
                 'max:100',
-                Rule::requiredIf(fn () => $request->boolean('sms_is_enabled') && !$hasSmsProviderKey),
+                Rule::requiredIf(fn () => $request->boolean('sms_is_enabled') && ! $hasSmsProviderKey),
             ],
             'sms_sender_id' => ['nullable', 'string', 'max:100'],
             'sms_api_key' => [
                 'nullable',
                 'string',
                 'max:255',
-                Rule::requiredIf(fn () => $request->boolean('sms_is_enabled') && !$hasSmsApiKey),
+                Rule::requiredIf(fn () => $request->boolean('sms_is_enabled') && ! $hasSmsApiKey),
             ],
             'sms_base_url' => ['nullable', 'url'],
             'sms_is_enabled' => ['nullable', 'boolean'],
@@ -113,7 +113,7 @@ class SettingsController extends Controller
         SystemSetting::setValue('sms_base_url', $validated['sms_base_url'] ?? '', 'SMS provider base URL', $userId);
         SystemSetting::setValue('sms_is_enabled', $isEnabled ? 'true' : 'false', 'SMS provider enabled flag', $userId);
 
-        if (!empty($validated['sms_api_key'])) {
+        if (! empty($validated['sms_api_key'])) {
             SystemSetting::setValue('sms_api_key', $validated['sms_api_key'], 'SMS provider API key', $userId);
         }
 
@@ -125,7 +125,7 @@ class SettingsController extends Controller
      */
     public function updateEmailSettings(Request $request)
     {
-        $hasMailPassword = !empty(SystemSetting::getValue('mail_password', ''));
+        $hasMailPassword = ! empty(SystemSetting::getValue('mail_password', ''));
 
         $validated = $request->validate([
             'mail_driver' => ['nullable', 'string', 'max:50', 'required_if:mail_is_enabled,1'],
@@ -136,7 +136,7 @@ class SettingsController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                Rule::requiredIf(fn () => $request->boolean('mail_is_enabled') && !$hasMailPassword),
+                Rule::requiredIf(fn () => $request->boolean('mail_is_enabled') && ! $hasMailPassword),
             ],
             'mail_encryption' => ['nullable', 'string', 'max:10', Rule::in(['tls', 'ssl', 'none'])],
             'mail_from_address' => ['nullable', 'email', 'max:191', 'required_if:mail_is_enabled,1'],
@@ -156,7 +156,7 @@ class SettingsController extends Controller
         SystemSetting::setValue('mail_from_name', $validated['mail_from_name'] ?? '', 'Mail from name', $userId);
         SystemSetting::setValue('mail_is_enabled', $isEnabled ? 'true' : 'false', 'Mail enabled flag', $userId);
 
-        if (!empty($validated['mail_password'])) {
+        if (! empty($validated['mail_password'])) {
             SystemSetting::setValue('mail_password', $validated['mail_password'], 'Mail password', $userId);
         }
 
@@ -168,8 +168,8 @@ class SettingsController extends Controller
      */
     public function updateAzamPesaSettings(Request $request)
     {
-        $hasAppName = !empty(SystemSetting::getValue('azampesa_app_name', ''));
-        $hasClientId = !empty(SystemSetting::getValue('azampesa_client_id', ''));
+        $hasAppName = ! empty(SystemSetting::getValue('azampesa_app_name', ''));
+        $hasClientId = ! empty(SystemSetting::getValue('azampesa_client_id', ''));
 
         $validated = $request->validate([
             'azampesa_is_enabled' => ['nullable', 'boolean'],
@@ -177,13 +177,13 @@ class SettingsController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                Rule::requiredIf(fn () => $request->boolean('azampesa_is_enabled') && !$hasAppName),
+                Rule::requiredIf(fn () => $request->boolean('azampesa_is_enabled') && ! $hasAppName),
             ],
             'azampesa_client_id' => [
                 'nullable',
                 'string',
                 'max:255',
-                Rule::requiredIf(fn () => $request->boolean('azampesa_is_enabled') && !$hasClientId),
+                Rule::requiredIf(fn () => $request->boolean('azampesa_is_enabled') && ! $hasClientId),
             ],
             'azampesa_client_secret' => ['nullable', 'string', 'max:1024'],
             'azampesa_base_url' => ['nullable', 'url'],
@@ -197,15 +197,15 @@ class SettingsController extends Controller
         SystemSetting::setValue('azampesa_auth_url', $validated['azampesa_auth_url'] ?? '', 'AzamPesa auth URL', $userId);
         SystemSetting::setValue('azampesa_is_enabled', $isEnabled ? 'true' : 'false', 'AzamPesa payment enabled flag', $userId);
 
-        if (!empty($validated['azampesa_app_name'])) {
+        if (! empty($validated['azampesa_app_name'])) {
             SystemSetting::setValue('azampesa_app_name', $validated['azampesa_app_name'], 'AzamPesa app name', $userId);
         }
 
-        if (!empty($validated['azampesa_client_id'])) {
+        if (! empty($validated['azampesa_client_id'])) {
             SystemSetting::setValue('azampesa_client_id', $validated['azampesa_client_id'], 'AzamPesa client ID', $userId);
         }
 
-        if (!empty($validated['azampesa_client_secret'])) {
+        if (! empty($validated['azampesa_client_secret'])) {
             SystemSetting::setValue('azampesa_client_secret', $validated['azampesa_client_secret'], 'AzamPesa client secret', $userId);
         }
 

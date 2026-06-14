@@ -12,23 +12,23 @@ class AccountingService
     /**
      * Create a balanced journal entry.
      *
-     * @param array $data [
-     *   'date'        => '2024-03-01',
-     *   'description' => 'Room booking settled — BK-0042',
-     *   'source'      => 'booking',
-     *   'source_id'   => $bookingId,
-     *   'reference'   => 'BK-0042',
-     *   'lines' => [
-     *     ['account_code' => '1100', 'type' => 'debit',  'amount' => 500000],
-     *     ['account_code' => '4100', 'type' => 'credit', 'amount' => 500000],
-     *   ]
-     * ]
+     * @param  array  $data  [
+     *                       'date'        => '2024-03-01',
+     *                       'description' => 'Room booking settled — BK-0042',
+     *                       'source'      => 'booking',
+     *                       'source_id'   => $bookingId,
+     *                       'reference'   => 'BK-0042',
+     *                       'lines' => [
+     *                       ['account_code' => '1100', 'type' => 'debit',  'amount' => 500000],
+     *                       ['account_code' => '4100', 'type' => 'credit', 'amount' => 500000],
+     *                       ]
+     *                       ]
      */
     public function post(array $data, string $actorId): JournalEntry
     {
         return DB::transaction(function () use ($data, $actorId) {
 
-            $totalDebit  = collect($data['lines'])->where('type', 'debit')->sum('amount');
+            $totalDebit = collect($data['lines'])->where('type', 'debit')->sum('amount');
             $totalCredit = collect($data['lines'])->where('type', 'credit')->sum('amount');
 
             // Hard stop — never post an unbalanced entry
@@ -39,18 +39,18 @@ class AccountingService
             );
 
             $entry = JournalEntry::create([
-                'entry_date'   => $data['date'],
-                'description'  => $data['description'],
-                'source'       => $data['source'],
-                'source_id'    => $data['source_id'] ?? null,
-                'supplier_id'  => $data['supplier_id'] ?? null,
-                'reference'    => $data['reference'] ?? null,
-                'total_debit'  => $totalDebit,
+                'entry_date' => $data['date'],
+                'description' => $data['description'],
+                'source' => $data['source'],
+                'source_id' => $data['source_id'] ?? null,
+                'supplier_id' => $data['supplier_id'] ?? null,
+                'reference' => $data['reference'] ?? null,
+                'total_debit' => $totalDebit,
                 'total_credit' => $totalCredit,
-                'status'       => 'posted',
-                'created_by'   => $actorId,
-                'posted_by'    => $actorId,
-                'posted_at'    => now(),
+                'status' => 'posted',
+                'created_by' => $actorId,
+                'posted_by' => $actorId,
+                'posted_at' => now(),
             ]);
 
             foreach ($data['lines'] as $line) {
@@ -58,10 +58,10 @@ class AccountingService
 
                 JournalLine::create([
                     'journal_entry_id' => $entry->id,
-                    'account_id'       => $account->id,
-                    'type'             => $line['type'],
-                    'amount'           => $line['amount'],
-                    'notes'            => $line['notes'] ?? null,
+                    'account_id' => $account->id,
+                    'type' => $line['type'],
+                    'amount' => $line['amount'],
+                    'notes' => $line['notes'] ?? null,
                 ]);
             }
 
@@ -87,11 +87,11 @@ class AccountingService
         $vatAmount = $amount - $netAmount;
 
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date' => now()->toDateString(),
             'description' => "Room revenue — {$bookingRef}",
-            'source'      => 'booking',
-            'source_id'   => $bookingId,
-            'reference'   => $bookingRef,
+            'source' => 'booking',
+            'source_id' => $bookingId,
+            'reference' => $bookingRef,
             'lines' => [
                 ['account_code' => $cashAccountCode, 'type' => 'debit',  'amount' => $amount],
                 ['account_code' => '4100',           'type' => 'credit', 'amount' => $netAmount],
@@ -116,11 +116,11 @@ class AccountingService
         $vatAmount = $amount - $netAmount;
 
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date' => now()->toDateString(),
             'description' => "F&B revenue — {$orderNo}",
-            'source'      => 'restaurant',
-            'source_id'   => $orderId,
-            'reference'   => $orderNo,
+            'source' => 'restaurant',
+            'source_id' => $orderId,
+            'reference' => $orderNo,
             'lines' => [
                 ['account_code' => $cashAccountCode, 'type' => 'debit',  'amount' => $amount],
                 ['account_code' => '4200',           'type' => 'credit', 'amount' => $netAmount],
@@ -145,11 +145,11 @@ class AccountingService
         $vatAmount = $amount - $netAmount;
 
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date' => now()->toDateString(),
             'description' => "Laundry revenue — {$orderNo}",
-            'source'      => 'laundry',
-            'source_id'   => $orderId,
-            'reference'   => $orderNo,
+            'source' => 'laundry',
+            'source_id' => $orderId,
+            'reference' => $orderNo,
             'lines' => [
                 ['account_code' => $cashAccountCode, 'type' => 'debit',  'amount' => $amount],
                 ['account_code' => '4300',           'type' => 'credit', 'amount' => $netAmount],
@@ -171,12 +171,12 @@ class AccountingService
         string $actorId
     ): JournalEntry {
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date' => now()->toDateString(),
             'description' => "Goods received - {$grnNo}",
-            'source'      => 'procurement',
-            'source_id'   => $grnId,
+            'source' => 'procurement',
+            'source_id' => $grnId,
             'supplier_id' => $supplierId,
-            'reference'   => $grnNo,
+            'reference' => $grnNo,
             'lines' => [
                 ['account_code' => '1400', 'type' => 'debit',  'amount' => $netAmount],
                 ['account_code' => '2300', 'type' => 'debit',  'amount' => $vatAmount],
@@ -201,12 +201,12 @@ class AccountingService
         $cashAccountCode = $paymentMethod === 'cash' ? '1100' : '1200';
 
         return $this->post([
-            'date'        => $paymentDate ?? now()->toDateString(),
+            'date' => $paymentDate ?? now()->toDateString(),
             'description' => "Supplier payment - {$reference}",
-            'source'      => 'procurement',
-            'source_id'   => $sourceId,
+            'source' => 'procurement',
+            'source_id' => $sourceId,
             'supplier_id' => $supplierId,
-            'reference'   => $reference,
+            'reference' => $reference,
             'lines' => [
                 ['account_code' => '2100', 'type' => 'debit',  'amount' => $amount],
                 ['account_code' => $cashAccountCode, 'type' => 'credit', 'amount' => $amount],
@@ -230,12 +230,12 @@ class AccountingService
         $cashAccountCode = $paymentMethod === 'cash' ? '1100' : '1200';
 
         return $this->post([
-            'date'        => $paymentDate ?? now()->toDateString(),
+            'date' => $paymentDate ?? now()->toDateString(),
             'description' => "Supplier payment reversal - {$reference}",
-            'source'      => 'procurement',
-            'source_id'   => $sourceId,
+            'source' => 'procurement',
+            'source_id' => $sourceId,
             'supplier_id' => $supplierId,
-            'reference'   => $reference,
+            'reference' => $reference,
             'lines' => [
                 ['account_code' => $cashAccountCode, 'type' => 'debit',  'amount' => $amount],
                 ['account_code' => '2100', 'type' => 'credit', 'amount' => $amount],
@@ -255,11 +255,11 @@ class AccountingService
         string $actorId
     ): JournalEntry {
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date' => now()->toDateString(),
             'description' => "Petty cash expense — {$reference}",
-            'source'      => 'petty_cash',
-            'source_id'   => $sourceId,
-            'reference'   => $reference,
+            'source' => 'petty_cash',
+            'source_id' => $sourceId,
+            'reference' => $reference,
             'lines' => [
                 ['account_code' => $expenseAccountCode, 'type' => 'debit',  'amount' => $amount],
                 ['account_code' => '1100',              'type' => 'credit', 'amount' => $amount],
@@ -282,11 +282,11 @@ class AccountingService
         string $actorId
     ): JournalEntry {
         return $this->post([
-            'date'        => now()->toDateString(),
+            'date' => now()->toDateString(),
             'description' => "Payroll — {$reference}",
-            'source'      => 'payroll',
-            'source_id'   => $payrollId,
-            'reference'   => $reference,
+            'source' => 'payroll',
+            'source_id' => $payrollId,
+            'reference' => $reference,
             'lines' => [
                 ['account_code' => '6100', 'type' => 'debit',  'amount' => $grossSalary],
                 ['account_code' => '6200', 'type' => 'debit',  'amount' => $nssf_employer],

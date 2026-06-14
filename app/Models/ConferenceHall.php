@@ -1,18 +1,20 @@
 <?php
+
 // app/Models/ConferenceHall.php
 
 namespace App\Models;
 
 use App\Helpers\CurrencyHelper;
+use App\Traits\BuildingScoped;
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\HasSoftDelete;
 
 class ConferenceHall extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'name',

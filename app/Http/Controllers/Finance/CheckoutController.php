@@ -7,29 +7,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingCharge;
 use App\Models\Checkout;
-use App\Models\FinancialTransaction;
 use App\Models\FinancePayment;
-use App\Models\LaundryOrder;
-use App\Models\Order;
+use App\Models\FinancialTransaction;
+use App\Services\AccountingService;
 use App\Services\Billing\ModuleBillingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use App\Services\AccountingService;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         protected ModuleBillingService $moduleBillingService
-    ) {
-    }
+    ) {}
 
     /**
      * GET /finance/checkout/{booking}
      * Show the guest folio — all charges grouped by type.
-     * 
+     *
      * UNIFIED CHECKOUT FLOW:
      * This is the SINGLE checkout page where ALL charges are aggregated and paid.
      */
@@ -42,10 +39,10 @@ class CheckoutController extends Controller
             ->whereIn('status', ['pending', 'draft'])
             ->first();
 
-        if (!$checkout) {
+        if (! $checkout) {
             $checkout = Checkout::create([
-                'booking_id'   => $booking->id,
-                'status'       => 'pending',
+                'booking_id' => $booking->id,
+                'status' => 'pending',
                 'initiated_by' => (string) Auth::id(),
             ]);
         }
@@ -76,7 +73,7 @@ class CheckoutController extends Controller
     /**
      * POST /finance/checkout/{checkout}/process
      * Process the actual payment and complete checkout.
-     * 
+     *
      * UNIFIED CHECKOUT FLOW:
      * 1. Process payment
      * 2. Mark all BookingCharges as paid
@@ -88,9 +85,9 @@ class CheckoutController extends Controller
         abort_if(in_array($checkout->status, ['completed', 'cancelled']), 422, 'This checkout is already completed or cancelled.');
 
         $data = $request->validate([
-            'payment_method'  => 'required|in:cash_usd,cash_tzs,card_usd,card_tzs,split',
-            'discount_usd'    => 'nullable|numeric|min:0',
-            'notes'           => 'nullable|string|max:500',
+            'payment_method' => 'required|in:cash_usd,cash_tzs,card_usd,card_tzs,split',
+            'discount_usd' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
             // Split payment fields
             'cash_usd_amount' => 'required_if:payment_method,split|nullable|numeric|min:0',
             'card_usd_amount' => 'required_if:payment_method,split|nullable|numeric|min:0',
@@ -106,9 +103,8 @@ class CheckoutController extends Controller
             $checkout->calculateTotals();
             $checkout->refresh();
 
-
             // Apply discount if given
-            if (!empty($data['discount_usd'])) {
+            if (! empty($data['discount_usd'])) {
                 $checkout->update(['discount_usd' => $data['discount_usd']]);
                 $checkout->calculateTotals();
                 $checkout->refresh();
@@ -153,23 +149,23 @@ class CheckoutController extends Controller
                 'cash_tzs' => 'cash',
                 'card_usd' => 'card',
                 'card_tzs' => 'card',
-                'split'    => 'split',
+                'split' => 'split',
             ];
             $modulePaymentMethod = $paymentMethodMap[$data['payment_method']] ?? 'cash';
 
             // Update checkout record
             $checkout->update([
-                'status'         => 'completed',
+                'status' => 'completed',
                 'payment_method' => $data['payment_method'],
-                'paid_cash_usd'  => $paidCashUsd,
-                'paid_card_usd'  => $paidCardUsd,
-                'paid_cash_tzs'  => round($paidCashUsd * $exchangeRate, 2),
-                'paid_card_tzs'  => round($paidCardUsd * $exchangeRate, 2),
+                'paid_cash_usd' => $paidCashUsd,
+                'paid_card_usd' => $paidCardUsd,
+                'paid_cash_tzs' => round($paidCashUsd * $exchangeRate, 2),
+                'paid_card_tzs' => round($paidCardUsd * $exchangeRate, 2),
                 'total_paid_usd' => $totalPaidUsd,
                 'change_due_usd' => $changeDueUsd,
-                'notes'          => $data['notes'] ?? null,
-                'completed_by'   => (string) Auth::id(),
-                'completed_at'   => now(),
+                'notes' => $data['notes'] ?? null,
+                'completed_by' => (string) Auth::id(),
+                'completed_at' => now(),
             ]);
 
             // Get all unpaid charges before marking them paid
@@ -181,7 +177,7 @@ class CheckoutController extends Controller
             BookingCharge::where('booking_id', $checkout->booking_id)
                 ->where('status', 'unpaid')
                 ->update([
-                    'status'      => 'paid',
+                    'status' => 'paid',
                     'checkout_id' => $checkout->id,
                 ]);
 
@@ -204,31 +200,31 @@ class CheckoutController extends Controller
                 : (str_contains($data['payment_method'], 'cash') ? 'cash' : 'card');
 
             $payment = FinancePayment::create([
-                'payment_type'  => 'checkout',
-                'checkout_id'   => $checkout->id,
-                'booking_id'    => $checkout->booking_id,
-                'currency'      => $paymentCurrency,
-                'amount'        => $paymentAmount,
-                'amount_usd'    => $grandTotalUsd,
+                'payment_type' => 'checkout',
+                'checkout_id' => $checkout->id,
+                'booking_id' => $checkout->booking_id,
+                'currency' => $paymentCurrency,
+                'amount' => $paymentAmount,
+                'amount_usd' => $grandTotalUsd,
                 'exchange_rate' => $exchangeRate,
-                'method'        => $financeMethod,
-                'status'        => 'completed',
-                'created_by'    => (string) Auth::id(),
-                'paid_at'       => now(),
+                'method' => $financeMethod,
+                'status' => 'completed',
+                'created_by' => (string) Auth::id(),
+                'paid_at' => now(),
             ]);
 
             // Write immutable financial transaction record
             FinancialTransaction::record([
-                'type'           => 'checkout_payment',
-                'source_module'  => 'accommodation',
-                'payment_id'     => $payment->id,
-                'booking_id'     => $checkout->booking_id,
-                'currency'       => $payment->currency,
-                'amount'         => $paymentAmount,
-                'amount_usd'     => $grandTotalUsd,
-                'exchange_rate'  => $exchangeRate,
+                'type' => 'checkout_payment',
+                'source_module' => 'accommodation',
+                'payment_id' => $payment->id,
+                'booking_id' => $checkout->booking_id,
+                'currency' => $payment->currency,
+                'amount' => $paymentAmount,
+                'amount_usd' => $grandTotalUsd,
+                'exchange_rate' => $exchangeRate,
                 'payment_method' => $financeMethod,
-                'description'    => "Guest checkout — Receipt {$checkout->receipt_number}",
+                'description' => "Guest checkout — Receipt {$checkout->receipt_number}",
             ], (string) Auth::id());
 
             // Post to accounting journal (room revenue)
@@ -250,7 +246,7 @@ class CheckoutController extends Controller
 
     /**
      * Finalize related module orders after checkout payment.
-     * 
+     *
      * This marks:
      * - Restaurant/Bar orders as 'settled'
      * - Laundry orders as 'settled'
@@ -262,26 +258,26 @@ class CheckoutController extends Controller
      */
     public function addCharge(Request $request, Checkout $checkout): RedirectResponse
     {
-        abort_if(!in_array($checkout->status, ['pending', 'draft']), 422, 'Cannot add charges to a completed or cancelled checkout.');
+        abort_if(! in_array($checkout->status, ['pending', 'draft']), 422, 'Cannot add charges to a completed or cancelled checkout.');
 
         $data = $request->validate([
             'charge_type' => 'required|string|max:50',
             'description' => 'required|string|max:255',
-            'amount'      => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0.01',
         ]);
 
         $exchangeRate = CurrencyHelper::getExchangeRate();
 
         BookingCharge::create([
-            'booking_id'  => $checkout->booking_id,
+            'booking_id' => $checkout->booking_id,
             'checkout_id' => $checkout->id,
             'charge_type' => $data['charge_type'],
             'description' => $data['description'],
-            'amount'      => $data['amount'],
-            'currency'    => 'USD',
-            'amount_tzs'  => round($data['amount'] * $exchangeRate, 2),
-            'status'      => 'unpaid',
-            'created_by'  => (string) Auth::id(),
+            'amount' => $data['amount'],
+            'currency' => 'USD',
+            'amount_tzs' => round($data['amount'] * $exchangeRate, 2),
+            'status' => 'unpaid',
+            'created_by' => (string) Auth::id(),
         ]);
 
         return redirect()
@@ -303,7 +299,7 @@ class CheckoutController extends Controller
 
         $checkout->update([
             'status' => 'draft',
-            'notes'  => $request->input('notes') ?: $checkout->notes,
+            'notes' => $request->input('notes') ?: $checkout->notes,
         ]);
 
         return redirect()

@@ -3,17 +3,14 @@
 namespace App\Http\Controllers\Laundry;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendLaundryReadyJob;
 use App\Models\Booking;
 use App\Models\BookingCharge;
-use App\Models\FinancePayment;
-use App\Models\FinancialTransaction;
 use App\Models\LaundryOrder;
 use App\Models\LaundryOrderItem;
 use App\Models\LaundryService;
 use App\Models\LaundryServiceItem;
-use App\Models\SystemSetting;
 use App\Models\User;
-use App\Services\AccountingService;
 use App\Services\Billing\ModuleBillingService;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
@@ -32,14 +29,14 @@ class LaundryOrderController extends Controller
     public function index(Request $request): View
     {
         $orders = LaundryOrder::with(['items.serviceItem.service', 'receiver'])
-            ->when($request->status,        fn ($q) => $q->where('status', $request->status))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->customer_type, fn ($q) => $q->where('customer_type', $request->customer_type))
-            ->when($request->date,          fn ($q) => $q->whereDate('created_at', $request->date))
+            ->when($request->date, fn ($q) => $q->whereDate('created_at', $request->date))
             ->when($request->search, fn ($q) => $q->where(function ($q2) use ($request) {
-                $q2->where('order_number',    'like', '%' . $request->search . '%')
-                   ->orWhere('customer_name', 'like', '%' . $request->search . '%')
-                   ->orWhere('room_number',   'like', '%' . $request->search . '%')
-                   ->orWhere('customer_phone', 'like', '%' . $request->search . '%');
+                $q2->where('order_number', 'like', '%'.$request->search.'%')
+                    ->orWhere('customer_name', 'like', '%'.$request->search.'%')
+                    ->orWhere('room_number', 'like', '%'.$request->search.'%')
+                    ->orWhere('customer_phone', 'like', '%'.$request->search.'%');
             }))
             ->latest()
             ->paginate(25);
@@ -70,20 +67,20 @@ class LaundryOrderController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'customer_type'           => 'required|in:guest,walkin',
-            'booking_id'              => 'required_if:customer_type,guest|nullable|uuid',
-            'room_number'             => 'nullable|string|max:20',
-            'customer_name'           => 'required_if:customer_type,walkin|nullable|string|max:150',
-            'customer_phone'          => 'nullable|string|max:30',
-            'special_instructions'    => 'nullable|string|max:500',
-            'items'                   => 'required|array|min:1',
+            'customer_type' => 'required|in:guest,walkin',
+            'booking_id' => 'required_if:customer_type,guest|nullable|uuid',
+            'room_number' => 'nullable|string|max:20',
+            'customer_name' => 'required_if:customer_type,walkin|nullable|string|max:150',
+            'customer_phone' => 'nullable|string|max:30',
+            'special_instructions' => 'nullable|string|max:500',
+            'items' => 'required|array|min:1',
             'items.*.service_item_id' => 'required|uuid|exists:laundry_service_items,id',
-            'items.*.quantity'        => 'required|integer|min:1',
-            'items.*.notes'           => 'nullable|string|max:255',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.notes' => 'nullable|string|max:255',
         ]);
 
         // If guest, auto-fill room_number from booking
-        if ($data['customer_type'] === 'guest' && !empty($data['booking_id'])) {
+        if ($data['customer_type'] === 'guest' && ! empty($data['booking_id'])) {
             $booking = Booking::with('room')->find($data['booking_id']);
             if ($booking && $booking->room && empty($data['room_number'])) {
                 $data['room_number'] = $booking->room->room_number;
@@ -102,27 +99,27 @@ class LaundryOrderController extends Controller
             }
 
             $order = LaundryOrder::create([
-                'customer_type'       => $data['customer_type'],
-                'booking_id'          => $data['booking_id'] ?? null,
-                'room_number'         => $data['room_number'] ?? null,
-                'customer_name'       => $data['customer_name'] ?? null,
-                'customer_phone'      => $data['customer_phone'] ?? null,
+                'customer_type' => $data['customer_type'],
+                'booking_id' => $data['booking_id'] ?? null,
+                'room_number' => $data['room_number'] ?? null,
+                'customer_name' => $data['customer_name'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
                 'special_instructions' => $data['special_instructions'] ?? null,
-                'status'              => 'received',
-                'expected_ready_at'   => now()->addHours($maxTurnaround),
-                'received_by'         => (string) Auth::id(),
+                'status' => 'received',
+                'expected_ready_at' => now()->addHours($maxTurnaround),
+                'received_by' => (string) Auth::id(),
             ]);
 
             foreach ($data['items'] as $item) {
                 $serviceItem = LaundryServiceItem::findOrFail($item['service_item_id']);
 
                 LaundryOrderItem::create([
-                    'laundry_order_id'        => $order->id,
+                    'laundry_order_id' => $order->id,
                     'laundry_service_item_id' => $serviceItem->id,
-                    'quantity'                => $item['quantity'],
-                    'unit_price'              => $serviceItem->price,
-                    'subtotal'                => $serviceItem->price * $item['quantity'],
-                    'notes'                   => $item['notes'] ?? null,
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $serviceItem->price,
+                    'subtotal' => $serviceItem->price * $item['quantity'],
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
 
@@ -138,22 +135,22 @@ class LaundryOrderController extends Controller
             ->toArray();
 
         $this->notificationService->createForUsers($userIds, [
-            'type'           => 'new_laundry_order',
-            'title'          => 'New Laundry Order Received',
-            'body'           => "Order {$order->order_number} — " .
+            'type' => 'new_laundry_order',
+            'title' => 'New Laundry Order Received',
+            'body' => "Order {$order->order_number} — ".
                                 ($order->customer_type === 'guest'
                                     ? "Room {$order->room_number}"
-                                    : $order->customer_name) .
-                                " — {$order->items->count()} item(s). Ready by: " .
+                                    : $order->customer_name).
+                                " — {$order->items->count()} item(s). Ready by: ".
                                 $order->expected_ready_at->format('d M H:i'),
             'reference_type' => 'laundry_order',
-            'reference_id'   => $order->id,
-            'action_url'     => route('laundry.orders.show', $order->id),
+            'reference_id' => $order->id,
+            'action_url' => route('laundry.orders.show', $order->id),
         ]);
 
         return redirect()
             ->route('laundry.orders.show', $order)
-            ->with('success', "Order {$order->order_number} created. Ready by: " .
+            ->with('success', "Order {$order->order_number} created. Ready by: ".
                               $order->expected_ready_at->format('d M Y H:i'));
     }
 
@@ -174,7 +171,7 @@ class LaundryOrderController extends Controller
         abort_if($laundryOrder->status !== 'received', 422, 'Only received orders can be started.');
 
         $laundryOrder->update([
-            'status'       => 'processing',
+            'status' => 'processing',
             'processed_by' => (string) Auth::id(),
         ]);
 
@@ -203,8 +200,8 @@ class LaundryOrderController extends Controller
         abort_if($laundryOrder->status !== 'pending_confirmation', 422, 'Order must be pending confirmation before it can be confirmed.');
 
         $laundryOrder->update([
-            'status'       => 'ready',
-            'ready_at'     => now(),
+            'status' => 'ready',
+            'ready_at' => now(),
             'confirmed_by' => (string) Auth::id(),
             'confirmed_at' => now(),
         ]);
@@ -216,23 +213,23 @@ class LaundryOrderController extends Controller
                 ->toArray();
 
             $this->notificationService->createForUsers($frontDeskIds, [
-                'type'           => 'laundry_ready',
-                'title'          => 'Laundry Ready for Delivery',
-                'body'           => "Order {$laundryOrder->order_number} — Room {$laundryOrder->room_number} is ready.",
+                'type' => 'laundry_ready',
+                'title' => 'Laundry Ready for Delivery',
+                'body' => "Order {$laundryOrder->order_number} — Room {$laundryOrder->room_number} is ready.",
                 'reference_type' => 'laundry_order',
-                'reference_id'   => $laundryOrder->id,
-                'action_url'     => route('laundry.orders.show', $laundryOrder->id),
+                'reference_id' => $laundryOrder->id,
+                'action_url' => route('laundry.orders.show', $laundryOrder->id),
             ]);
         }
 
         // Send SMS/Email notification to guest/walk-in that laundry is ready
         $guest = $laundryOrder->booking?->guest;
-        \App\Jobs\SendLaundryReadyJob::dispatch([
+        SendLaundryReadyJob::dispatch([
             'order_number' => $laundryOrder->order_number,
-            'email'        => $guest?->email ?? null,
-            'phone'        => $guest?->phone_number ?? $laundryOrder->customer_phone ?? null,
-            'room_number'  => $laundryOrder->room_number ?? null,
-            'total'        => $laundryOrder->total ?? 0,
+            'email' => $guest?->email ?? null,
+            'phone' => $guest?->phone_number ?? $laundryOrder->customer_phone ?? null,
+            'room_number' => $laundryOrder->room_number ?? null,
+            'total' => $laundryOrder->total ?? 0,
         ])->onQueue('notifications');
 
         return redirect()
@@ -250,7 +247,7 @@ class LaundryOrderController extends Controller
             app(ModuleBillingService::class)->syncLaundryCharge($laundryOrder, (string) Auth::id());
 
             $laundryOrder->update([
-                'status'       => 'delivered',
+                'status' => 'delivered',
                 'delivered_at' => now(),
                 'delivered_by' => (string) Auth::id(),
             ]);
@@ -264,7 +261,7 @@ class LaundryOrderController extends Controller
     // POST /laundry/orders/{laundryOrder}/collected
     public function collected(LaundryOrder $laundryOrder): RedirectResponse
     {
-        abort_if(!in_array($laundryOrder->status, ['ready', 'delivered', 'settled']), 422, 'Order must be ready, delivered, or settled before collection.');
+        abort_if(! in_array($laundryOrder->status, ['ready', 'delivered', 'settled']), 422, 'Order must be ready, delivered, or settled before collection.');
         abort_if($laundryOrder->customer_type !== 'walkin', 422, 'Collected is only for walk-in orders.');
         abort_if($laundryOrder->status === 'settled' && $laundryOrder->collected_at, 422, 'Order already collected.');
 
@@ -284,7 +281,7 @@ class LaundryOrderController extends Controller
 
     /**
      * POST /laundry/orders/{laundryOrder}/settle
-     * 
+     *
      * UNIFIED CHECKOUT FLOW:
      * - Guest orders: Create BookingCharge and redirect to Finance Checkout
      * - Walk-in orders: Use WalkinPaymentController (direct payment modal)
@@ -299,12 +296,12 @@ class LaundryOrderController extends Controller
         // Walk-in direct payments are handled by WalkinPaymentController
         if ($laundryOrder->customer_type === 'guest') {
             $request->validate([
-                'discount'   => 'nullable|numeric|min:0',
+                'discount' => 'nullable|numeric|min:0',
                 'booking_id' => 'nullable|uuid|exists:bookings,id',
             ]);
-            
+
             $bookingId = $request->booking_id ?? $laundryOrder->booking_id;
-            abort_if(!$bookingId, 422, 'Booking ID is required for guest laundry orders.');
+            abort_if(! $bookingId, 422, 'Booking ID is required for guest laundry orders.');
         } else {
             // Walk-in orders can settle directly (handled by WalkinPaymentController)
             // This path should NOT be used for walk-ins - they use the modal
@@ -319,11 +316,11 @@ class LaundryOrderController extends Controller
                 // Check if user has permission to apply discount
                 $roleName = Auth::user()?->role?->name;
                 $canApplyDiscount = in_array($roleName, ['laundry_manager', 'manager'], true);
-                
-                if (!$canApplyDiscount) {
+
+                if (! $canApplyDiscount) {
                     abort(403, 'Only Laundry Manager or Manager can apply discounts to laundry orders.');
                 }
-                
+
                 $laundryOrder->update(['discount' => $request->discount]);
                 $laundryOrder->load('items');
                 $laundryOrder->recalculate();
@@ -332,9 +329,9 @@ class LaundryOrderController extends Controller
 
             // Mark order as charged (NOT settled - will be settled at checkout)
             $laundryOrder->update([
-                'status'         => 'charged',
+                'status' => 'charged',
                 'payment_method' => 'charge_to_booking',
-                'booking_id'     => $bookingId,
+                'booking_id' => $bookingId,
             ]);
 
             app(ModuleBillingService::class)->syncLaundryCharge($laundryOrder->fresh(), (string) Auth::id());

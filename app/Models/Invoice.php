@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
 
 class Invoice extends Model
 {
-    use HasUuids, HasSoftDelete;
+    use HasSoftDelete, HasUuids;
 
     protected $fillable = [
         'invoice_no', 'invoice_type', 'guest_id', 'guest_name',
@@ -19,21 +19,28 @@ class Invoice extends Model
 
     protected $casts = [
         'invoice_date' => 'date',
-        'subtotal'     => 'decimal:2',
-        'discount'     => 'decimal:2',
-        'tax_amount'   => 'decimal:2',
-        'total'        => 'decimal:2',
-        'deleted_at'   => 'datetime',
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'deleted_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (Invoice $inv) {
             $count = self::whereDate('created_at', today())->count() + 1;
-            $inv->invoice_no = 'INV-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $inv->invoice_no = 'INV-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
         });
     }
 
-    public function lines()   { return $this->hasMany(InvoiceLine::class); }
-    public function issuer()  { return $this->belongsTo(User::class, 'issued_by'); }
+    public function lines()
+    {
+        return $this->hasMany(InvoiceLine::class);
+    }
+
+    public function issuer()
+    {
+        return $this->belongsTo(User::class, 'issued_by');
+    }
 }

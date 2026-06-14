@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Building;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\BuildingModuleGate;
 use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +17,10 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('role')->latest()->paginate(15);
+        $users = User::with('role')
+            ->forUserBuilding()
+            ->latest()
+            ->paginate(15);
 
         return view('users.index', compact('users'));
     }
@@ -23,8 +28,9 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::whereNotIn('name', [Role::ADMIN])->get();
+        $buildings = Building::active()->orderBy('name')->get();
 
-        return view('users.create', compact('roles'));
+        return view('users.create', compact('roles', 'buildings'));
     }
 
     public function store(Request $request)
@@ -50,6 +56,7 @@ class UserController extends Controller
             'login_type' => 'required|in:full,staff,both',
             'property_code' => 'nullable|string|max:50',
             'passkey' => 'nullable|string|digits:4|numeric|confirmed',
+            'building_id' => 'nullable|uuid|exists:buildings,id',
             'is_active' => 'boolean',
         ]);
 
@@ -68,12 +75,18 @@ class UserController extends Controller
             unset($validated['passkey']);
         }
 
+        $role = Role::find($validated['role_id']);
+        if ($role && ! $this->roleMatchesBuildingModules($role->name, $validated['building_id'] ?? null)) {
+            return back()->withErrors(['building_id' => 'The selected building does not have the required module active for this role.'])->withInput();
+        }
+
         $user = new User;
         $user->fill($validated);
         $user->role_id = $validated['role_id'];  // Explicitly set (not mass-assignable)
         $user->is_active = $validated['is_active'] ?? true;  // Explicitly set
         $user->login_type = $validated['login_type'];
         $user->property_code = $validated['property_code'] ?? null;
+        $user->building_id = $validated['building_id'] ?? null;
         $user->save();
 
         Log::info('Admin created user with phone number.', [
@@ -88,8 +101,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::whereNotIn('name', [Role::ADMIN])->get();
+        $buildings = Building::active()->orderBy('name')->get();
 
-        return view('users.edit', compact('user', 'roles'));
+        return view('users.edit', compact('user', 'roles', 'buildings'));
     }
 
     public function update(Request $request, User $user)
@@ -115,6 +129,7 @@ class UserController extends Controller
             'login_type' => 'required|in:full,staff,both',
             'property_code' => 'nullable|string|max:50',
             'passkey' => 'nullable|string|digits:4|numeric|confirmed',
+            'building_id' => 'nullable|uuid|exists:buildings,id',
             'is_active' => 'boolean',
         ]);
 
@@ -139,18 +154,25 @@ class UserController extends Controller
             unset($validated['passkey']);
         }
 
+        $role = Role::find($validated['role_id']);
+        if ($role && ! $this->roleMatchesBuildingModules($role->name, $validated['building_id'] ?? null)) {
+            return back()->withErrors(['building_id' => 'The selected building does not have the required module active for this role.'])->withInput();
+        }
+
         // Separate guarded fields from mass-assignable fields
         $roleId = $validated['role_id'];
         $isActive = $validated['is_active'] ?? $user->is_active;
         $loginType = $validated['login_type'];
         $propertyCode = $validated['property_code'] ?? null;
-        unset($validated['role_id'], $validated['is_active'], $validated['login_type'], $validated['property_code']);
+        $buildingId = $validated['building_id'] ?? null;
+        unset($validated['role_id'], $validated['is_active'], $validated['login_type'], $validated['property_code'], $validated['building_id']);
 
         $user->fill($validated);
         $user->role_id = $roleId;  // Explicitly set
         $user->is_active = $isActive;  // Explicitly set
         $user->login_type = $loginType;
         $user->property_code = $propertyCode;
+        $user->building_id = $buildingId;
         $user->save();
 
         if ($previousPhone !== $user->phone) {
@@ -184,5 +206,22 @@ class UserController extends Controller
         $this->restoreModel($user);
 
         return redirect()->route('users.index')->with('success', 'User restored successfully.');
+    }
+
+    protected function roleMatchesBuildingModules(string $roleName, ?string $buildingId): bool
+    {
+        if (! $buildingId) {
+            return true;
+        }
+
+        if (in_array(strtolower($roleName), [Role::WAITER, Role::RESTAURANT_MANAGER, Role::CASHIER], true)) {
+            return BuildingModuleGate::hasRestaurant($buildingId);
+        }
+
+        if (strtolower($roleName) === Role::BAR_TENDER) {
+            return BuildingModuleGate::hasBar($buildingId);
+        }
+
+        return true;
     }
 }

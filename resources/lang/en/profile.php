@@ -4,7 +4,7 @@ return [
     // Page titles
     'title' => 'Profile',
     'page_title' => 'Profile Settings',
-    
+
     // Section headers
     'sections' => [
         'profile_information' => 'Profile Information',
@@ -12,7 +12,7 @@ return [
         'update_password' => 'Update Password',
         'delete_account' => 'Delete Account',
     ],
-    
+
     // Subtitles/descriptions
     'subtitles' => [
         'profile_info' => "Update your account's profile information and email address.",
@@ -22,7 +22,7 @@ return [
         'delete_warning' => 'Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.',
         'delete_confirm_warning' => 'Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.',
     ],
-    
+
     // Form fields
     'fields' => [
         'name' => 'Name',
@@ -34,7 +34,7 @@ return [
         'confirm_new_password' => 'Confirm New Password',
         'password' => 'Password',
     ],
-    
+
     // Actions
     'actions' => [
         'save' => 'Save',
@@ -43,7 +43,7 @@ return [
         'delete_account' => 'Delete Account',
         'cancel' => 'Cancel',
     ],
-    
+
     // Messages
     'messages' => [
         'saved' => 'Saved.',

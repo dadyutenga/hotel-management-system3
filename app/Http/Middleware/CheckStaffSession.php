@@ -14,7 +14,7 @@ class CheckStaffSession
         $token = $request->session()->get('staff_token');
         $userId = $request->session()->get('staff_user_id');
 
-        if (!$token || !$userId) {
+        if (! $token || ! $userId) {
             return redirect()->route('staff.login');
         }
 
@@ -23,14 +23,16 @@ class CheckStaffSession
             ->whereNull('logged_out_at')
             ->first();
 
-        if (!$session) {
+        if (! $session) {
             $request->session()->forget(['staff_token', 'staff_user_id']);
+
             return redirect()->route('staff.login');
         }
 
         if ($session->session_expires_at && $session->session_expires_at->isPast()) {
             $session->update(['logged_out_at' => now()]);
             $request->session()->forget(['staff_token', 'staff_user_id']);
+
             return redirect()->route('staff.login');
         }
 

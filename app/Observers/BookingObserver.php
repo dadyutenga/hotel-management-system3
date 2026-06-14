@@ -31,9 +31,9 @@ class BookingObserver
     {
         if ($booking->isDirty('status')) {
             match ($booking->status) {
-                'checked_in'  => $booking->room?->update(['status' => 'occupied']),
+                'checked_in' => $booking->room?->update(['status' => 'occupied']),
                 'checked_out' => $booking->room?->update(['status' => 'dirty']),
-                'cancelled'   => $booking->room?->update(['status' => 'available']),
+                'cancelled' => $booking->room?->update(['status' => 'available']),
                 default => null,
             };
 

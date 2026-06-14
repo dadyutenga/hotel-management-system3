@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class MenuOptionValue extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
+        'building_id',
         'menu_option_group_id',
         'label',
         'price_delta',
@@ -29,5 +31,9 @@ class MenuOptionValue extends Model
     {
         return $this->belongsTo(MenuOptionGroup::class, 'menu_option_group_id');
     }
-}
 
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+}

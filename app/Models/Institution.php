@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Institution extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'name',
@@ -28,5 +28,4 @@ class Institution extends Model
     {
         return $this->hasMany(ConferenceBooking::class);
     }
-
 }

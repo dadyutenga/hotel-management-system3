@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\JournalEntry;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\StoreNotification;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class JournalEntryController extends Controller
 {
@@ -42,6 +42,7 @@ class JournalEntryController extends Controller
     public function create(): View
     {
         $accounts = Account::where('is_active', true)->orderBy('code')->get();
+
         return view('accounting.journal.create', [
             'accounts' => $accounts,
             'journalEntry' => null,
@@ -56,14 +57,14 @@ class JournalEntryController extends Controller
 
         DB::transaction(function () use ($validated) {
             $entry = JournalEntry::create([
-                'entry_date'   => $validated['entry_date'],
-                'description'  => $validated['description'],
-                'reference'    => $validated['reference'] ?? null,
-                'source'       => 'manual',
-                'total_debit'  => $validated['totals']['debit'],
+                'entry_date' => $validated['entry_date'],
+                'description' => $validated['description'],
+                'reference' => $validated['reference'] ?? null,
+                'source' => 'manual',
+                'total_debit' => $validated['totals']['debit'],
                 'total_credit' => $validated['totals']['credit'],
-                'status'       => 'draft',
-                'created_by'   => auth()->id(),
+                'status' => 'draft',
+                'created_by' => auth()->id(),
             ]);
 
             $this->syncLines($entry, $validated['lines']);
@@ -91,10 +92,10 @@ class JournalEntryController extends Controller
 
         DB::transaction(function () use ($journalEntry, $validated) {
             $journalEntry->update([
-                'entry_date'   => $validated['entry_date'],
-                'description'  => $validated['description'],
-                'reference'    => $validated['reference'] ?? null,
-                'total_debit'  => $validated['totals']['debit'],
+                'entry_date' => $validated['entry_date'],
+                'description' => $validated['description'],
+                'reference' => $validated['reference'] ?? null,
+                'total_debit' => $validated['totals']['debit'],
                 'total_credit' => $validated['totals']['credit'],
             ]);
 
@@ -158,29 +159,29 @@ class JournalEntryController extends Controller
 
         DB::transaction(function () use ($journalEntry, $data) {
             $reverseEntry = JournalEntry::create([
-                'entry_date'   => now()->toDateString(),
-                'description'  => __('accountant.journal.messages.reversal_description', [
+                'entry_date' => now()->toDateString(),
+                'description' => __('accountant.journal.messages.reversal_description', [
                     'entry' => $journalEntry->entry_no,
                     'reason' => $data['reason'],
                 ]),
-                'reference'    => 'REV-' . $journalEntry->entry_no,
-                'source'       => $journalEntry->source,
-                'source_id'    => $journalEntry->source_id,
-                'supplier_id'  => $journalEntry->supplier_id,
-                'total_debit'  => $journalEntry->total_credit,
+                'reference' => 'REV-'.$journalEntry->entry_no,
+                'source' => $journalEntry->source,
+                'source_id' => $journalEntry->source_id,
+                'supplier_id' => $journalEntry->supplier_id,
+                'total_debit' => $journalEntry->total_credit,
                 'total_credit' => $journalEntry->total_debit,
-                'status'       => 'posted',
-                'created_by'   => auth()->id(),
-                'posted_by'    => auth()->id(),
-                'posted_at'    => now(),
+                'status' => 'posted',
+                'created_by' => auth()->id(),
+                'posted_by' => auth()->id(),
+                'posted_at' => now(),
             ]);
 
             foreach ($journalEntry->lines as $line) {
                 $reverseEntry->lines()->create([
                     'account_id' => $line->account_id,
-                    'type'       => $line->type === 'debit' ? 'credit' : 'debit',
-                    'amount'     => $line->amount,
-                    'notes'      => __('accountant.journal.messages.reversal_line_note', ['entry' => $journalEntry->entry_no]),
+                    'type' => $line->type === 'debit' ? 'credit' : 'debit',
+                    'amount' => $line->amount,
+                    'notes' => __('accountant.journal.messages.reversal_line_note', ['entry' => $journalEntry->entry_no]),
                 ]);
             }
 
@@ -204,6 +205,7 @@ class JournalEntryController extends Controller
     public function show(JournalEntry $journalEntry): View
     {
         $journalEntry->load(['lines.account', 'creator', 'poster', 'supplier']);
+
         return view('accounting.journal.show', compact('journalEntry'));
     }
 
@@ -219,7 +221,7 @@ class JournalEntryController extends Controller
     private function validateEntryPayload(Request $request): array
     {
         $normalizedLines = collect($request->input('lines', []))
-            ->filter(fn ($line) => is_array($line) && !empty($line['account_id']) && !empty($line['amount']))
+            ->filter(fn ($line) => is_array($line) && ! empty($line['account_id']) && ! empty($line['amount']))
             ->values()
             ->all();
 
@@ -262,7 +264,7 @@ class JournalEntryController extends Controller
 
     private function syncLines(JournalEntry $journalEntry, array $lines): void
     {
-        $journalEntry->lines->each(fn($line) => $this->softDelete($line));
+        $journalEntry->lines->each(fn ($line) => $this->softDelete($line));
 
         foreach ($lines as $line) {
             $journalEntry->lines()->create([
@@ -276,7 +278,7 @@ class JournalEntryController extends Controller
 
     private function ensureCanCreateDraft(): void
     {
-        if (!auth()->user()?->hasRole('ACCOUNTANT')) {
+        if (! auth()->user()?->hasRole('ACCOUNTANT')) {
             abort(403);
         }
     }
@@ -292,7 +294,7 @@ class JournalEntryController extends Controller
 
     private function ensureCanPost(): void
     {
-        if (!auth()->user()?->hasAnyRole(['ACCOUNTANT', 'manager'])) {
+        if (! auth()->user()?->hasAnyRole(['ACCOUNTANT', 'manager'])) {
             abort(403);
         }
     }

@@ -2,42 +2,51 @@
 
 namespace App\Models;
 
-use App\Traits\HasUuid;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 class Room extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     const STATUS_AVAILABLE = 'available';
+
     const STATUS_NEEDS_CLEANING = 'dirty';
+
     const STATUS_OUT_OF_ORDER = 'out_of_order';
+
     const STATUS_OCCUPIED = 'occupied';
+
     const STATUS_RESERVED = 'reserved';
 
     protected $fillable = [
-        'floor_id', 'room_type_id', 'room_number', 'status', 'is_active',
+        'building_id', 'floor_id', 'room_type_id', 'room_number', 'status', 'is_active',
         'cleaning_assigned_to', 'cleaning_assigned_at',
         'cleaning_completed_at', 'cleaning_confirmed_by', 'cleaning_confirmed_at',
         'out_of_order_reason', 'out_of_order_set_by', 'out_of_order_set_at',
     ];
 
     protected $casts = [
-        'is_active'              => 'boolean',
-        'cleaning_assigned_at'   => 'datetime',
-        'cleaning_completed_at'  => 'datetime',
-        'cleaning_confirmed_at'  => 'datetime',
-        'out_of_order_set_at'    => 'datetime',
-        'deleted_at'             => 'datetime',
+        'is_active' => 'boolean',
+        'cleaning_assigned_at' => 'datetime',
+        'cleaning_completed_at' => 'datetime',
+        'cleaning_confirmed_at' => 'datetime',
+        'out_of_order_set_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function floor(): BelongsTo
     {
         return $this->belongsTo(Floor::class);
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function roomType(): BelongsTo
@@ -81,10 +90,19 @@ class Room extends Model
     public function getImageAttribute(): string
     {
         if ($this->roomType && $this->roomType->hasImage()) {
-            return $this->roomType->getFirstMediaUrl('room_type_image', 'medium') 
+            return $this->roomType->getFirstMediaUrl('room_type_image', 'medium')
                 ?: $this->roomType->getFirstMediaUrl('room_type_image');
         }
+
         return asset('images/room-placeholder.svg');
+    }
+
+    /**
+     * Derive building_id from the stored value or the floor's building.
+     */
+    public function getBuildingIdAttribute(): ?string
+    {
+        return $this->attributes['building_id'] ?? $this->floor?->building_id;
     }
 
     /**
@@ -97,14 +115,14 @@ class Room extends Model
             ->where('is_active', true)
             ->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in_date', '<', $checkOut)
-                  ->where('check_out_date', '>', $checkIn)
-                  ->whereNotIn('status', ['cancelled', 'no_show', 'checked_out']);
+                    ->where('check_out_date', '>', $checkIn)
+                    ->whereNotIn('status', ['cancelled', 'no_show', 'checked_out']);
             })
             ->whereDoesntHave('reservations', function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in_date', '<', $checkOut)
-                  ->where('check_out_date', '>', $checkIn)
-                  ->whereNotIn('status', ['cancelled', 'no_show', 'converted'])
-                  ->whereNull('booking_id');
+                    ->where('check_out_date', '>', $checkIn)
+                    ->whereNotIn('status', ['cancelled', 'no_show', 'converted'])
+                    ->whereNull('booking_id');
             });
     }
 }

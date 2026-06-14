@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 /**
  * Receipt — stores all generated receipts for printing/reprinting.
- * 
+ *
  * Links to any receiptable model (LaundryOrder, Order, Checkout, WalkinTransaction, etc.)
  * Ensures idempotent receipt number generation (reprint uses same number).
  */
@@ -48,17 +48,17 @@ class Receipt extends Model
 
     protected $casts = [
         'items_snapshot' => 'array',
-        'subtotal'       => 'decimal:2',
-        'discount'       => 'decimal:2',
-        'tax'            => 'decimal:2',
-        'total'          => 'decimal:2',
-        'amount_paid'    => 'decimal:2',
-        'balance'        => 'decimal:2',
-        'is_refund'      => 'boolean',
-        'issued_at'      => 'datetime',
-        'printed_at'     => 'datetime',
-        'print_count'    => 'integer',
-        'deleted_at'     => 'datetime',
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'total' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
+        'balance' => 'decimal:2',
+        'is_refund' => 'boolean',
+        'issued_at' => 'datetime',
+        'printed_at' => 'datetime',
+        'print_count' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -89,7 +89,7 @@ class Receipt extends Model
     {
         $year = date('Y');
         $prefix = "HMS-{$year}-";
-        
+
         $lastReceipt = self::where('receipt_number', 'like', "{$prefix}%")
             ->orderByDesc('receipt_number')
             ->first();
@@ -101,7 +101,7 @@ class Receipt extends Model
             $nextNum = 1;
         }
 
-        return $prefix . str_pad($nextNum, 6, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($nextNum, 6, '0', STR_PAD_LEFT);
     }
 
     // ── Relationships ────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ class Receipt extends Model
     public function markPrinted(): void
     {
         $this->update([
-            'printed_at'  => now(),
+            'printed_at' => now(),
             'print_count' => $this->print_count + 1,
         ]);
     }
@@ -150,7 +150,7 @@ class Receipt extends Model
      */
     public function getFormattedTotalAttribute(): string
     {
-        return number_format($this->total, 0) . ' ' . ($this->currency ?? 'TZS');
+        return number_format($this->total, 0).' '.($this->currency ?? 'TZS');
     }
 
     /**
@@ -159,11 +159,11 @@ class Receipt extends Model
     public function getPaymentStatusLabelAttribute(): string
     {
         return match ($this->payment_status) {
-            'paid'     => 'PAID',
-            'partial'  => 'PARTIAL PAYMENT',
-            'unpaid'   => 'UNPAID',
+            'paid' => 'PAID',
+            'partial' => 'PARTIAL PAYMENT',
+            'unpaid' => 'UNPAID',
             'refunded' => 'REFUNDED',
-            default    => strtoupper($this->payment_status ?? 'UNKNOWN'),
+            default => strtoupper($this->payment_status ?? 'UNKNOWN'),
         };
     }
 
@@ -173,16 +173,16 @@ class Receipt extends Model
     public function getModuleLabelAttribute(): string
     {
         return match ($this->module) {
-            'laundry'     => 'Laundry Service',
-            'restaurant'  => 'Restaurant',
-            'bar'         => 'Bar',
-            'checkout'    => 'Hotel Checkout',
-            'walkin'      => 'Walk-in Sale',
-            'conference'  => 'Conference',
+            'laundry' => 'Laundry Service',
+            'restaurant' => 'Restaurant',
+            'bar' => 'Bar',
+            'checkout' => 'Hotel Checkout',
+            'walkin' => 'Walk-in Sale',
+            'conference' => 'Conference',
             'procurement' => 'Procurement',
-            'store'       => 'Store / Inventory',
-            'accounting'  => 'Accounting',
-            default       => ucfirst($this->module ?? 'Unknown'),
+            'store' => 'Store / Inventory',
+            'accounting' => 'Accounting',
+            default => ucfirst($this->module ?? 'Unknown'),
         };
     }
 }

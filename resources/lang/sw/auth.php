@@ -4,7 +4,7 @@ return [
     'failed' => 'Taarifa ulizojaza hazipatikani kwenye mfumo wetu.',
     'password' => 'Nenosiri uliloweka si sahihi.',
     'throttle' => 'Umejaribu kuingia mara nyingi sana. Tafadhali jaribu tena baada ya sekunde :seconds.',
-    
+
     // Login page
     'login' => [
         'title' => 'Ingia',
@@ -29,14 +29,14 @@ return [
         'reports' => 'Ripoti',
         'all_rights_reserved' => 'Haki zote zimehifadhiwa.',
     ],
-    
+
     // Guest booking notice
     'guest_booking' => [
         'title' => 'Unataka kuhifadhi chumba?',
         'description' => 'Tembelea ukurasa wetu wa uhifadhi wa wageni kuangalia upatikanaji na kufanya uhifadhi.',
         'link' => 'Nenda kwa Uhifadhi wa Wageni',
     ],
-    
+
     // Terms
     'terms' => [
         'by_signing_in' => 'Kwa kuingia, unakubali',
@@ -44,7 +44,7 @@ return [
         'and' => 'na',
         'privacy_policy' => 'Sera ya Faragha',
     ],
-    
+
     // Register page
     'register' => [
         'title' => 'Unda Akaunti',
@@ -57,7 +57,7 @@ return [
         'have_account' => 'Tayari una akaunti?',
         'login_here' => 'Ingia hapa',
     ],
-    
+
     // Password reset
     'reset' => [
         'title' => 'Weka Upya Nenosiri',
@@ -80,7 +80,7 @@ return [
         'email_sent' => 'Tumetuma kiungo cha kuweka upya nenosiri kwa barua pepe!',
         'create_new_password' => 'Unda nenosiri lako jipya hapa chini.',
     ],
-    
+
     // Profile
     'profile' => [
         'title' => 'Mipangilio ya Wasifu',

@@ -19,7 +19,7 @@ class AttendeeTicketMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Event Ticket — ' . $this->attendance->event->title,
+            subject: 'Your Event Ticket — '.$this->attendance->event->title,
         );
     }
 

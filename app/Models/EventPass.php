@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\HasSoftDelete;
 
 class EventPass extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $table = 'event_passes';
 
@@ -50,7 +50,10 @@ class EventPass extends Model
 
     public function getQuantityRemainingAttribute(): ?int
     {
-        if ($this->quantity_available === null) return null;
+        if ($this->quantity_available === null) {
+            return null;
+        }
+
         return max(0, $this->quantity_available - $this->quantity_sold);
     }
 
@@ -61,7 +64,10 @@ class EventPass extends Model
 
     public function canRegister(int $quantity = 1): bool
     {
-        if ($this->quantity_available !== null && ($this->quantity_sold + $quantity) > $this->quantity_available) return false;
+        if ($this->quantity_available !== null && ($this->quantity_sold + $quantity) > $this->quantity_available) {
+            return false;
+        }
+
         return true;
     }
 

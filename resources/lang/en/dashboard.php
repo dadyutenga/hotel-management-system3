@@ -7,7 +7,7 @@ return [
     'welcome' => 'Welcome',
     'help' => 'Help',
     'help_support' => 'Help & Support',
-    
+
     // Role-specific titles
     'titles' => [
         'admin' => 'Admin Dashboard',
@@ -20,7 +20,7 @@ return [
         'restaurant_manager' => 'Restaurant Manager Dashboard',
         'bar_tender' => 'Bar Tender Dashboard',
     ],
-    
+
     'admin_title' => 'System Administration',
     'manager_title' => 'Manager Dashboard',
     'front_desk_title' => 'Front Desk Dashboard',
@@ -30,7 +30,7 @@ return [
     'store_keeper_title' => 'Store Keeper Dashboard',
     'restaurant_manager_title' => 'Restaurant Manager Dashboard',
     'bar_tender_title' => 'Bar Tender Dashboard',
-    
+
     // Welcome messages
     'welcome' => [
         'greeting' => 'Welcome, :name!',
@@ -44,7 +44,7 @@ return [
         'restaurant_manager_message' => 'Bar & Kitchen inventory overview for today.',
         'bar_tender_message' => 'Your bar overview for today.',
     ],
-    
+
     'admin_welcome' => 'System administration and infrastructure overview.',
     'manager_welcome' => 'Here\'s your business operations overview for today.',
     'front_desk_welcome' => 'Here\'s your front desk overview for today.',
@@ -54,7 +54,7 @@ return [
     'store_keeper_welcome' => 'Here\'s your store & inventory overview for today.',
     'restaurant_manager_welcome' => 'Bar & Kitchen inventory overview for today.',
     'bar_tender_welcome' => 'Your bar overview for today.',
-    
+
     // Stats
     'stats' => [
         'total_rooms' => 'Total Rooms',
@@ -133,7 +133,7 @@ return [
         'pending_transfers' => 'Pending Transfers',
         'today_movements' => 'Today\'s Movements',
     ],
-    
+
     // Revenue
     'revenue' => [
         'title' => 'Revenue Overview',
@@ -146,7 +146,7 @@ return [
         'revenue' => 'Revenue',
         'revenue_today' => 'Revenue Today',
     ],
-    
+
     // Sections
     'sections' => [
         'room_status' => 'Room Status',
@@ -196,7 +196,7 @@ return [
         'notifications' => 'Notifications',
         'bar_stock_levels' => 'Bar Stock Levels',
     ],
-    
+
     // Actions
     'actions' => [
         'new_booking' => 'New Booking',
@@ -240,7 +240,7 @@ return [
         'check_inventory_desc' => 'Check bar & kitchen inventory',
         'report_damage_desc' => 'Record damaged bar or kitchen items',
     ],
-    
+
     // Laundry statuses
     'laundry' => [
         'pending' => 'Pending',
@@ -250,7 +250,7 @@ return [
         'today' => 'Today',
         'today_tasks' => 'Today\'s Tasks',
     ],
-    
+
     // Room status labels
     'room_status' => [
         'available' => 'Available',
@@ -263,7 +263,6 @@ return [
         'out_of_order' => 'Out of Order',
     ],
 
-    
     // Table headers
     'table' => [
         'reservation_number' => 'Reservation #',
@@ -299,7 +298,7 @@ return [
         'payment' => 'Payment',
         'action' => 'Action',
     ],
-    
+
     // Procurement specific
     'procurement' => [
         'this_month_spending' => 'This Month Spending',
@@ -322,7 +321,7 @@ return [
         'no_supplier_activity' => 'No supplier activity this month.',
         'no_grns' => 'No goods received notes yet.',
     ],
-    
+
     // Messages
     'messages' => [
         'no_arrivals' => 'No arrivals scheduled for today',
@@ -352,7 +351,7 @@ return [
         'no_pending_internal_requests' => 'No pending internal requests.',
         'no_recent_store_transfers' => 'No recent store transfers.',
     ],
-    
+
     // Sections
     'sections' => [
         'room_status' => 'Room Status',
@@ -403,7 +402,7 @@ return [
         'notifications' => 'Notifications',
         'bar_stock_levels' => 'Bar Stock Levels',
     ],
-    
+
     // Actions
     'actions' => [
         'new_booking' => 'New Booking',
@@ -448,7 +447,7 @@ return [
         'check_inventory_desc' => 'Check bar & kitchen inventory',
         'report_damage_desc' => 'Record damaged bar or kitchen items',
     ],
-    
+
     // Laundry statuses
     'laundry' => [
         'pending' => 'Pending',
@@ -461,7 +460,7 @@ return [
         'total_orders' => 'Total Orders',
         'pending_orders' => 'Pending Orders',
     ],
-    
+
     // Procurement
     'procurement' => [
         'active_suppliers' => 'Active Suppliers',

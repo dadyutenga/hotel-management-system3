@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Helpers\CurrencyHelper;
-use App\Traits\HasUuid;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
@@ -13,12 +13,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class RoomType extends Model implements HasMedia
 {
-    use HasUuid, HasSoftDelete, InteractsWithMedia;
+    use HasSoftDelete, HasUuid, InteractsWithMedia;
 
     protected $fillable = ['name', 'code', 'base_rate', 'currency', 'max_occupancy', 'description'];
-    
+
     protected $casts = [
-        'base_rate'  => 'decimal:2',
+        'base_rate' => 'decimal:2',
         'deleted_at' => 'datetime',
     ];
 
@@ -159,6 +159,7 @@ class RoomType extends Model implements HasMedia
         if ($this->hasImage()) {
             return $this->getFirstMediaUrl('room_type_image');
         }
+
         return asset('images/room-placeholder.svg');
     }
 
@@ -170,6 +171,7 @@ class RoomType extends Model implements HasMedia
         if ($this->hasImage()) {
             return $this->getFirstMediaUrl('room_type_image', 'medium') ?: $this->getFirstMediaUrl('room_type_image');
         }
+
         return asset('images/room-placeholder.svg');
     }
 
@@ -181,6 +183,7 @@ class RoomType extends Model implements HasMedia
         if ($this->hasImage()) {
             return $this->getFirstMediaUrl('room_type_image', 'thumb') ?: $this->getFirstMediaUrl('room_type_image');
         }
+
         return asset('images/room-placeholder.svg');
     }
 

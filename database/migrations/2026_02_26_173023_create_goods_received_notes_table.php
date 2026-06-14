@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2026_02_27_000004_create_goods_received_notes_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -39,7 +40,7 @@ return new class extends Migration
             $table->foreign('supplier_id')->references('id')->on('suppliers')->nullOnDelete();
             $table->foreign('received_by')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('confirmed_by')->references('id')->on('users')->nullOnDelete();
-            
+
             $table->index('status');
             $table->index('received_date');
         });

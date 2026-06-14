@@ -5,7 +5,7 @@ return [
     'booking' => 'Booking',
     'bookings' => 'Bookings',
     'subtitle' => 'Manage guest bookings, check-ins and check-outs',
-    
+
     // Actions
     'new_booking' => 'New Booking',
     'create_booking' => 'Create Booking',
@@ -24,7 +24,7 @@ return [
     'cancel' => 'Cancel',
     'filter' => 'Filter',
     'reset' => 'Reset',
-    
+
     // Stats
     'stats' => [
         'total' => 'Total',
@@ -33,7 +33,7 @@ return [
         'today_checkins' => 'Today Check-ins',
         'today_checkouts' => 'Today Check-outs',
     ],
-    
+
     // Filters
     'filters' => [
         'search_placeholder' => 'Search name, email, booking #...',
@@ -41,7 +41,7 @@ return [
         'all_sources' => 'All Sources',
         'from_date' => 'From date',
     ],
-    
+
     // Sources
     'sources' => [
         'online' => 'Online',
@@ -49,7 +49,7 @@ return [
         'phone' => 'Phone',
         'walkin' => 'Walk-in',
     ],
-    
+
     // Table
     'table' => [
         'booking' => 'Booking',
@@ -64,7 +64,7 @@ return [
         'not_assigned' => 'Not Assigned',
         'nights' => 'nights',
     ],
-    
+
     // Messages
     'messages' => [
         'no_bookings_found' => 'No bookings found',
@@ -79,7 +79,7 @@ return [
         'room_not_available' => 'This room is not available for the selected dates.',
         'loading_rooms' => 'Searching for available rooms...',
     ],
-    
+
     // Fields
     'fields' => [
         'guest' => 'Guest',
@@ -99,7 +99,7 @@ return [
         'source' => 'Booking Source',
         'special_requests' => 'Special Requests',
     ],
-    
+
     // Status
     'status' => [
         'pending' => 'Pending',
@@ -109,7 +109,7 @@ return [
         'cancelled' => 'Cancelled',
         'no_show' => 'No Show',
     ],
-    
+
     // Payment status
     'payment' => [
         'unpaid' => 'Unpaid',
@@ -117,7 +117,7 @@ return [
         'paid' => 'Paid',
         'refunded' => 'Refunded',
     ],
-    
+
     // Sections
     'sections' => [
         'guest_info' => 'Guest Information',

@@ -76,7 +76,7 @@ return [
     'per_night' => 'per night',
     'per_hour' => 'per hour',
     'grand_total' => 'Grand Total',
-    
+
     // Navigation
     'nav' => [
         'dashboard' => 'Dashboard',
@@ -128,7 +128,7 @@ return [
         'stock_reports' => 'Stock Reports',
         'bar_stock' => 'Bar Stock',
     ],
-    
+
     // Messages
     'messages' => [
         'saved_successfully' => 'Saved successfully!',
@@ -142,7 +142,7 @@ return [
         'language_switched_english' => 'Language switched to English',
         'language_switched_swahili' => 'Language switched to Swahili',
     ],
-    
+
     // Time periods
     'periods' => [
         'daily' => 'Daily',
@@ -150,7 +150,7 @@ return [
         'monthly' => 'Monthly',
         'yearly' => 'Yearly',
     ],
-    
+
     // Days of week
     'days' => [
         'monday' => 'Monday',
@@ -161,7 +161,7 @@ return [
         'saturday' => 'Saturday',
         'sunday' => 'Sunday',
     ],
-    
+
     // Language
     'language' => 'Language',
     'english' => 'English',

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Traits\HasSoftDelete;
 use Illuminate\Support\Str;
 
 /**
@@ -22,7 +23,7 @@ use Illuminate\Support\Str;
  */
 class Booking extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'booking_number',
@@ -33,6 +34,7 @@ class Booking extends Model
         'guest_country',
         'room_id',
         'reservation_id',
+        'building_id',
         'check_in_date',
         'check_out_date',
         'number_of_guests',
@@ -64,7 +66,7 @@ class Booking extends Model
 
         static::creating(function ($booking) {
             if (empty($booking->booking_number)) {
-                $booking->booking_number = 'BK-' . strtoupper(Str::random(10));
+                $booking->booking_number = 'BK-'.strtoupper(Str::random(10));
             }
         });
     }
@@ -79,6 +81,11 @@ class Booking extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     /**
@@ -130,7 +137,7 @@ class Booking extends Model
     {
         return $query->where(function ($q) use ($checkIn, $checkOut) {
             $q->where('check_in_date', '<', $checkOut)
-              ->where('check_out_date', '>', $checkIn);
+                ->where('check_out_date', '>', $checkIn);
         })->whereNotIn('status', ['cancelled', 'checked_out']);
     }
 
@@ -146,6 +153,7 @@ class Booking extends Model
         if ($this->check_in_date && $this->check_out_date) {
             return $this->check_in_date->diffInDays($this->check_out_date);
         }
+
         return 0;
     }
 
@@ -154,6 +162,7 @@ class Booking extends Model
         if ($this->guest) {
             return $this->guest->full_name;
         }
+
         return $this->guest_name ?? 'Unknown Guest';
     }
 
@@ -162,6 +171,7 @@ class Booking extends Model
         if ($this->guest) {
             return $this->guest->email;
         }
+
         return $this->guest_email;
     }
 
@@ -170,6 +180,7 @@ class Booking extends Model
         if ($this->guest) {
             return $this->guest->phone_number;
         }
+
         return $this->guest_phone;
     }
 
@@ -193,11 +204,30 @@ class Booking extends Model
         return $this->room?->roomType?->base_rate ?? 0;
     }
 
+    /**
+     * Derive building_id from the stored value or the room's floor/building.
+     */
+    public function getBuildingIdAttribute(): ?string
+    {
+        return $this->attributes['building_id'] ?? $this->room?->floor?->building_id;
+    }
+
     // ─── Status Helpers ────────────────────────────────────────────
 
-    public function isCheckedIn(): bool  { return $this->status === 'checked_in'; }
-    public function isCheckedOut(): bool { return $this->status === 'checked_out'; }
-    public function isCancelled(): bool  { return $this->status === 'cancelled'; }
+    public function isCheckedIn(): bool
+    {
+        return $this->status === 'checked_in';
+    }
+
+    public function isCheckedOut(): bool
+    {
+        return $this->status === 'checked_out';
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
+    }
 
     public function canBeCheckedOut(): bool
     {
@@ -227,7 +257,7 @@ class Booking extends Model
             ->whereNotIn('status', ['cancelled', 'checked_out'])
             ->where('check_in_date', '<', $checkOut)
             ->where('check_out_date', '>', $checkIn)
-            ->when($excludeBookingId, fn($q) => $q->where('id', '!=', $excludeBookingId));
+            ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId));
 
         // Apply pessimistic lock when inside a transaction to prevent race conditions
         if ($lock) {
@@ -245,13 +275,13 @@ class Booking extends Model
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('check_in_date', '<', $checkOut)
             ->where('check_out_date', '>', $checkIn)
-            ->when($excludeReservationId, fn($q) => $q->where('id', '!=', $excludeReservationId));
+            ->when($excludeReservationId, fn ($q) => $q->where('id', '!=', $excludeReservationId));
 
         if ($lock) {
             $reservationQuery->lockForUpdate();
         }
 
-        return !$reservationQuery->exists();
+        return ! $reservationQuery->exists();
     }
 
     /**
@@ -262,7 +292,7 @@ class Booking extends Model
         return DB::transaction(function () use ($reservation, $createdBy) {
             // Re-check availability with lock to prevent race conditions
             // Exclude the current reservation from the check since we're converting it
-            if (!static::isRoomAvailable($reservation->room_id, $reservation->check_in_date, $reservation->check_out_date, null, true, $reservation->id)) {
+            if (! static::isRoomAvailable($reservation->room_id, $reservation->check_in_date, $reservation->check_out_date, null, true, $reservation->id)) {
                 throw new \RuntimeException('Room is no longer available for the selected dates.');
             }
 

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
 
 class DiscountAudit extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'booking_id', 'authorized_by', 'discount_amount',
@@ -17,10 +17,10 @@ class DiscountAudit extends Model
 
     protected $casts = [
         'discount_amount' => 'decimal:2',
-        'valid_from'      => 'date',
-        'valid_until'     => 'date',
-        'authorized_at'   => 'datetime',
-        'deleted_at'      => 'datetime',
+        'valid_from' => 'date',
+        'valid_until' => 'date',
+        'authorized_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function authorizer()

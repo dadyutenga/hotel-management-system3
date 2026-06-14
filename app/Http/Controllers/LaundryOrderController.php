@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
+use App\Models\LaundryItem;
 use App\Models\LaundryOrder;
 use App\Models\LaundryOrderItem;
-use App\Models\LaundryItem;
-use App\Models\Booking;
-use App\Models\BookingCharge;
 use Illuminate\Http\Request;
 
 class LaundryOrderController extends Controller
@@ -29,13 +28,13 @@ class LaundryOrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($gq) use ($search) {
-                      $gq->where('first_name', 'like', "%{$search}%")
-                         ->orWhere('last_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('booking', function ($bq) use ($search) {
-                      $bq->where('booking_number', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('guest', function ($gq) use ($search) {
+                        $gq->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('booking', function ($bq) use ($search) {
+                        $bq->where('booking_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -112,18 +111,19 @@ class LaundryOrderController extends Controller
         $order->update(['total_amount' => $totalAmount]);
 
         return redirect()->route('laundry-orders.index')
-            ->with('success', 'Laundry order #' . $order->order_number . ' created successfully. Total: ' . number_format($totalAmount));
+            ->with('success', 'Laundry order #'.$order->order_number.' created successfully. Total: '.number_format($totalAmount));
     }
 
     public function show(LaundryOrder $laundryOrder)
     {
         $laundryOrder->load(['booking.room', 'guest', 'creator', 'items.laundryItem', 'bookingCharge']);
+
         return view('laundry-orders.show', compact('laundryOrder'));
     }
 
     public function edit(LaundryOrder $laundryOrder)
     {
-        if (!in_array($laundryOrder->status, ['pending'])) {
+        if (! in_array($laundryOrder->status, ['pending'])) {
             return back()->with('error', 'Only pending orders can be edited.');
         }
 
@@ -140,7 +140,7 @@ class LaundryOrderController extends Controller
 
     public function update(Request $request, LaundryOrder $laundryOrder)
     {
-        if (!in_array($laundryOrder->status, ['pending'])) {
+        if (! in_array($laundryOrder->status, ['pending'])) {
             return back()->with('error', 'Only pending orders can be updated.');
         }
 
@@ -166,7 +166,7 @@ class LaundryOrderController extends Controller
         ]);
 
         // Replace items
-        $laundryOrder->items->each(fn($item) => $this->softDelete($item));
+        $laundryOrder->items->each(fn ($item) => $this->softDelete($item));
 
         $totalAmount = 0;
         foreach ($validated['items'] as $itemData) {
@@ -193,11 +193,11 @@ class LaundryOrderController extends Controller
 
     public function destroy(LaundryOrder $laundryOrder)
     {
-        if (!in_array($laundryOrder->status, ['pending'])) {
+        if (! in_array($laundryOrder->status, ['pending'])) {
             return back()->with('error', 'Only pending orders can be deleted.');
         }
 
-        $laundryOrder->items->each(fn($item) => $this->softDelete($item));
+        $laundryOrder->items->each(fn ($item) => $this->softDelete($item));
         $this->softDelete($laundryOrder);
 
         return redirect()->route('laundry-orders.index')
@@ -207,25 +207,28 @@ class LaundryOrderController extends Controller
     // Status transitions
     public function markInProgress(LaundryOrder $laundryOrder)
     {
-        if (!$laundryOrder->markAsInProgress()) {
+        if (! $laundryOrder->markAsInProgress()) {
             return back()->with('error', 'Order cannot be marked as in progress.');
         }
+
         return back()->with('success', 'Order marked as in progress.');
     }
 
     public function markCompleted(LaundryOrder $laundryOrder)
     {
-        if (!$laundryOrder->markAsCompleted()) {
+        if (! $laundryOrder->markAsCompleted()) {
             return back()->with('error', 'Order cannot be marked as completed.');
         }
+
         return back()->with('success', 'Order completed. Charge added to booking.');
     }
 
     public function markDelivered(LaundryOrder $laundryOrder)
     {
-        if (!$laundryOrder->markAsDelivered()) {
+        if (! $laundryOrder->markAsDelivered()) {
             return back()->with('error', 'Order cannot be marked as delivered.');
         }
+
         return back()->with('success', 'Laundry delivered to guest.');
     }
 
@@ -233,6 +236,7 @@ class LaundryOrderController extends Controller
     public function getItems()
     {
         $items = LaundryItem::where('is_active', true)->orderBy('name')->get(['id', 'name', 'price']);
+
         return response()->json($items);
     }
 }

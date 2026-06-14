@@ -20,13 +20,13 @@ class LaundryReportController extends Controller
             ->get();
 
         $summary = [
-            'total_orders'   => $orders->count(),
-            'total_revenue'  => $orders->sum('total'),
-            'guest_revenue'  => $orders->where('customer_type', 'guest')->sum('total'),
+            'total_orders' => $orders->count(),
+            'total_revenue' => $orders->sum('total'),
+            'guest_revenue' => $orders->where('customer_type', 'guest')->sum('total'),
             'walkin_revenue' => $orders->where('customer_type', 'walkin')->sum('total'),
-            'cash'           => $orders->where('payment_method', 'cash')->sum('total'),
-            'card'           => $orders->where('payment_method', 'card')->sum('total'),
-            'charged'        => $orders->where('payment_method', 'charge_to_booking')->sum('total'),
+            'cash' => $orders->where('payment_method', 'cash')->sum('total'),
+            'card' => $orders->where('payment_method', 'card')->sum('total'),
+            'charged' => $orders->where('payment_method', 'charge_to_booking')->sum('total'),
         ];
 
         $overdueOrders = LaundryOrder::whereNotIn('status', ['settled', 'cancelled', 'ready', 'delivered', 'collected'])

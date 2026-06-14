@@ -30,12 +30,12 @@ class ReceiptController extends Controller
 
         $booking = $checkout->booking;
         $extraFields = [
-            __('general.receipt.booking_number')  => $booking?->booking_number,
-            __('general.receipt.room_number')     => $booking?->room?->room_number,
-            __('general.receipt.check_in')        => $booking?->check_in_date?->format('d M Y'),
-            __('general.receipt.check_out')       => $booking?->check_out_date?->format('d M Y'),
-            __('general.receipt.nights')          => $booking?->nights,
-            __('general.receipt.guest_name')      => $booking?->guest_name,
+            __('general.receipt.booking_number') => $booking?->booking_number,
+            __('general.receipt.room_number') => $booking?->room?->room_number,
+            __('general.receipt.check_in') => $booking?->check_in_date?->format('d M Y'),
+            __('general.receipt.check_out') => $booking?->check_out_date?->format('d M Y'),
+            __('general.receipt.nights') => $booking?->nights,
+            __('general.receipt.guest_name') => $booking?->guest_name,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -48,7 +48,7 @@ class ReceiptController extends Controller
     public function walkin(Request $request): RedirectResponse
     {
         $orderId = $request->order_id;
-        $order   = Order::findOrFail($orderId);
+        $order = Order::findOrFail($orderId);
 
         $receipt = $this->receiptService->getOrCreateReceipt($order);
 

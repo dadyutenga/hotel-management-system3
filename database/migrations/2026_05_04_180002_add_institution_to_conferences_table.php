@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -12,7 +12,7 @@ return new class extends Migration
         $driver = DB::getDriverName();
 
         Schema::table('conferences', function (Blueprint $table) {
-            if (!Schema::hasColumn('conferences', 'institution_id')) {
+            if (! Schema::hasColumn('conferences', 'institution_id')) {
                 $table->foreignUuid('institution_id')->nullable()->after('conference_booking_id')->constrained()->nullOnDelete();
             }
         });

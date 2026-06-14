@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Beverage;
 use App\Models\BeverageCategory;
 use App\Models\BeverageInventory;
+use App\Services\BuildingContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,21 +15,22 @@ class BeverageController extends Controller
     public function index(Request $request)
     {
         $beverages = Beverage::with('category', 'inventory')
+            ->forUserBuilding()
             ->active()
-            ->when($request->search, fn ($q) => $q->where('name', 'like', '%' . $request->search . '%'))
+            ->when($request->search, fn ($q) => $q->where('name', 'like', '%'.$request->search.'%'))
             ->when($request->category, fn ($q) => $q->where('category_id', $request->category))
             ->when($request->barcode, fn ($q) => $q->where('barcode', $request->barcode))
             ->latest()
             ->paginate(20);
 
-        $categories = BeverageCategory::active()->orderBy('name')->get();
+        $categories = BeverageCategory::forUserBuilding()->active()->orderBy('name')->get();
 
         return view('store.beverages.index', compact('beverages', 'categories'));
     }
 
     public function create()
     {
-        $categories = BeverageCategory::active()->orderBy('name')->get();
+        $categories = BeverageCategory::forUserBuilding()->active()->orderBy('name')->get();
 
         return view('store.beverages.create', compact('categories'));
     }
@@ -50,6 +52,12 @@ class BeverageController extends Controller
         DB::transaction(function () use ($data) {
             $data['created_by'] = auth()->id();
             $data['is_active'] = true;
+            $data['building_id'] = BuildingContext::buildingId();
+
+            if (! empty($data['category_id'])) {
+                $category = BeverageCategory::findOrFail($data['category_id']);
+                BuildingContext::enforce($category->building_id);
+            }
 
             if (isset($data['image'])) {
                 $path = $data['image']->store('beverages', 'public');
@@ -70,6 +78,8 @@ class BeverageController extends Controller
 
     public function show(Beverage $beverage)
     {
+        BuildingContext::enforce($beverage->building_id);
+
         $beverage->load('category', 'inventory', 'creator', 'stockMovements.performer');
 
         return view('store.beverages.show', compact('beverage'));
@@ -77,15 +87,19 @@ class BeverageController extends Controller
 
     public function edit(Beverage $beverage)
     {
-        $categories = BeverageCategory::active()->orderBy('name')->get();
+        BuildingContext::enforce($beverage->building_id);
+
+        $categories = BeverageCategory::forUserBuilding()->active()->orderBy('name')->get();
 
         return view('store.beverages.edit', compact('beverage', 'categories'));
     }
 
     public function update(Request $request, Beverage $beverage)
     {
+        BuildingContext::enforce($beverage->building_id);
+
         $data = $request->validate([
-            'barcode' => 'required|string|max:100|unique:beverages,barcode,' . $beverage->id,
+            'barcode' => 'required|string|max:100|unique:beverages,barcode,'.$beverage->id,
             'name' => 'required|string|max:255',
             'category_id' => 'nullable|uuid|exists:beverage_categories,id',
             'unit' => 'required|in:bottle,can,crate,pack',
@@ -95,6 +109,11 @@ class BeverageController extends Controller
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        if (! empty($data['category_id'])) {
+            $category = BeverageCategory::findOrFail($data['category_id']);
+            BuildingContext::enforce($category->building_id);
+        }
 
         if (isset($data['image'])) {
             $path = $data['image']->store('beverages', 'public');
@@ -111,6 +130,8 @@ class BeverageController extends Controller
 
     public function destroy(Beverage $beverage)
     {
+        BuildingContext::enforce($beverage->building_id);
+
         $beverage->update(['is_active' => false]);
         $this->softDelete($beverage);
 
@@ -120,7 +141,7 @@ class BeverageController extends Controller
 
     public function manageCategories()
     {
-        $categories = BeverageCategory::orderBy('name')->withCount('beverages')->get();
+        $categories = BeverageCategory::forUserBuilding()->orderBy('name')->withCount('beverages')->get();
 
         return view('store.beverages.categories', compact('categories'));
     }
@@ -131,6 +152,8 @@ class BeverageController extends Controller
             'name' => 'required|string|max:100|unique:beverage_categories,name',
             'description' => 'nullable|string|max:255',
         ]);
+
+        $data['building_id'] = BuildingContext::buildingId();
 
         BeverageCategory::create($data);
 

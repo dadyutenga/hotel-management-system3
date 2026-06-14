@@ -1,12 +1,13 @@
 <?php
+
 // app/Http/Controllers/LaundryTaskController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\LaundryTask;
 use App\Models\Reservation;
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LaundryTaskController extends Controller
@@ -14,7 +15,7 @@ class LaundryTaskController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
         // House Help sees only their assigned tasks
         if ($user->isHouseHelp()) {
             $tasks = LaundryTask::with(['reservation', 'assignedTo', 'creator'])
@@ -34,7 +35,7 @@ class LaundryTaskController extends Controller
     public function create()
     {
         // Only supervisor and admin can create tasks
-        if (!auth()->user()->isSupervisor() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isSupervisor() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -58,7 +59,7 @@ class LaundryTaskController extends Controller
     public function store(Request $request)
     {
         // Only supervisor and admin can create tasks
-        if (!auth()->user()->isSupervisor() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isSupervisor() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -94,7 +95,7 @@ class LaundryTaskController extends Controller
     public function edit(LaundryTask $laundryTask)
     {
         // Only supervisor and admin can edit tasks
-        if (!auth()->user()->isSupervisor() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isSupervisor() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -118,7 +119,7 @@ class LaundryTaskController extends Controller
     public function update(Request $request, LaundryTask $laundryTask)
     {
         // Only supervisor and admin can update tasks
-        if (!auth()->user()->isSupervisor() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isSupervisor() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -154,7 +155,7 @@ class LaundryTaskController extends Controller
     public function destroy(LaundryTask $laundryTask)
     {
         // Only supervisor and admin can delete tasks
-        if (!auth()->user()->isSupervisor() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isSupervisor() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -166,7 +167,7 @@ class LaundryTaskController extends Controller
 
     public function markAsInProgress(LaundryTask $laundryTask)
     {
-        if (!$laundryTask->canBeMarkedAsInProgress()) {
+        if (! $laundryTask->canBeMarkedAsInProgress()) {
             return back()->with('error', 'Task cannot be marked as in progress.');
         }
 
@@ -177,7 +178,7 @@ class LaundryTaskController extends Controller
 
     public function markAsCompleted(LaundryTask $laundryTask)
     {
-        if (!$laundryTask->canBeMarkedAsCompleted()) {
+        if (! $laundryTask->canBeMarkedAsCompleted()) {
             return back()->with('error', 'Task cannot be marked as completed.');
         }
 
@@ -189,7 +190,7 @@ class LaundryTaskController extends Controller
     public function markAsReturned(LaundryTask $laundryTask)
     {
         // House help or supervisor can mark as returned
-        if (!auth()->user()->isHouseHelp() && !auth()->user()->isSupervisor() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isHouseHelp() && ! auth()->user()->isSupervisor() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -198,7 +199,7 @@ class LaundryTaskController extends Controller
             abort(403, 'You can only mark your own tasks as returned.');
         }
 
-        if (!$laundryTask->canBeMarkedAsReturned()) {
+        if (! $laundryTask->canBeMarkedAsReturned()) {
             return back()->with('error', 'Only completed tasks can be marked as returned.');
         }
 

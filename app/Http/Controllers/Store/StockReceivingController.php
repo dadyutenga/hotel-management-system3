@@ -7,6 +7,7 @@ use App\Models\StockReceiving;
 use App\Models\StockReceivingItem;
 use App\Models\Supplier;
 use App\Services\BarcodeStockService;
+use App\Services\BuildingContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,12 +15,12 @@ class StockReceivingController extends Controller
 {
     public function __construct(
         protected BarcodeStockService $barcodeService,
-    ) {
-    }
+    ) {}
 
     public function index()
     {
         $receivings = StockReceiving::with('receiver', 'supplier', 'items.beverage')
+            ->forUserBuilding()
             ->latest('received_at')
             ->paginate(15);
 
@@ -29,6 +30,8 @@ class StockReceivingController extends Controller
     public function create()
     {
         $receiving = $this->barcodeService->createReceiving(auth()->id());
+        $receiving->update(['building_id' => BuildingContext::buildingId()]);
+
         $suppliers = Supplier::active()->orderBy('name')->get();
 
         return view('store.receivings.create', compact('receiving', 'suppliers'));
@@ -40,8 +43,11 @@ class StockReceivingController extends Controller
             'barcode' => 'required|string|min:4|max:100',
         ]);
 
+        BuildingContext::enforce($receiving->building_id);
+
         try {
             $item = $this->barcodeService->addScanToReceiving($receiving, $request->barcode);
+            BuildingContext::enforce($item->beverage->building_id);
             $item->load('beverage.category');
 
             $totalItems = $receiving->items()->sum('quantity');
@@ -71,6 +77,8 @@ class StockReceivingController extends Controller
 
     public function updateItem(Request $request, StockReceivingItem $item): JsonResponse
     {
+        BuildingContext::enforce($item->receiving->building_id);
+
         $request->validate(['quantity' => 'required|integer|min:1']);
 
         $this->barcodeService->updateReceivingItemQuantity($item, $request->quantity);
@@ -83,6 +91,8 @@ class StockReceivingController extends Controller
 
     public function removeItem(StockReceivingItem $item): JsonResponse
     {
+        BuildingContext::enforce($item->receiving->building_id);
+
         $item->delete();
 
         return response()->json(['success' => true]);
@@ -90,6 +100,8 @@ class StockReceivingController extends Controller
 
     public function confirm(Request $request, StockReceiving $receiving)
     {
+        BuildingContext::enforce($receiving->building_id);
+
         $request->validate([
             'supplier_id' => 'nullable|uuid|exists:suppliers,id',
             'notes' => 'nullable|string',
@@ -120,6 +132,8 @@ class StockReceivingController extends Controller
 
     public function show(StockReceiving $receiving)
     {
+        BuildingContext::enforce($receiving->building_id);
+
         $receiving->load('receiver', 'supplier', 'items.beverage.category');
 
         return view('store.receivings.show', compact('receiving'));

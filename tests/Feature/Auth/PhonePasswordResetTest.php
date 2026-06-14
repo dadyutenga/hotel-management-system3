@@ -56,6 +56,4 @@ class PhonePasswordResetTest extends TestCase
 
         $this->assertTrue($user->password_reset_completed_at?->equalTo($firstCompletedAt));
     }
-
 }
-

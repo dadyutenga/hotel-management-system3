@@ -15,9 +15,7 @@ use Illuminate\Support\Str;
 
 class ForgotPasswordController extends Controller
 {
-    public function __construct(private readonly SmsService $smsService)
-    {
-    }
+    public function __construct(private readonly SmsService $smsService) {}
 
     public function showLinkRequestForm()
     {
@@ -33,7 +31,7 @@ class ForgotPasswordController extends Controller
 
         $safeMessage = __('auth.reset.safe_notice');
 
-        if (!empty($validated['email'])) {
+        if (! empty($validated['email'])) {
             Password::sendResetLink(['email' => $validated['email']]);
             Log::info('Password reset link requested via email.', [
                 'email_hash' => hash('sha256', $validated['email']),
@@ -45,7 +43,7 @@ class ForgotPasswordController extends Controller
 
         $normalizedPhone = PhoneNumber::normalize($validated['phone'] ?? null);
 
-        if (!PhoneNumber::isValid($normalizedPhone)) {
+        if (! PhoneNumber::isValid($normalizedPhone)) {
             return back()
                 ->withErrors(['phone' => __('auth.reset.invalid_phone')])
                 ->withInput();
@@ -80,7 +78,7 @@ class ForgotPasswordController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             Log::info('Phone password reset requested for unknown or inactive user.', [
                 'ip' => $ip,
             ]);
@@ -142,4 +140,3 @@ class ForgotPasswordController extends Controller
         return Str::password(16);
     }
 }
-

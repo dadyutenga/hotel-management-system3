@@ -4,15 +4,14 @@ namespace App\Models;
 
 use App\Contracts\ReceiptPrintable;
 use App\Helpers\CurrencyHelper;
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Support\Facades\DB;
-use App\Traits\HasSoftDelete;
 
 class Checkout extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'booking_id', 'receipt_number', 'status',
@@ -25,16 +24,16 @@ class Checkout extends Model implements ReceiptPrintable
 
     protected $casts = [
         'total_charges_usd' => 'decimal:2',
-        'discount_usd'      => 'decimal:2',
-        'grand_total_usd'   => 'decimal:2',
-        'exchange_rate'      => 'decimal:4',
-        'grand_total_tzs'    => 'decimal:2',
-        'paid_cash_usd'      => 'decimal:2',
-        'paid_card_usd'      => 'decimal:2',
-        'total_paid_usd'     => 'decimal:2',
-        'change_due_usd'     => 'decimal:2',
-        'completed_at'       => 'datetime',
-        'deleted_at'         => 'datetime',
+        'discount_usd' => 'decimal:2',
+        'grand_total_usd' => 'decimal:2',
+        'exchange_rate' => 'decimal:4',
+        'grand_total_tzs' => 'decimal:2',
+        'paid_cash_usd' => 'decimal:2',
+        'paid_card_usd' => 'decimal:2',
+        'total_paid_usd' => 'decimal:2',
+        'change_due_usd' => 'decimal:2',
+        'completed_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // Auto-generate receipt number
@@ -42,17 +41,36 @@ class Checkout extends Model implements ReceiptPrintable
     {
         static::creating(function (Checkout $checkout) {
             $count = self::whereDate('created_at', today())->count() + 1;
-            $checkout->receipt_number = 'RCPT-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $checkout->receipt_number = 'RCPT-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
         });
     }
 
     // ── Relationships ────────────────────────────────────────────────────────
 
-    public function booking()   { return $this->belongsTo(Booking::class); }
-    public function initiator() { return $this->belongsTo(User::class, 'initiated_by'); }
-    public function completer() { return $this->belongsTo(User::class, 'completed_by'); }
-    public function charges()   { return $this->hasMany(BookingCharge::class); }
-    public function payments()  { return $this->hasMany(FinancePayment::class); }
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
+    }
+
+    public function initiator()
+    {
+        return $this->belongsTo(User::class, 'initiated_by');
+    }
+
+    public function completer()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function charges()
+    {
+        return $this->hasMany(BookingCharge::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(FinancePayment::class);
+    }
 
     // ── Receipt Relationship ─────────────────────────────────────────────────
 
@@ -83,6 +101,7 @@ class Checkout extends Model implements ReceiptPrintable
             if ($charge->currency === 'TZS') {
                 return round($charge->amount / $exchangeRate, 2);
             }
+
             return (float) $charge->amount;
         });
 
@@ -90,9 +109,9 @@ class Checkout extends Model implements ReceiptPrintable
 
         $this->update([
             'total_charges_usd' => $totalUsd,
-            'grand_total_usd'   => $grandTotal,
-            'exchange_rate'      => $exchangeRate,
-            'grand_total_tzs'    => round($grandTotal * $exchangeRate, 2),
+            'grand_total_usd' => $grandTotal,
+            'exchange_rate' => $exchangeRate,
+            'grand_total_tzs' => round($grandTotal * $exchangeRate, 2),
         ]);
     }
 
@@ -117,37 +136,38 @@ class Checkout extends Model implements ReceiptPrintable
 
         $items = $this->charges->map(function ($charge) use ($exchangeRate) {
             $unitPriceTzs = round($charge->amount * $exchangeRate, 2);
+
             return [
-                'name'       => $charge->description,
-                'details'    => $charge->charge_type_label ?? $charge->charge_type,
-                'quantity'   => 1,
+                'name' => $charge->description,
+                'details' => $charge->charge_type_label ?? $charge->charge_type,
+                'quantity' => 1,
                 'unit_price' => $unitPriceTzs,
-                'amount'     => $unitPriceTzs,
+                'amount' => $unitPriceTzs,
             ];
         })->toArray();
 
         $totalTzs = (float) $this->grand_total_tzs;
-        $paidTzs  = round((float) $this->total_paid_usd * $exchangeRate, 2);
+        $paidTzs = round((float) $this->total_paid_usd * $exchangeRate, 2);
 
         return [
-            'receipt_no'            => $this->receipt_number,
-            'issued_at'             => $this->completed_at ?? $this->created_at,
-            'module'                => 'checkout',
-            'customer_name'         => $this->booking?->guest_name ?? null,
-            'customer_phone'        => $this->booking?->guest?->phone ?? null,
-            'items'                 => $items,
-            'subtotal'              => round((float) $this->total_charges_usd * $exchangeRate, 2),
-            'discount'              => round((float) $this->discount_usd * $exchangeRate, 2),
-            'tax'                   => 0.0,
-            'total'                 => $totalTzs,
-            'amount_paid'           => $paidTzs,
-            'balance'               => max(0, $totalTzs - $paidTzs),
-            'currency'              => 'TZS',
-            'payment_method'        => $this->payment_method,
-            'payment_status'        => $this->getPaymentStatus(),
+            'receipt_no' => $this->receipt_number,
+            'issued_at' => $this->completed_at ?? $this->created_at,
+            'module' => 'checkout',
+            'customer_name' => $this->booking?->guest_name ?? null,
+            'customer_phone' => $this->booking?->guest?->phone ?? null,
+            'items' => $items,
+            'subtotal' => round((float) $this->total_charges_usd * $exchangeRate, 2),
+            'discount' => round((float) $this->discount_usd * $exchangeRate, 2),
+            'tax' => 0.0,
+            'total' => $totalTzs,
+            'amount_paid' => $paidTzs,
+            'balance' => max(0, $totalTzs - $paidTzs),
+            'currency' => 'TZS',
+            'payment_method' => $this->payment_method,
+            'payment_status' => $this->getPaymentStatus(),
             'transaction_reference' => null,
-            'cashier'               => $this->completer?->name,
-            'notes'                 => $this->notes,
+            'cashier' => $this->completer?->name,
+            'notes' => $this->notes,
         ];
     }
 

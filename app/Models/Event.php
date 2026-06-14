@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
-use App\Traits\HasSoftDelete;
 
 class Event extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'organization_id',
@@ -233,32 +233,47 @@ class Event extends Model
 
     public function getDaysCountAttribute(): int
     {
-        if (!$this->end_date) return 1;
+        if (! $this->end_date) {
+            return 1;
+        }
+
         return $this->start_date->diffInDays($this->end_date) + 1;
     }
 
     // State Transitions
     public function publish(): bool
     {
-        if ($this->status !== 'draft') return false;
+        if ($this->status !== 'draft') {
+            return false;
+        }
+
         return $this->update(['status' => 'scheduled']);
     }
 
     public function start(): bool
     {
-        if ($this->status !== 'scheduled') return false;
+        if ($this->status !== 'scheduled') {
+            return false;
+        }
+
         return $this->update(['status' => 'ongoing']);
     }
 
     public function complete(): bool
     {
-        if (!in_array($this->status, ['scheduled', 'ongoing'])) return false;
+        if (! in_array($this->status, ['scheduled', 'ongoing'])) {
+            return false;
+        }
+
         return $this->update(['status' => 'completed']);
     }
 
     public function cancel(): bool
     {
-        if (in_array($this->status, ['completed'])) return false;
+        if (in_array($this->status, ['completed'])) {
+            return false;
+        }
+
         return $this->update(['status' => 'cancelled']);
     }
 

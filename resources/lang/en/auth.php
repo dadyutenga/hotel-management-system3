@@ -4,7 +4,7 @@ return [
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
-    
+
     // Login page
     'login' => [
         'title' => 'Sign In',
@@ -29,14 +29,14 @@ return [
         'reports' => 'Reports',
         'all_rights_reserved' => 'All rights reserved.',
     ],
-    
+
     // Guest booking notice
     'guest_booking' => [
         'title' => 'Looking to book a room?',
         'description' => 'Visit our guest booking page to check availability and make a reservation.',
         'link' => 'Go to Guest Booking',
     ],
-    
+
     // Terms
     'terms' => [
         'by_signing_in' => 'By signing in, you agree to our',
@@ -44,7 +44,7 @@ return [
         'and' => 'and',
         'privacy_policy' => 'Privacy Policy',
     ],
-    
+
     // Register page
     'register' => [
         'title' => 'Create Account',
@@ -57,7 +57,7 @@ return [
         'have_account' => 'Already have an account?',
         'login_here' => 'Login here',
     ],
-    
+
     // Password reset
     'reset' => [
         'title' => 'Reset Password',
@@ -80,7 +80,7 @@ return [
         'email_sent' => 'We have emailed your password reset link!',
         'create_new_password' => 'Create your new password below.',
     ],
-    
+
     // Profile
     'profile' => [
         'title' => 'Profile Settings',

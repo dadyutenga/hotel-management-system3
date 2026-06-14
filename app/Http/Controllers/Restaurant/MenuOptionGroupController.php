@@ -6,21 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\MenuItem;
 use App\Models\MenuOptionGroup;
 use App\Models\MenuOptionValue;
+use App\Services\BuildingContext;
+use App\Services\BuildingModuleGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MenuOptionGroupController extends Controller
 {
     public function index(): View
     {
+        $buildingId = BuildingContext::buildingId();
+
         $groups = MenuOptionGroup::with(['values', 'menuItems'])
+            ->forBuilding($buildingId)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
         $menuItems = MenuItem::with('category')
+            ->forBuilding($buildingId)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -30,6 +37,14 @@ class MenuOptionGroupController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'selection_type' => 'required|in:single,multiple',
@@ -41,11 +56,12 @@ class MenuOptionGroupController extends Controller
             'values.*.price_delta' => 'required|numeric|min:0',
             'values.*.sort_order' => 'nullable|integer|min:0|max:9999',
             'menu_item_ids' => 'nullable|array',
-            'menu_item_ids.*' => 'uuid|exists:menu_items,id',
+            'menu_item_ids.*' => ['uuid', $menuItemRule],
         ]);
 
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data, $buildingId) {
             $group = MenuOptionGroup::create([
+                'building_id' => $buildingId,
                 'name' => $data['name'],
                 'selection_type' => $data['selection_type'],
                 'is_required' => (bool) ($data['is_required'] ?? false),
@@ -63,7 +79,7 @@ class MenuOptionGroupController extends Controller
                 ]);
             }
 
-            if (!empty($data['menu_item_ids'])) {
+            if (! empty($data['menu_item_ids'])) {
                 $attach = [];
                 foreach ($data['menu_item_ids'] as $index => $menuItemId) {
                     $attach[$menuItemId] = ['sort_order' => $index];
@@ -77,6 +93,14 @@ class MenuOptionGroupController extends Controller
 
     public function update(Request $request, MenuOptionGroup $menuOptionGroup): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingContext::enforce($menuOptionGroup->building_id);
+
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'selection_type' => 'required|in:single,multiple',
@@ -90,7 +114,7 @@ class MenuOptionGroupController extends Controller
             'values.*.is_active' => 'nullable|boolean',
             'values.*.sort_order' => 'nullable|integer|min:0|max:9999',
             'menu_item_ids' => 'nullable|array',
-            'menu_item_ids.*' => 'uuid|exists:menu_items,id',
+            'menu_item_ids.*' => ['uuid', $menuItemRule],
         ]);
 
         DB::transaction(function () use ($data, $menuOptionGroup) {
@@ -106,7 +130,7 @@ class MenuOptionGroupController extends Controller
             $submittedIds = [];
 
             foreach ($data['values'] as $value) {
-                if (!empty($value['id'])) {
+                if (! empty($value['id'])) {
                     $submittedIds[] = $value['id'];
                     MenuOptionValue::where('id', $value['id'])->update([
                         'label' => $value['label'],
@@ -114,6 +138,7 @@ class MenuOptionGroupController extends Controller
                         'is_active' => (bool) ($value['is_active'] ?? true),
                         'sort_order' => (int) ($value['sort_order'] ?? 0),
                     ]);
+
                     continue;
                 }
 
@@ -128,8 +153,8 @@ class MenuOptionGroupController extends Controller
             }
 
             $toDelete = array_diff($existingIds, $submittedIds);
-            if (!empty($toDelete)) {
-                MenuOptionValue::whereIn('id', $toDelete)->get()->each(fn($v) => $this->softDelete($v));
+            if (! empty($toDelete)) {
+                MenuOptionValue::whereIn('id', $toDelete)->get()->each(fn ($v) => $this->softDelete($v));
             }
 
             $attach = [];
@@ -144,11 +169,12 @@ class MenuOptionGroupController extends Controller
 
     public function destroy(MenuOptionGroup $menuOptionGroup): RedirectResponse
     {
+        BuildingContext::enforce($menuOptionGroup->building_id);
+
         $menuOptionGroup->update(['is_active' => false]);
         $this->softDelete($menuOptionGroup);
-        $menuOptionGroup->values->each(fn($v) => $this->softDelete($v));
+        $menuOptionGroup->values->each(fn ($v) => $this->softDelete($v));
 
         return back()->with('success', __('general.restaurant.messages.option_group_deactivated'));
     }
 }
-

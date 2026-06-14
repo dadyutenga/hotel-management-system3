@@ -10,7 +10,6 @@ use App\Models\Guest;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class AttendanceController extends Controller
 {
@@ -34,8 +33,9 @@ class AttendanceController extends Controller
 
         if (request()->wantsJson()) {
             $attendances = $query->limit(10)->get();
+
             return response()->json([
-                'data' => $attendances->map(fn($a) => [
+                'data' => $attendances->map(fn ($a) => [
                     'id' => $a->id,
                     'first_name' => $a->first_name,
                     'last_name' => $a->last_name,
@@ -64,6 +64,7 @@ class AttendanceController extends Controller
     {
         $passes = $event->passes()->get();
         $event->load('schedules');
+
         return view('attendances.create', compact('organization', 'event', 'passes'));
     }
 
@@ -95,7 +96,7 @@ class AttendanceController extends Controller
         $validated['registration_status'] = 'confirmed';
         $validated['registration_type'] = $validated['registration_type'] ?? 'individual';
 
-        if (!empty($validated['event_pass_id'])) {
+        if (! empty($validated['event_pass_id'])) {
             $pass = EventPass::find($validated['event_pass_id']);
             $validated['pass_type'] = $pass->tier_type ?? 'attendee';
             $pass?->recordRegistration();
@@ -120,6 +121,7 @@ class AttendanceController extends Controller
     public function show(Organization $organization, Event $event, Attendance $attendance)
     {
         $attendance->load(['eventPass', 'guest', 'checkIns.eventSchedule']);
+
         return view('attendances.show', compact('organization', 'event', 'attendance'));
     }
 
@@ -127,6 +129,7 @@ class AttendanceController extends Controller
     {
         $passes = $event->passes()->get();
         $event->load('schedules');
+
         return view('attendances.edit', compact('organization', 'event', 'attendance', 'passes'));
     }
 
@@ -189,6 +192,7 @@ class AttendanceController extends Controller
             if (empty($data['email']) || empty($data['first_name']) || empty($data['last_name'])) {
                 $results['errors'][] = "Line {$lineNumber}: Missing required fields (email, first_name, last_name)";
                 $results['failed']++;
+
                 continue;
             }
 
@@ -196,6 +200,7 @@ class AttendanceController extends Controller
             if ($event->attendances()->where('email', $data['email'])->exists()) {
                 $results['errors'][] = "Line {$lineNumber}: Email {$data['email']} already registered";
                 $results['failed']++;
+
                 continue;
             }
 
@@ -224,7 +229,7 @@ class AttendanceController extends Controller
 
                 $results['success']++;
             } catch (\Exception $e) {
-                $results['errors'][] = "Line {$lineNumber}: " . $e->getMessage();
+                $results['errors'][] = "Line {$lineNumber}: ".$e->getMessage();
                 $results['failed']++;
             }
         }
@@ -255,6 +260,7 @@ class AttendanceController extends Controller
     public function ticketPdf(Organization $organization, Event $event, Attendance $attendance)
     {
         $attendance->load('event');
+
         return view('attendances.ticket', compact('organization', 'event', 'attendance'));
     }
 
@@ -266,7 +272,7 @@ class AttendanceController extends Controller
 
         Mail::to($attendance->email)->send(new AttendeeTicketMail($attendance));
 
-        return back()->with('success', 'Ticket sent to ' . $attendance->email);
+        return back()->with('success', 'Ticket sent to '.$attendance->email);
     }
 
     public function printBadges(Request $request, Organization $organization, Event $event)
@@ -285,12 +291,14 @@ class AttendanceController extends Controller
     public function markNoShow(Organization $organization, Event $event, Attendance $attendance)
     {
         $attendance->markAsNoShow();
+
         return back()->with('success', 'Attendee marked as no-show.');
     }
 
     public function confirm(Organization $organization, Event $event, Attendance $attendance)
     {
         $attendance->update(['registration_status' => 'confirmed']);
+
         return back()->with('success', 'Attendee confirmed.');
     }
 }

@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Fix the laundry_orders status CHECK constraint on SQLite to include 'charged'.
      * SQLite does not support ALTER TABLE MODIFY COLUMN, so we must:
@@ -67,10 +66,10 @@ return new class extends Migration {
             ");
 
             // 2. Copy all existing rows
-            DB::statement("
+            DB::statement('
                 INSERT INTO laundry_orders_new
                 SELECT * FROM laundry_orders
-            ");
+            ');
 
             // 3. Drop dependent table first (laundry_order_items references laundry_orders with cascade)
             DB::statement('DROP TABLE laundry_order_items');
@@ -80,7 +79,7 @@ return new class extends Migration {
             DB::statement('ALTER TABLE laundry_orders_new RENAME TO laundry_orders');
 
             // 5. Recreate laundry_order_items
-            DB::statement("
+            DB::statement('
                 CREATE TABLE laundry_order_items (
                     id varchar not null,
                     laundry_order_id varchar not null,
@@ -95,7 +94,7 @@ return new class extends Migration {
                     foreign key (laundry_service_item_id) references laundry_service_items(id),
                     primary key (id)
                 )
-            ");
+            ');
         });
 
         if ($isSqlite) {
@@ -153,16 +152,16 @@ return new class extends Migration {
                 )
             ");
 
-            DB::statement("
+            DB::statement('
                 INSERT INTO laundry_orders_old
                 SELECT * FROM laundry_orders
-            ");
+            ');
 
             DB::statement('DROP TABLE laundry_order_items');
             DB::statement('DROP TABLE laundry_orders');
             DB::statement('ALTER TABLE laundry_orders_old RENAME TO laundry_orders');
 
-            DB::statement("
+            DB::statement('
                 CREATE TABLE laundry_order_items (
                     id varchar not null,
                     laundry_order_id varchar not null,
@@ -177,7 +176,7 @@ return new class extends Migration {
                     foreign key (laundry_service_item_id) references laundry_service_items(id),
                     primary key (id)
                 )
-            ");
+            ');
         });
 
         if ($isSqlite) {

@@ -13,6 +13,5 @@ class StaffLoggedOut
     public function __construct(
         public User $user,
         public ?string $closedByUserId = null,
-    ) {
-    }
+    ) {}
 }

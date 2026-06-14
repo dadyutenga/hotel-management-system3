@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class FinancePayment extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $table = 'finance_payments';
 
@@ -25,28 +25,47 @@ class FinancePayment extends Model
     ];
 
     protected $casts = [
-        'amount'        => 'decimal:2',
-        'amount_usd'    => 'decimal:2',
+        'amount' => 'decimal:2',
+        'amount_usd' => 'decimal:2',
         'exchange_rate' => 'decimal:4',
-        'paid_at'       => 'datetime',
-        'deleted_at'    => 'datetime',
+        'paid_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (FinancePayment $payment) {
             $count = self::whereDate('created_at', today())->count() + 1;
-            $payment->payment_number = 'PAY-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $payment->payment_number = 'PAY-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
         });
     }
 
     // ── Relationships ────────────────────────────────────────────────────────
 
-    public function checkout()  { return $this->belongsTo(Checkout::class); }
-    public function order()     { return $this->belongsTo(Order::class); }
-    public function items()     { return $this->hasMany(PaymentItem::class, 'payment_id'); }
-    public function createdBy() { return $this->belongsTo(User::class, 'created_by'); }
-    public function transaction() { return $this->hasOne(FinancialTransaction::class, 'payment_id'); }
+    public function checkout()
+    {
+        return $this->belongsTo(Checkout::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(PaymentItem::class, 'payment_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function transaction()
+    {
+        return $this->hasOne(FinancialTransaction::class, 'payment_id');
+    }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -55,7 +74,10 @@ class FinancePayment extends Model
      */
     public static function toUsd(float $amount, string $currency, float $exchangeRate): float
     {
-        if ($currency === 'USD') return $amount;
+        if ($currency === 'USD') {
+            return $amount;
+        }
+
         return round($amount / $exchangeRate, 2); // TZS → USD
     }
 }

@@ -1,13 +1,16 @@
 <?php
+
 namespace Database\Seeders;
 
-use App\Models\Room;
 use App\Models\Floor;
+use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Database\Seeder;
 
-class RoomSeeder extends Seeder {
-    public function run(): void {
+class RoomSeeder extends Seeder
+{
+    public function run(): void
+    {
         $floors = Floor::all();
         $roomTypes = RoomType::all();
 
@@ -16,8 +19,8 @@ class RoomSeeder extends Seeder {
             $floorPrefix = $floor->floor_number;
 
             for ($i = 1; $i <= 10; $i++) {
-                $roomNumber = $floorPrefix . str_pad($i, 2, '0', STR_PAD_LEFT);
-                
+                $roomNumber = $floorPrefix.str_pad($i, 2, '0', STR_PAD_LEFT);
+
                 $roomType = match (true) {
                     $i <= 3 => $roomTypes->where('code', 'STD-SGL')->first(),
                     $i <= 6 => $roomTypes->where('code', 'STD-DBL')->first(),
@@ -27,7 +30,7 @@ class RoomSeeder extends Seeder {
                 };
 
                 Room::updateOrCreate(
-                    ['room_number' => $building->code . '-' . $roomNumber],
+                    ['room_number' => $building->code.'-'.$roomNumber],
                     [
                         'floor_id' => $floor->id,
                         'room_type_id' => $roomType?->id,

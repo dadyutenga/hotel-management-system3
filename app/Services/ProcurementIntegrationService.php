@@ -88,6 +88,7 @@ class ProcurementIntegrationService
                                 'received_quantity' => round(((float) $lpoItem->received_quantity) + $incoming, 3),
                             ]);
                         }
+
                         continue;
                     }
 

@@ -9,6 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('receipts', function (Blueprint $table) {
+            // SQLite cannot drop columns that are part of an index, so drop the index first
+            $table->dropIndex('receipts_receiptable_type_receiptable_id_index');
             // Drop the old bigint morph columns
             $table->dropColumn(['receiptable_type', 'receiptable_id']);
         });
@@ -24,6 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('receipts', function (Blueprint $table) {
+            $table->dropIndex('receipts_receiptable_index');
             $table->dropColumn(['receiptable_type', 'receiptable_id']);
         });
 

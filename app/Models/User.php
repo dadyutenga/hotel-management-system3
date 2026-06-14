@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/User.php
 
 namespace App\Models;
@@ -6,15 +7,14 @@ namespace App\Models;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasUuid, Notifiable, HasSoftDelete;
+    use HasFactory, HasSoftDelete, HasUuid, Notifiable;
 
     protected $fillable = ['name', 'email', 'password', 'phone'];
 
@@ -27,6 +27,7 @@ class User extends Authenticatable
         'password_reset_phone',
         'email_verified_at',
     ];
+
     protected $hidden = ['password', 'remember_token', 'passkey'];
 
     protected function casts(): array
@@ -49,6 +50,16 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
+    }
+
+    public function hasBuilding(): bool
+    {
+        return ! is_null($this->building_id);
     }
 
     /**
@@ -191,8 +202,8 @@ class User extends Authenticatable
     public function latestNotifications()
     {
         return $this->hasMany(StoreNotification::class)
-                    ->latest('created_at')
-                    ->limit(10);
+            ->latest('created_at')
+            ->limit(10);
     }
 
     /**

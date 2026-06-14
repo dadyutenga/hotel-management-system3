@@ -3,13 +3,15 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         $driver = DB::getDriverName();
 
         if ($driver === 'mysql') {
             DB::statement("ALTER TABLE checkouts MODIFY COLUMN status VARCHAR(30) DEFAULT 'pending'");
+
             return;
         }
 
@@ -26,7 +28,7 @@ return new class extends Migration {
         DB::transaction(function () {
             // Snapshot dependent data before dropping
             $financePaymentRows = DB::select('SELECT * FROM finance_payments');
-            $bookingChargeRows  = DB::select('SELECT * FROM booking_charges');
+            $bookingChargeRows = DB::select('SELECT * FROM booking_charges');
 
             DB::statement('DROP TABLE IF EXISTS finance_payments');
             DB::statement('DROP TABLE IF EXISTS booking_charges');

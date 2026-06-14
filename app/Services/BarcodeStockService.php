@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\StockReceived;
 use App\Models\Beverage;
 use App\Models\BeverageInventory;
 use App\Models\BeverageStockMovement;
@@ -9,9 +10,7 @@ use App\Models\StockReceiving;
 use App\Models\StockReceivingItem;
 use App\Models\StockTake;
 use App\Models\StockTakeItem;
-use App\Events\StockReceived;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class BarcodeStockService
 {
@@ -35,7 +34,7 @@ class BarcodeStockService
     {
         $beverage = $this->resolveBarcode($barcode);
 
-        if (!$beverage) {
+        if (! $beverage) {
             throw new \RuntimeException("Beverage not found for barcode: {$barcode}");
         }
 
@@ -45,6 +44,7 @@ class BarcodeStockService
 
         if ($existingItem) {
             $existingItem->increment('quantity', 1);
+
             return $existingItem->refresh();
         }
 
@@ -111,7 +111,7 @@ class BarcodeStockService
     {
         $beverage = $this->resolveBarcode($barcode);
 
-        if (!$beverage) {
+        if (! $beverage) {
             throw new \RuntimeException("Beverage not found for barcode: {$barcode}");
         }
 
@@ -124,6 +124,7 @@ class BarcodeStockService
             $existingItem->update([
                 'variance' => $existingItem->physical_count - $existingItem->expected_quantity,
             ]);
+
             return $existingItem->refresh();
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2026_02_27_000003_create_local_purchase_order_items_table.php
 
 use Illuminate\Database\Migrations\Migration;

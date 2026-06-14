@@ -9,12 +9,12 @@ return [
     'user_details' => 'Maelezo ya Mtumiaji',
     'user_management' => 'Usimamizi wa Watumiaji',
     'create_user' => 'Unda Mtumiaji',
-    
+
     // Subtitles
     'manage_subtitle' => 'Simamia watumiaji wa mfumo na ruhusa',
     'create_subtitle' => 'Ongeza mtumiaji mpya wa mfumo',
     'edit_subtitle' => 'Sasisha taarifa za mtumiaji',
-    
+
     // Sections
     'sections' => [
         'user_profile' => 'Wasifu wa Mtumiaji',
@@ -25,7 +25,7 @@ return [
         'account_info' => 'Taarifa za Akaunti',
         'role_permissions' => 'Ruhusa za Nafasi:',
     ],
-    
+
     // Stats
     'stats' => [
         'total_users' => 'Watumiaji Wote',
@@ -33,7 +33,7 @@ return [
         'administrators' => 'Wasimamizi',
         'inactive' => 'Wasiofanya Kazi',
     ],
-    
+
     // Table headers
     'table' => [
         'user' => 'Mtumiaji',
@@ -43,7 +43,7 @@ return [
         'created' => 'Imeundwa',
         'actions' => 'Vitendo',
     ],
-    
+
     // Fields
     'name' => 'Jina',
     'email' => 'Barua Pepe',
@@ -56,7 +56,7 @@ return [
     'last_login' => 'Kuingia Mwisho',
     'created_at' => 'Imeundwa',
     'phone' => 'Nambari ya Simu',
-    
+
     // Form fields
     'fields' => [
         'full_name' => 'Jina Kamili',
@@ -68,7 +68,7 @@ return [
         'user_role' => 'Nafasi ya Mtumiaji',
         'active_account' => 'Akaunti Inayofanya Kazi',
     ],
-    
+
     // Placeholders
     'placeholders' => [
         'enter_full_name' => 'Ingiza jina kamili',
@@ -77,7 +77,7 @@ return [
         'password' => '••••••••',
         'select_role' => 'Chagua nafasi',
     ],
-    
+
     // Roles
     'roles' => [
         'admin' => 'Msimamizi Mkuu',
@@ -92,12 +92,12 @@ return [
         'laundry_manager' => 'Meneja wa Kufulia',
         'accountant' => 'Mhasibu',
     ],
-    
+
     // Status
     'active' => 'Hai',
     'inactive' => 'Haifanyi Kazi',
     'suspended' => 'Imesimamishwa',
-    
+
     // Labels
     'labels' => [
         'you' => 'Wewe',
@@ -106,7 +106,7 @@ return [
         'last_updated' => 'Imesasishwa Mwisho:',
         'status' => 'Hali:',
     ],
-    
+
     // Actions
     'actions' => [
         'add_user' => 'Ongeza Mtumiaji',
@@ -124,7 +124,7 @@ return [
     'activate' => 'Washa',
     'deactivate' => 'Zima',
     'suspend' => 'Simamisha',
-    
+
     // Messages
     'messages' => [
         'no_users' => 'Hakuna watumiaji bado',
@@ -140,7 +140,7 @@ return [
     'password_reset' => 'Nenosiri limewekwa upya kikamilifu!',
     'no_users' => 'Hakuna watumiaji waliopatikana.',
     'cannot_delete_self' => 'Huwezi kufuta akaunti yako mwenyewe.',
-    
+
     // Info box - role descriptions
     'info' => [
         'administrator' => 'Msimamizi:',
@@ -150,7 +150,7 @@ return [
         'front_desk' => 'Mapokezi:',
         'front_desk_desc' => 'Uhifadhi na kuingia/kutoka kwa wageni',
     ],
-    
+
     // Profile
     'my_profile' => 'Wasifu Wangu',
     'edit_profile' => 'Hariri Wasifu',

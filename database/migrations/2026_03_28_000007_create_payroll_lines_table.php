@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('payroll_run_id')
-                  ->references('id')->on('payroll_runs')->cascadeOnDelete();
+                ->references('id')->on('payroll_runs')->cascadeOnDelete();
             $table->foreign('user_id')->references('id')->on('users');
         });
     }

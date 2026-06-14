@@ -4,27 +4,32 @@ namespace App\Http\Controllers\Restaurant;
 
 use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\BookingCharge;
+use App\Models\BuffetPackage;
+use App\Models\BuffetSale;
+use App\Models\FinancePayment;
+use App\Models\FinancialTransaction;
 use App\Models\MenuCategory;
 use App\Models\MenuItem;
 use App\Models\MenuOptionValue;
 use App\Models\Order;
-use App\Models\OrderItem;
+use App\Models\OrderItem;      // Added for POS accounting posting
+use App\Models\StockLevel;          // Added for POS receipt creation
 use App\Models\StockLocation;
 use App\Models\Table;
-use App\Services\Billing\ModuleBillingService;
+use App\Services\AccountingService;
 use App\Services\Bartender\BarOrderStockService;
-use App\Services\AccountingService;      // Added for POS accounting posting
-use App\Services\ReceiptService;          // Added for POS receipt creation
+use App\Services\Billing\ModuleBillingService;
+use App\Services\BuildingContext;            // Added for POS walk-in payments
+use App\Services\BuildingModuleGate;
 use App\Services\OrderDispatchService;
-use App\Models\BuffetPackage;
-use App\Models\BuffetSale;
-use App\Models\FinancePayment;            // Added for POS walk-in payments
+use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class OrderController extends Controller
@@ -34,14 +39,19 @@ class OrderController extends Controller
      */
     public function index(Request $request): View
     {
+        $buildingId = BuildingContext::buildingId();
+
         $orders = Order::with(['table', 'location', 'items', 'creator'])
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->location_id, fn($q) => $q->where('location_id', $request->location_id))
-            ->when($request->date, fn($q) => $q->whereDate('created_at', $request->date))
+            ->forBuilding($buildingId)
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->location_id, fn ($q) => $q->where('location_id', $request->location_id))
+            ->when($request->date, fn ($q) => $q->whereDate('created_at', $request->date))
             ->latest()
             ->paginate(30);
 
-        $locations = StockLocation::whereIn('code', ['bar', 'kitchen'])->get();
+        $locations = StockLocation::whereIn('code', ['bar', 'kitchen'])
+            ->when($buildingId, fn ($q) => $q->where('building_id', $buildingId))
+            ->get();
 
         return view('restaurant.orders.index', compact('orders', 'locations'));
     }
@@ -51,19 +61,22 @@ class OrderController extends Controller
      */
     public function create(Request $request): View
     {
-        $kitchen = StockLocation::kitchen();
-        $tables     = Table::where('is_active', true)
-                          ->when($kitchen, fn($q) => $q->where('location_id', $kitchen->id))
-                          ->get();
-        $categories = MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->with([
-            'optionGroups' => fn($g) => $g->where('is_active', true)->with([
-                'values' => fn($v) => $v->where('is_active', true),
+        $buildingId = BuildingContext::buildingId();
+        $kitchen = StockLocation::kitchen($buildingId);
+        $tables = Table::where('is_active', true)
+            ->forBuilding($buildingId)
+            ->when($kitchen, fn ($q) => $q->where('location_id', $kitchen->id))
+            ->get();
+        $categories = MenuCategory::with(['menuItems' => fn ($q) => $q->where('is_active', true)->with([
+            'optionGroups' => fn ($g) => $g->where('is_active', true)->with([
+                'values' => fn ($v) => $v->where('is_active', true),
             ]),
         ])])
-                          ->where('is_active', true)
-                          ->orderBy('sort_order')
-                          ->orderBy('name')
-                          ->get();
+            ->forBuilding($buildingId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         return view('restaurant.orders.create', compact('kitchen', 'tables', 'categories'));
     }
@@ -74,36 +87,39 @@ class OrderController extends Controller
      */
     public function pos(Request $request): View
     {
-        $kitchen = StockLocation::kitchen();
+        $buildingId = BuildingContext::buildingId();
+        $kitchen = StockLocation::kitchen($buildingId);
 
         $categories = MenuCategory::with(['menuItems' => function ($q) {
             $q->where('is_active', true)
-              ->where('is_available', true)
-              ->where('is_buffet', false)
-              ->where(function ($sub) {
-                  $sub->whereNull('available_from')
-                      ->orWhere('available_from', '<=', now()->format('H:i:s'));
-              })
-              ->where(function ($sub) {
-                  $sub->whereNull('available_until')
-                      ->orWhere('available_until', '>=', now()->format('H:i:s'));
-              })
-              ->with(['optionGroups' => fn($g) => $g->where('is_active', true)->with([
-                  'values' => fn($v) => $v->where('is_active', true),
-              ])]);
+                ->where('is_available', true)
+                ->where('is_buffet', false)
+                ->where(function ($sub) {
+                    $sub->whereNull('available_from')
+                        ->orWhere('available_from', '<=', now()->format('H:i:s'));
+                })
+                ->where(function ($sub) {
+                    $sub->whereNull('available_until')
+                        ->orWhere('available_until', '>=', now()->format('H:i:s'));
+                })
+                ->with(['optionGroups' => fn ($g) => $g->where('is_active', true)->with([
+                    'values' => fn ($v) => $v->where('is_active', true),
+                ])]);
         }])
+            ->forBuilding($buildingId)
             ->where('is_active', true)
-            ->when($kitchen, fn($q) => $q->where('location_id', $kitchen->id))
+            ->when($kitchen, fn ($q) => $q->where('location_id', $kitchen->id))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
         // Filter out categories with no visible items
-        $categories = $categories->filter(fn($cat) => $cat->menuItems->isNotEmpty())->values();
+        $categories = $categories->filter(fn ($cat) => $cat->menuItems->isNotEmpty())->values();
 
         // Build stock lookup keyed by product name (lowercase) → available quantity
-        $stockLevels = \App\Models\StockLevel::with('product')
-            ->when($kitchen, fn($q) => $q->where('location_id', $kitchen->id))
+        $stockLevels = StockLevel::with('product')
+            ->when($kitchen, fn ($q) => $q->where('location_id', $kitchen->id))
+            ->forBuilding($buildingId)
             ->where('quantity', '>', 0)
             ->get();
 
@@ -130,11 +146,13 @@ class OrderController extends Controller
         }
 
         $recentOrders = Order::with(['items.menuItem', 'table', 'location', 'creator'])
+            ->forBuilding($buildingId)
             ->where('status', 'served')
             ->latest()
             ->get();
 
-        $activeBookings = \App\Models\Booking::with('guest')
+        $activeBookings = Booking::with('guest')
+            ->forBuilding($buildingId)
             ->where('status', 'checked_in')
             ->orderBy('guest_name')
             ->get(['id', 'booking_number', 'guest_name', 'room_id']);
@@ -148,44 +166,56 @@ class OrderController extends Controller
      */
     public function storePos(Request $request): RedirectResponse
     {
-        $kitchen = StockLocation::kitchen();
-        abort_if(!$kitchen, 500, 'Kitchen stock location not configured.');
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $kitchen = StockLocation::kitchen($buildingId);
+        abort_if(! $kitchen, 500, 'Kitchen stock location not configured.');
+
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        $buffetPackageRule = Rule::exists('buffet_packages', 'id');
+        $bookingRule = Rule::exists('bookings', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+            $buffetPackageRule->where('building_id', $buildingId);
+            $bookingRule->where('building_id', $buildingId);
+        }
 
         $data = $request->validate([
             'existing_order_id' => 'nullable|uuid|exists:orders,id',
-            'customer_name'  => 'nullable|string|max:150',
+            'customer_name' => 'nullable|string|max:150',
             'customer_phone' => 'nullable|string|max:30',
             'payment_method' => 'required|in:cash,mobile,card,charge_to_booking',
-            'booking_id'     => 'required_if:payment_method,charge_to_booking|uuid|exists:bookings,id',
-            'notes'          => 'nullable|string|max:500',
-            'items'          => 'nullable|array|min:1',
-            'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
-            'items.*.quantity'     => 'required|integer|min:1',
-            'buffet_items'          => 'nullable|array',
-            'buffet_items.*.buffet_package_id' => 'required|uuid|exists:buffet_packages,id',
-            'buffet_items.*.adults'            => 'required|integer|min:1',
-            'buffet_items.*.children'          => 'nullable|integer|min:0',
+            'booking_id' => ['required_if:payment_method,charge_to_booking', 'nullable', 'uuid', $bookingRule],
+            'notes' => 'nullable|string|max:500',
+            'items' => 'nullable|array|min:1',
+            'items.*.menu_item_id' => ['required', 'uuid', $menuItemRule],
+            'items.*.quantity' => 'required|integer|min:1',
+            'buffet_items' => 'nullable|array',
+            'buffet_items.*.buffet_package_id' => ['required', 'uuid', $buffetPackageRule],
+            'buffet_items.*.adults' => 'required|integer|min:1',
+            'buffet_items.*.children' => 'nullable|integer|min:0',
         ]);
 
         // Finalise existing served order
-        if (!empty($data['existing_order_id'])) {
+        if (! empty($data['existing_order_id'])) {
             return $this->finaliseExistingOrder($data);
         }
 
-        $hasItems = !empty($data['items']);
-        $hasBuffet = !empty($data['buffet_items']);
+        $hasItems = ! empty($data['items']);
+        $hasBuffet = ! empty($data['buffet_items']);
 
-        abort_if(!$hasItems && !$hasBuffet, 422, 'At least one item or buffet package is required.');
+        abort_if(! $hasItems && ! $hasBuffet, 422, 'At least one item or buffet package is required.');
 
         // Validate the booking is checked in if charging to folio
         $isChargeToBooking = $data['payment_method'] === 'charge_to_booking';
 
         if ($isChargeToBooking) {
-            $booking = \App\Models\Booking::findOrFail($data['booking_id']);
+            $booking = Booking::findOrFail($data['booking_id']);
             abort_if($booking->status !== 'checked_in', 422, 'Can only charge to a checked-in booking.');
         }
 
-        $order = DB::transaction(function () use ($data, $kitchen, $isChargeToBooking, $hasItems, $hasBuffet) {
+        $order = DB::transaction(function () use ($data, $kitchen, $isChargeToBooking, $hasItems, $hasBuffet, $buildingId) {
             $customerName = $data['customer_name'] ?: ($isChargeToBooking ? 'Guest' : 'Walk-in Guest');
             $customerPhone = $data['customer_phone'] ?? null;
 
@@ -194,29 +224,30 @@ class OrderController extends Controller
 
             if ($hasItems) {
                 $order = Order::create([
-                    'location_id'    => $kitchen->id,
-                    'order_type'     => $isChargeToBooking ? 'guest' : 'walkin',
-                    'order_source'   => 'walkin',
-                    'booking_id'     => $isChargeToBooking ? $data['booking_id'] : null,
-                    'customer_name'  => $customerName,
+                    'building_id' => $buildingId,
+                    'location_id' => $kitchen->id,
+                    'order_type' => $isChargeToBooking ? 'guest' : 'walkin',
+                    'order_source' => 'walkin',
+                    'booking_id' => $isChargeToBooking ? $data['booking_id'] : null,
+                    'customer_name' => $customerName,
                     'customer_phone' => $customerPhone,
-                    'status'         => 'open',
+                    'status' => 'open',
                     'payment_method' => $data['payment_method'],
-                    'notes'          => $data['notes'] ?? null,
-                    'created_by'     => (string) Auth::id(),
+                    'notes' => $data['notes'] ?? null,
+                    'created_by' => (string) Auth::id(),
                 ]);
 
                 foreach ($data['items'] as $line) {
                     $menuItem = MenuItem::findOrFail($line['menu_item_id']);
                     OrderItem::create([
-                        'order_id'       => $order->id,
-                        'menu_item_id'   => $menuItem->id,
+                        'order_id' => $order->id,
+                        'menu_item_id' => $menuItem->id,
                         'item_name_snapshot' => $menuItem->name,
-                        'quantity'       => $line['quantity'],
+                        'quantity' => $line['quantity'],
                         'base_unit_price' => (float) $menuItem->selling_price,
-                        'unit_price'     => (float) $menuItem->selling_price,
-                        'subtotal'       => (float) $menuItem->selling_price * $line['quantity'],
-                        'status'         => 'pending',
+                        'unit_price' => (float) $menuItem->selling_price,
+                        'subtotal' => (float) $menuItem->selling_price * $line['quantity'],
+                        'status' => 'pending',
                     ]);
                 }
 
@@ -232,18 +263,19 @@ class OrderController extends Controller
                         + ($children * (float) $package->child_price);
 
                     $sale = BuffetSale::create([
-                        'buffet_package_id'    => $package->id,
-                        'booking_id'           => $isChargeToBooking ? ($data['booking_id'] ?? null) : null,
-                        'sale_type'            => $isChargeToBooking ? 'booking' : 'walkin',
-                        'adults_count'         => (int) $bi['adults'],
-                        'children_count'       => $children,
+                        'building_id' => $buildingId,
+                        'buffet_package_id' => $package->id,
+                        'booking_id' => $isChargeToBooking ? ($data['booking_id'] ?? null) : null,
+                        'sale_type' => $isChargeToBooking ? 'booking' : 'walkin',
+                        'adults_count' => (int) $bi['adults'],
+                        'children_count' => $children,
                         'package_name_snapshot' => $package->name,
-                        'adult_price_snapshot'  => $package->adult_price,
-                        'child_price_snapshot'  => $package->child_price,
-                        'total_amount'          => $total,
-                        'status'                => 'pending',
-                        'notes'                 => $data['notes'] ?? null,
-                        'served_by'             => (string) Auth::id(),
+                        'adult_price_snapshot' => $package->adult_price,
+                        'child_price_snapshot' => $package->child_price,
+                        'total_amount' => $total,
+                        'status' => 'pending',
+                        'notes' => $data['notes'] ?? null,
+                        'served_by' => (string) Auth::id(),
                     ]);
 
                     $buffetSales[] = $sale;
@@ -253,7 +285,7 @@ class OrderController extends Controller
             if ($isChargeToBooking) {
                 if ($order) {
                     $order->update([
-                        'status'             => 'charged',
+                        'status' => 'charged',
                         'billed_to_folio_at' => now(),
                     ]);
                     app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());
@@ -296,10 +328,10 @@ class OrderController extends Controller
                     $totalAmount += (float) $order->total;
                     if ($isCashPayment) {
                         $order->update([
-                            'status'         => 'settled',
+                            'status' => 'settled',
                             'payment_method' => $paymentMethod,
-                            'settled_by'     => (string) Auth::id(),
-                            'settled_at'     => now(),
+                            'settled_by' => (string) Auth::id(),
+                            'settled_at' => now(),
                         ]);
                     } else {
                         $order->update([
@@ -312,10 +344,10 @@ class OrderController extends Controller
                     $totalAmount += (float) $sale->total_amount;
                     if ($isCashPayment) {
                         $sale->update([
-                            'status'           => 'settled',
-                            'payment_method'   => $paymentMethod,
-                            'settled_by'       => (string) Auth::id(),
-                            'settled_at'       => now(),
+                            'status' => 'settled',
+                            'payment_method' => $paymentMethod,
+                            'settled_by' => (string) Auth::id(),
+                            'settled_at' => now(),
                         ]);
                     } else {
                         $sale->update([
@@ -329,17 +361,17 @@ class OrderController extends Controller
                     $amountUsd = FinancePayment::toUsd($totalAmount, 'TZS', $exchangeRate);
 
                     $financePayment = FinancePayment::create([
-                        'payment_type'  => 'walkin',
-                        'checkout_id'   => null,
-                        'order_id'      => $order?->id,
-                        'method'        => $paymentMethod,
-                        'amount'        => $totalAmount,
-                        'currency'      => 'TZS',
-                        'amount_usd'    => $amountUsd,
+                        'payment_type' => 'walkin',
+                        'checkout_id' => null,
+                        'order_id' => $order?->id,
+                        'method' => $paymentMethod,
+                        'amount' => $totalAmount,
+                        'currency' => 'TZS',
+                        'amount_usd' => $amountUsd,
                         'exchange_rate' => $exchangeRate,
-                        'status'        => $paymentStatus,
-                        'created_by'    => (string) Auth::id(),
-                        'paid_at'       => $isCashPayment ? now() : null,
+                        'status' => $paymentStatus,
+                        'created_by' => (string) Auth::id(),
+                        'paid_at' => $isCashPayment ? now() : null,
                     ]);
 
                     if ($isCashPayment) {
@@ -351,17 +383,17 @@ class OrderController extends Controller
                             actorId: (string) Auth::id()
                         );
 
-                        \App\Models\FinancialTransaction::record([
-                            'type'            => 'walkin_sale',
-                            'source_module'   => 'restaurant',
-                            'payment_id'      => $financePayment->id,
-                            'order_id'        => $order?->id,
-                            'currency'        => 'TZS',
-                            'amount'          => $totalAmount,
-                            'amount_usd'      => $amountUsd,
-                            'exchange_rate'   => $exchangeRate,
-                            'payment_method'  => $paymentMethod,
-                            'description'     => 'POS sale',
+                        FinancialTransaction::record([
+                            'type' => 'walkin_sale',
+                            'source_module' => 'restaurant',
+                            'payment_id' => $financePayment->id,
+                            'order_id' => $order?->id,
+                            'currency' => 'TZS',
+                            'amount' => $totalAmount,
+                            'amount_usd' => $amountUsd,
+                            'exchange_rate' => $exchangeRate,
+                            'payment_method' => $paymentMethod,
+                            'description' => 'POS sale',
                         ], (string) Auth::id());
                     }
 
@@ -380,23 +412,27 @@ class OrderController extends Controller
             $msg = $order ? "Order {$order->order_number} " : '';
             $msg .= 'charged to guest folio.';
             if (count($buffetSales) > 0) {
-                $msg .= ' ' . count($buffetSales) . ' buffet sale(s) added.';
+                $msg .= ' '.count($buffetSales).' buffet sale(s) added.';
             }
             $redirectRoute = $order
                 ? redirect()->route('restaurant.orders.show', $order)
                 : redirect()->route('restaurant.buffet.show', $buffetSales[0]);
+
             return $redirectRoute->with('success', trim($msg));
         }
 
         $isCashPayment = $order && $order->payment_method === 'cash';
         $msg = $isCashPayment ? 'Sale completed successfully.' : 'Payment initiated. Awaiting confirmation.';
-        if ($order) $msg = "Order {$order->order_number} " . $msg;
+        if ($order) {
+            $msg = "Order {$order->order_number} ".$msg;
+        }
         if (count($buffetSales) > 0) {
-            $msg .= ' ' . count($buffetSales) . ' buffet sale(s) created.';
+            $msg .= ' '.count($buffetSales).' buffet sale(s) created.';
         }
         $redirectRoute = $order
             ? redirect()->route('restaurant.orders.show', $order)
             : redirect()->route('restaurant.buffet.show', $buffetSales[0]);
+
         return $redirectRoute->with('success', trim($msg));
     }
 
@@ -405,15 +441,17 @@ class OrderController extends Controller
      */
     protected function finaliseExistingOrder(array $data): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
         $order = Order::with('items.menuItem')->findOrFail($data['existing_order_id']);
+        BuildingContext::enforce($order->building_id);
 
-        abort_if(!in_array($order->status, ['served', 'ready', 'sent', 'open']), 422, 'Order cannot be finalised. Status must be served.');
+        abort_if(! in_array($order->status, ['served', 'ready', 'sent', 'open']), 422, 'Order cannot be finalised. Status must be served.');
         abort_if(in_array($order->status, ['settled', 'charged', 'cancelled']), 422, 'Order already settled or cancelled.');
 
         $isChargeToBooking = $data['payment_method'] === 'charge_to_booking';
 
         if ($isChargeToBooking) {
-            $booking = \App\Models\Booking::findOrFail($data['booking_id']);
+            $booking = Booking::findOrFail($data['booking_id']);
             abort_if($booking->status !== 'checked_in', 422, 'Can only charge to a checked-in booking.');
         }
 
@@ -422,11 +460,11 @@ class OrderController extends Controller
 
             if ($isChargeToBooking) {
                 $order->update([
-                    'status'             => 'charged',
-                    'payment_method'     => 'charge_to_booking',
-                    'booking_id'         => $data['booking_id'],
+                    'status' => 'charged',
+                    'payment_method' => 'charge_to_booking',
+                    'booking_id' => $data['booking_id'],
                     'billed_to_folio_at' => now(),
-                    'settled_by'         => (string) Auth::id(),
+                    'settled_by' => (string) Auth::id(),
                 ]);
                 app(ModuleBillingService::class)->syncOrderCharge($order->fresh(), (string) Auth::id());
             } else {
@@ -438,25 +476,25 @@ class OrderController extends Controller
                 $amountUsd = FinancePayment::toUsd($totalAmount, 'TZS', $exchangeRate);
 
                 $financePayment = FinancePayment::create([
-                    'payment_type'  => 'walkin',
-                    'checkout_id'   => null,
-                    'order_id'      => $order->id,
-                    'method'        => $paymentMethod,
-                    'amount'        => $totalAmount,
-                    'currency'      => 'TZS',
-                    'amount_usd'    => $amountUsd,
+                    'payment_type' => 'walkin',
+                    'checkout_id' => null,
+                    'order_id' => $order->id,
+                    'method' => $paymentMethod,
+                    'amount' => $totalAmount,
+                    'currency' => 'TZS',
+                    'amount_usd' => $amountUsd,
                     'exchange_rate' => $exchangeRate,
-                    'status'        => $paymentStatus,
-                    'created_by'    => (string) Auth::id(),
-                    'paid_at'       => $isCashPayment ? now() : null,
+                    'status' => $paymentStatus,
+                    'created_by' => (string) Auth::id(),
+                    'paid_at' => $isCashPayment ? now() : null,
                 ]);
 
                 if ($isCashPayment) {
                     $order->update([
-                        'status'         => 'settled',
+                        'status' => 'settled',
                         'payment_method' => $paymentMethod,
-                        'settled_by'     => (string) Auth::id(),
-                        'settled_at'     => now(),
+                        'settled_by' => (string) Auth::id(),
+                        'settled_at' => now(),
                     ]);
 
                     app(AccountingService::class)->postRestaurantSettlement(
@@ -467,17 +505,17 @@ class OrderController extends Controller
                         actorId: (string) Auth::id()
                     );
 
-                    \App\Models\FinancialTransaction::record([
-                        'type'            => 'walkin_sale',
-                        'source_module'   => 'restaurant',
-                        'payment_id'      => $financePayment->id,
-                        'order_id'        => $order->id,
-                        'currency'        => 'TZS',
-                        'amount'          => $totalAmount,
-                        'amount_usd'      => $amountUsd,
-                        'exchange_rate'   => $exchangeRate,
-                        'payment_method'  => $paymentMethod,
-                        'description'     => 'POS finalisation of order ' . $order->order_number,
+                    FinancialTransaction::record([
+                        'type' => 'walkin_sale',
+                        'source_module' => 'restaurant',
+                        'payment_id' => $financePayment->id,
+                        'order_id' => $order->id,
+                        'currency' => 'TZS',
+                        'amount' => $totalAmount,
+                        'amount_usd' => $amountUsd,
+                        'exchange_rate' => $exchangeRate,
+                        'payment_method' => $paymentMethod,
+                        'description' => 'POS finalisation of order '.$order->order_number,
                     ], (string) Auth::id());
                 } else {
                     $order->update([
@@ -508,39 +546,53 @@ class OrderController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $tableRule = Rule::exists('tables', 'id');
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        $optionValueRule = Rule::exists('menu_option_values', 'id');
+        $bookingRule = Rule::exists('bookings', 'id');
+        if ($buildingId) {
+            $tableRule->where('building_id', $buildingId);
+            $menuItemRule->where('building_id', $buildingId);
+            $bookingRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
-            'table_id'             => 'nullable|uuid|exists:tables,id',
-            'order_type'           => 'required|in:guest,walkin,dine_in,room_service,bar_tab,takeaway',
-            'booking_id'           => 'required_if:order_type,guest,room_service|nullable|uuid',
-            'customer_name'        => 'required_if:order_type,walkin,takeaway|nullable|string|max:150',
-            'notes'                => 'nullable|string|max:500',
-            'items'                => 'required|array|min:1',
-            'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
-            'items.*.quantity'     => 'required|integer|min:1',
-            'items.*.notes'        => 'nullable|string|max:255',
+            'table_id' => ['nullable', 'uuid', $tableRule],
+            'order_type' => 'required|in:guest,walkin,dine_in,room_service,bar_tab,takeaway',
+            'booking_id' => ['required_if:order_type,guest,room_service', 'nullable', 'uuid', $bookingRule],
+            'customer_name' => 'required_if:order_type,walkin,takeaway|nullable|string|max:150',
+            'notes' => 'nullable|string|max:500',
+            'items' => 'required|array|min:1',
+            'items.*.menu_item_id' => ['required', 'uuid', $menuItemRule],
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.notes' => 'nullable|string|max:255',
             'items.*.selected_option_value_ids' => 'nullable|array',
-            'items.*.selected_option_value_ids.*' => 'uuid|exists:menu_option_values,id',
+            'items.*.selected_option_value_ids.*' => ['uuid', $optionValueRule],
         ]);
 
-$order = DB::transaction(function () use ($data) {
-            $kitchen = StockLocation::kitchen();
+        $order = DB::transaction(function () use ($data, $buildingId) {
+            $kitchen = StockLocation::kitchen($buildingId);
 
             $order = Order::create([
-                'location_id'   => $kitchen?->id ?? $data['location_id'] ?? null,
-                'table_id'      => $data['table_id'] ?? null,
-                'order_type'    => $data['order_type'],
-                'order_source'  => null,
+                'building_id' => $buildingId,
+                'location_id' => $kitchen?->id ?? $data['location_id'] ?? null,
+                'table_id' => $data['table_id'] ?? null,
+                'order_type' => $data['order_type'],
+                'order_source' => null,
                 'bartender_status' => null,
                 'bartender_status_updated_at' => null,
-                'booking_id'    => $data['booking_id'] ?? null,
+                'booking_id' => $data['booking_id'] ?? null,
                 'customer_name' => $data['customer_name'] ?? null,
-                'status'        => 'open',
-                'notes'         => $data['notes'] ?? null,
-                'created_by'    => (string) Auth::id(),
+                'status' => 'open',
+                'notes' => $data['notes'] ?? null,
+                'created_by' => (string) Auth::id(),
             ]);
 
             foreach ($data['items'] as $item) {
-                OrderItem::create($this->buildOrderItemPayload($order, $item));
+                OrderItem::create($this->buildOrderItemPayload($order, $item, $buildingId));
             }
 
             // Mark table as occupied
@@ -563,12 +615,16 @@ $order = DB::transaction(function () use ($data) {
      */
     public function show(Order $order): View
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingContext::enforce($order->building_id);
+
         $order->load(['items.menuItem.ingredients.product', 'table', 'location', 'creator', 'settler']);
-        $menuCategories = MenuCategory::with(['menuItems' => fn($q) => $q->where('is_active', true)->with([
-            'optionGroups' => fn($g) => $g->where('is_active', true)->with([
-                'values' => fn($v) => $v->where('is_active', true),
+        $menuCategories = MenuCategory::with(['menuItems' => fn ($q) => $q->where('is_active', true)->with([
+            'optionGroups' => fn ($g) => $g->where('is_active', true)->with([
+                'values' => fn ($v) => $v->where('is_active', true),
             ]),
         ])])
+            ->forBuilding($buildingId)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -582,6 +638,7 @@ $order = DB::transaction(function () use ($data) {
      */
     public function send(Order $order): RedirectResponse
     {
+        BuildingContext::enforce($order->building_id);
         abort_if($order->status !== 'open', 422, 'Only open orders can be sent.');
 
         DB::transaction(function () use ($order) {
@@ -601,6 +658,7 @@ $order = DB::transaction(function () use ($data) {
      */
     public function ready(Order $order): RedirectResponse
     {
+        BuildingContext::enforce($order->building_id);
         abort_if($order->status !== 'sent', 422, 'Order must be sent before marking ready.');
 
         $order->update(['status' => 'ready']);
@@ -615,6 +673,7 @@ $order = DB::transaction(function () use ($data) {
      */
     public function serve(Order $order): RedirectResponse
     {
+        BuildingContext::enforce($order->building_id);
         abort_if($order->status !== 'ready', 422, 'Order must be ready before serving.');
 
         DB::transaction(function () use ($order) {
@@ -633,17 +692,19 @@ $order = DB::transaction(function () use ($data) {
     /**
      * POST /restaurant/orders/{order}/settle
      * This is where stock is deducted.
-     * 
+     *
      * UNIFIED CHECKOUT FLOW:
      * - Guest orders: Create BookingCharge and redirect to Finance Checkout
      * - Walk-in orders: Use WalkinPaymentController (direct payment modal)
      */
     public function settle(Request $request, Order $order): RedirectResponse
     {
+        BuildingContext::enforce($order->building_id);
+
         // Prevent re-settlement of already charged or settled orders
         abort_if(in_array($order->status, ['charged', 'settled']), 422, 'Order already charged or settled.');
         abort_if($order->status === 'cancelled', 422, 'Cannot settle a cancelled order.');
-        abort_if(!in_array($order->status, ['served', 'ready', 'sent', 'open']), 422, 'Order cannot be settled.');
+        abort_if(! in_array($order->status, ['served', 'ready', 'sent', 'open']), 422, 'Order cannot be settled.');
 
         // For guest orders, we ONLY allow charge_to_booking (enforces checkout flow)
         // Walk-in direct payments are handled by WalkinPaymentController
@@ -655,7 +716,7 @@ $order = DB::transaction(function () use ($data) {
             $request->validate([
                 'booking_id' => 'required|uuid|exists:bookings,id',
             ]);
-            
+
             // Force charge_to_booking for guest orders
             $paymentMethod = 'charge_to_booking';
         } else {
@@ -665,7 +726,7 @@ $order = DB::transaction(function () use ($data) {
         }
 
         $bookingId = $request->booking_id ?? $order->booking_id;
-        abort_if(!$bookingId, 422, 'Booking ID is required for guest orders.');
+        abort_if(! $bookingId, 422, 'Booking ID is required for guest orders.');
 
         DB::transaction(function () use ($order, $bookingId) {
             // 1. Deduct stock only once per order
@@ -673,9 +734,9 @@ $order = DB::transaction(function () use ($data) {
 
             // 2. Mark order as charged (NOT settled - will be settled at checkout)
             $order->update([
-                'status'         => 'charged',
+                'status' => 'charged',
                 'payment_method' => 'charge_to_booking',
-                'booking_id'     => $bookingId,
+                'booking_id' => $bookingId,
                 'billed_to_folio_at' => now(),
             ]);
 
@@ -695,7 +756,7 @@ $order = DB::transaction(function () use ($data) {
         // Award loyalty points for restaurant (50 points per 10,000 TZS)
         $freshOrder = $order->fresh();
         if ($freshOrder->booking_id) {
-            $booking = \App\Models\Booking::with('guest')->find($freshOrder->booking_id);
+            $booking = Booking::with('guest')->find($freshOrder->booking_id);
             if ($booking && $booking->guest) {
                 $pointsEarned = (int) floor(($freshOrder->total ?? 0) / 10000) * 50;
                 if ($pointsEarned > 0) {
@@ -715,10 +776,11 @@ $order = DB::transaction(function () use ($data) {
      */
     public function cancel(Order $order): RedirectResponse
     {
+        BuildingContext::enforce($order->building_id);
         abort_if($order->status === 'settled', 422, 'Cannot cancel a settled order.');
 
         DB::transaction(function () use ($order) {
-            if ($order->stock_deducted_at && !$order->stock_reversed_at) {
+            if ($order->stock_deducted_at && ! $order->stock_reversed_at) {
                 app(BarOrderStockService::class)->reverseForCancelledOrder($order, (string) Auth::id());
             }
 
@@ -743,14 +805,22 @@ $order = DB::transaction(function () use ($data) {
      */
     public function addItem(Request $request, Order $order): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingContext::enforce($order->building_id);
         abort_if($order->status !== 'open', 422, 'Can only add items to open orders.');
 
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        $optionValueRule = Rule::exists('menu_option_values', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+        }
+
         $request->validate([
-            'menu_item_id' => 'required|uuid|exists:menu_items,id',
-            'quantity'     => 'required|integer|min:1',
-            'notes'        => 'nullable|string|max:255',
+            'menu_item_id' => ['required', 'uuid', $menuItemRule],
+            'quantity' => 'required|integer|min:1',
+            'notes' => 'nullable|string|max:255',
             'selected_option_value_ids' => 'nullable|array',
-            'selected_option_value_ids.*' => 'uuid|exists:menu_option_values,id',
+            'selected_option_value_ids.*' => ['uuid', $optionValueRule],
         ]);
 
         DB::transaction(function () use ($request, $order) {
@@ -773,7 +843,7 @@ $order = DB::transaction(function () use ($data) {
                 $existing->update([
                     'quantity' => $newQty,
                     'subtotal' => $newQty * $existing->unit_price,
-                    'notes'    => $request->notes ?? $existing->notes,
+                    'notes' => $request->notes ?? $existing->notes,
                 ]);
             } else {
                 OrderItem::create($payload);
@@ -793,6 +863,7 @@ $order = DB::transaction(function () use ($data) {
      */
     public function removeItem(Order $order, OrderItem $orderItem): RedirectResponse
     {
+        BuildingContext::enforce($order->building_id);
         abort_if($order->status !== 'open', 422, 'Can only remove items from open orders.');
 
         DB::transaction(function () use ($order, $orderItem) {
@@ -815,12 +886,14 @@ $order = DB::transaction(function () use ($data) {
     {
         $menuItem = MenuItem::with([
             'category',
-            'optionGroups' => fn($q) => $q->where('is_active', true)->with([
-                'values' => fn($v) => $v->where('is_active', true),
+            'optionGroups' => fn ($q) => $q->where('is_active', true)->with([
+                'values' => fn ($v) => $v->where('is_active', true),
             ]),
         ])->where('is_active', true)->findOrFail($item['menu_item_id']);
 
-        abort_if(!$menuItem->is_available, 422, __('general.restaurant.messages.item_unavailable'));
+        BuildingContext::enforce($menuItem->building_id);
+
+        abort_if(! $menuItem->is_available, 422, __('general.restaurant.messages.item_unavailable'));
 
         $selectedIds = collect($item['selected_option_value_ids'] ?? [])->filter()->unique()->values();
         $selectedValues = MenuOptionValue::with('group')
@@ -829,7 +902,7 @@ $order = DB::transaction(function () use ($data) {
             ->get();
 
         $selectedByGroup = $selectedValues->groupBy('menu_option_group_id');
-        $allowedValueIds = $menuItem->optionGroups->flatMap(fn($group) => $group->values->pluck('id'))->map(fn($id) => (string) $id)->values();
+        $allowedValueIds = $menuItem->optionGroups->flatMap(fn ($group) => $group->values->pluck('id'))->map(fn ($id) => (string) $id)->values();
         $invalidSelections = $selectedIds->diff($allowedValueIds);
         abort_if($invalidSelections->isNotEmpty(), 422, __('general.restaurant.messages.invalid_option_selection'));
 
@@ -852,7 +925,7 @@ $order = DB::transaction(function () use ($data) {
                     'group_name' => $group->name,
                     'selection_type' => $group->selection_type,
                     'required' => (bool) $group->is_required,
-                    'values' => $groupSelections->map(fn($value) => [
+                    'values' => $groupSelections->map(fn ($value) => [
                         'id' => $value->id,
                         'label' => $value->label,
                         'price_delta' => (float) $value->price_delta,
@@ -861,13 +934,13 @@ $order = DB::transaction(function () use ($data) {
             }
         }
 
-        $optionsUnitPrice = (float) $selectedValues->sum(fn($value) => (float) $value->price_delta);
+        $optionsUnitPrice = (float) $selectedValues->sum(fn ($value) => (float) $value->price_delta);
         $basePrice = (float) $menuItem->selling_price;
         $unitPrice = $basePrice + $optionsUnitPrice;
         $quantity = (int) $item['quantity'];
         $signature = $selectedIds->isEmpty()
             ? 'none'
-            : sha1($selectedIds->map(fn($id) => (string) $id)->sort()->implode(','));
+            : sha1($selectedIds->map(fn ($id) => (string) $id)->sort()->implode(','));
 
         return [
             'order_id' => $order->id,

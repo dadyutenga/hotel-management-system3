@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Restaurant;
 use App\Http\Controllers\Controller;
 use App\Models\KitchenStockItem;
 use App\Models\KitchenStockMovement;
+use App\Services\BuildingContext;
+use App\Services\BuildingModuleGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +16,11 @@ class KitchenStockController extends Controller
 {
     public function index(): View
     {
-        $items = KitchenStockItem::where('is_active', true)
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $items = KitchenStockItem::forUserBuilding()
+            ->where('is_active', true)
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
@@ -26,11 +32,16 @@ class KitchenStockController extends Controller
 
     public function create(): View
     {
+        BuildingModuleGate::ensureRestaurant(BuildingContext::buildingId());
+
         return view('manager.kitchen-stock.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'unit' => 'required|string|max:50',
@@ -38,7 +49,10 @@ class KitchenStockController extends Controller
             'minimum_quantity' => 'required|numeric|min:0',
         ]);
 
-        KitchenStockItem::create($data);
+        KitchenStockItem::create([
+            'building_id' => $buildingId,
+            ...$data,
+        ]);
 
         return redirect()->route('manager.kitchen-stock.index')
             ->with('success', 'Stock item created.');
@@ -46,6 +60,9 @@ class KitchenStockController extends Controller
 
     public function show(KitchenStockItem $item): View
     {
+        BuildingContext::enforce($item->building_id);
+        BuildingModuleGate::ensureRestaurant($item->building_id);
+
         $movements = $item->movements()->with('recordedBy')->paginate(25);
 
         return view('manager.kitchen-stock.show', compact('item', 'movements'));
@@ -53,11 +70,17 @@ class KitchenStockController extends Controller
 
     public function edit(KitchenStockItem $item): View
     {
+        BuildingContext::enforce($item->building_id);
+        BuildingModuleGate::ensureRestaurant($item->building_id);
+
         return view('manager.kitchen-stock.edit', compact('item'));
     }
 
     public function update(Request $request, KitchenStockItem $item): RedirectResponse
     {
+        BuildingContext::enforce($item->building_id);
+        BuildingModuleGate::ensureRestaurant($item->building_id);
+
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'unit' => 'required|string|max:50',
@@ -73,6 +96,9 @@ class KitchenStockController extends Controller
 
     public function destroy(KitchenStockItem $item): RedirectResponse
     {
+        BuildingContext::enforce($item->building_id);
+        BuildingModuleGate::ensureRestaurant($item->building_id);
+
         $item->update(['is_active' => false]);
         $this->softDelete($item);
 
@@ -82,19 +108,33 @@ class KitchenStockController extends Controller
 
     public function archived(): View
     {
-        $records = KitchenStockItem::onlyDeleted()->latest('deleted_at')->paginate(20);
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $records = KitchenStockItem::onlyDeleted()
+            ->forUserBuilding()
+            ->latest('deleted_at')
+            ->paginate(20);
+
         return view('manager.kitchen-stock.archived', compact('records'));
     }
 
     public function restore(KitchenStockItem $item): RedirectResponse
     {
+        BuildingContext::enforce($item->building_id);
+        BuildingModuleGate::ensureRestaurant($item->building_id);
+
         $item->update(['is_active' => true]);
         $this->restoreModel($item);
+
         return redirect()->route('manager.kitchen-stock.index')->with('success', 'Stock item restored successfully.');
     }
 
     public function recordMovement(Request $request, KitchenStockItem $item): RedirectResponse
     {
+        BuildingContext::enforce($item->building_id);
+        BuildingModuleGate::ensureRestaurant($item->building_id);
+
         $data = $request->validate([
             'movement_type' => 'required|in:purchase,damage,transfer,adjustment',
             'quantity' => 'required|numeric',

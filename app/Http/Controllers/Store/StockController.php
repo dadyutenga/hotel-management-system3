@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\StockLevel;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
+use App\Services\BuildingContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -19,28 +20,35 @@ class StockController extends Controller
     {
         $user = auth()->user();
         $isRestaurantManager = $user->hasRole('restaurant_manager');
+        $buildingId = BuildingContext::buildingId();
 
         // Restaurant manager only sees bar location
         if ($isRestaurantManager) {
-            $barLocation = StockLocation::bar();
+            $barLocation = StockLocation::bar($buildingId);
             $locations = collect([$barLocation]);
         } else {
-            $locations = StockLocation::where('is_active', true)->get();
+            $locations = StockLocation::where('is_active', true)
+                ->when($buildingId, fn ($q, $id) => $q->where('building_id', $id))
+                ->get();
         }
+
+        $allowedLocationIds = $locations->pluck('id');
 
         $query = StockLevel::with(['product', 'location'])
             ->join('products', 'stock_levels.product_id', '=', 'products.id')
-            ->where('products.is_active', true);
+            ->where('products.is_active', true)
+            ->when($buildingId, fn ($q) => $q->where('products.building_id', $buildingId));
 
         // Restaurant manager: scope to bar location + bar products only
         if ($isRestaurantManager) {
             $query->where('stock_levels.location_id', $barLocation->id)
-                  ->where('products.product_type', 'bar');
+                ->where('products.product_type', 'bar');
         } else {
-            $query->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id));
+            $query->whereIn('stock_levels.location_id', $allowedLocationIds)
+                ->when($request->location_id, fn ($q) => $q->where('stock_levels.location_id', $request->location_id));
         }
 
-        $query->when($request->search, fn ($q) => $q->where('products.name', 'like', '%' . $request->search . '%'));
+        $query->when($request->search, fn ($q) => $q->where('products.name', 'like', '%'.$request->search.'%'));
 
         $levels = $query->select('stock_levels.*')->paginate(30);
 
@@ -50,8 +58,10 @@ class StockController extends Controller
     // GET /store/stock/restock
     public function restockForm(): View
     {
-        $products  = Product::where('is_active', true)->orderBy('name')->get();
-        $locations = StockLocation::where('is_active', true)->get();
+        $products = Product::where('is_active', true)->forUserBuilding()->orderBy('name')->get();
+        $locations = StockLocation::where('is_active', true)
+            ->when(BuildingContext::buildingId(), fn ($q, $id) => $q->where('building_id', $id))
+            ->get();
 
         return view('store.stock.restock', compact('products', 'locations'));
     }
@@ -60,23 +70,28 @@ class StockController extends Controller
     public function restock(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'product_id'  => 'required|uuid|exists:products,id',
+            'product_id' => 'required|uuid|exists:products,id',
             'location_id' => 'required|uuid|exists:stock_locations,id',
-            'quantity'    => 'required|numeric|min:0.001',
-            'unit_cost'   => 'nullable|numeric|min:0',
-            'notes'       => 'nullable|string|max:500',
+            'quantity' => 'required|numeric|min:0.001',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $product = Product::findOrFail($data['product_id']);
+        BuildingContext::enforce($product->building_id);
+
+        $location = StockLocation::findOrFail($data['location_id']);
+        BuildingContext::enforce($location->building_id);
+
         abort_if(! $product->is_active, 422, 'Cannot restock an inactive product.');
 
         StockMovement::record([
-            'product_id'  => $data['product_id'],
+            'product_id' => $data['product_id'],
             'location_id' => $data['location_id'],
-            'type'        => 'restock',
-            'quantity'    => $data['quantity'],
-            'unit_cost'   => $data['unit_cost'] ?? null,
-            'notes'       => $data['notes'] ?? null,
+            'type' => 'restock',
+            'quantity' => $data['quantity'],
+            'unit_cost' => $data['unit_cost'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ], auth()->id());
 
         return redirect()
@@ -89,19 +104,23 @@ class StockController extends Controller
     {
         $user = auth()->user();
         $isRestaurantManager = $user->hasRole('restaurant_manager');
+        $buildingId = BuildingContext::buildingId();
 
         if ($isRestaurantManager) {
             // Restaurant manager only sees bar and kitchen locations + bar products
-            $barId = StockLocation::bar()->id;
-            $kitchenId = StockLocation::kitchen()->id;
+            $barId = StockLocation::bar($buildingId)->id;
+            $kitchenId = StockLocation::kitchen($buildingId)->id;
             $locations = StockLocation::whereIn('id', [$barId, $kitchenId])->get();
             $products = Product::where('is_active', true)
+                ->forUserBuilding()
                 ->where('product_type', 'bar')
                 ->orderBy('name')
                 ->get();
         } else {
-            $products = Product::where('is_active', true)->orderBy('name')->get();
-            $locations = StockLocation::where('is_active', true)->get();
+            $products = Product::where('is_active', true)->forUserBuilding()->orderBy('name')->get();
+            $locations = StockLocation::where('is_active', true)
+                ->when($buildingId, fn ($q, $id) => $q->where('building_id', $id))
+                ->get();
         }
 
         return view('store.stock.damage', compact('products', 'locations'));
@@ -111,17 +130,22 @@ class StockController extends Controller
     public function damage(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'product_id'  => 'required|uuid|exists:products,id',
+            'product_id' => 'required|uuid|exists:products,id',
             'location_id' => 'required|uuid|exists:stock_locations,id',
-            'quantity'    => 'required|numeric|min:0.001',
-            'reason'      => 'required|string|max:255',
-            'notes'       => 'nullable|string|max:500',
+            'quantity' => 'required|numeric|min:0.001',
+            'reason' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         // RESTAURANT_MANAGER is scoped to bar and kitchen locations
         $this->assertLocationAccess(auth()->user(), $data['location_id']);
 
         $product = Product::findOrFail($data['product_id']);
+        BuildingContext::enforce($product->building_id);
+
+        $location = StockLocation::findOrFail($data['location_id']);
+        BuildingContext::enforce($location->building_id);
+
         $level = StockLevel::where('product_id', $data['product_id'])
             ->where('location_id', $data['location_id'])
             ->first();
@@ -135,11 +159,11 @@ class StockController extends Controller
         }
 
         StockMovement::record([
-            'product_id'  => $data['product_id'],
+            'product_id' => $data['product_id'],
             'location_id' => $data['location_id'],
-            'type'        => 'damage',
-            'quantity'    => $data['quantity'],
-            'notes'       => $data['reason'] . ($data['notes'] ? ' | ' . $data['notes'] : ''),
+            'type' => 'damage',
+            'quantity' => $data['quantity'],
+            'notes' => $data['reason'].($data['notes'] ? ' | '.$data['notes'] : ''),
         ], auth()->id());
 
         return redirect()
@@ -149,11 +173,11 @@ class StockController extends Controller
 
     private function assertLocationAccess($user, string $locationId): void
     {
-        $role     = $user->role->name;
+        $role = $user->role->name;
         $location = StockLocation::findOrFail($locationId);
 
         // RESTAURANT_MANAGER can access both bar and kitchen locations
-        if ($role === 'restaurant_manager' && !in_array($location->code, ['bar', 'kitchen'])) {
+        if ($role === 'restaurant_manager' && ! in_array($location->code, ['bar', 'kitchen'])) {
             abort(403, 'RESTAURANT_MANAGER can only record damage at bar or kitchen locations.');
         }
     }

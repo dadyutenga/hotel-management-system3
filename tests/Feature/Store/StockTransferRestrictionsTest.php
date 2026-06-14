@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Store;
 
+use App\Models\Building;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\StockLevel;
@@ -16,6 +17,8 @@ use Tests\TestCase;
 class StockTransferRestrictionsTest extends TestCase
 {
     use RefreshDatabase;
+
+    private ?string $buildingId = null;
 
     public function test_store_manager_cannot_access_direct_stock_edit_routes(): void
     {
@@ -300,11 +303,16 @@ class StockTransferRestrictionsTest extends TestCase
     private function bootstrapStockContext(): void
     {
         Artisan::call('db:seed', ['class' => 'RoleSeeder']);
+
+        $building = Building::factory()->create();
+        $this->buildingId = $building->id;
+
         Artisan::call('db:seed', ['class' => 'StockLocationSeeder']);
 
         $storeManager = $this->makeUser('store_manager');
 
         Product::create([
+            'building_id' => $this->buildingId,
             'name' => 'Cooking Oil',
             'sku' => 'OIL-001',
             'category' => 'Kitchen',
@@ -323,6 +331,7 @@ class StockTransferRestrictionsTest extends TestCase
 
         return User::factory()->create([
             'role_id' => $role->id,
+            'building_id' => $this->buildingId,
             'is_active' => true,
         ]);
     }

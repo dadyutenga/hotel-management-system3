@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendBookingCancellationJob;
+use App\Jobs\SendBookingConfirmationJob;
 use App\Models\Booking;
 use App\Models\Guest;
-use App\Services\Billing\ModuleBillingService;
+use App\Models\Order;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Services\Billing\ModuleBillingService;
+use App\Services\BuildingContext;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -25,8 +29,7 @@ class BookingController extends Controller
 {
     public function __construct(
         protected ModuleBillingService $moduleBillingService
-    ) {
-    }
+    ) {}
 
     // ═══════════════════════════════════════════════════════════════
     //  FRONTDESK BOOKING MANAGEMENT — active stays
@@ -38,6 +41,7 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $query = Booking::with(['room.roomType', 'guest', 'creator', 'reservation'])
+            ->forUserBuilding()
             ->orderBy('created_at', 'desc');
 
         // Filter by status
@@ -63,9 +67,9 @@ class BookingController extends Controller
             $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('guest_name', 'like', "%{$search}%")
-                  ->orWhere('guest_email', 'like', "%{$search}%")
-                  ->orWhere('booking_number', 'like', "%{$search}%")
-                  ->orWhere('guest_phone', 'like', "%{$search}%");
+                    ->orWhere('guest_email', 'like', "%{$search}%")
+                    ->orWhere('booking_number', 'like', "%{$search}%")
+                    ->orWhere('guest_phone', 'like', "%{$search}%");
             });
         }
 
@@ -73,11 +77,11 @@ class BookingController extends Controller
 
         // Stats for dashboard cards
         $stats = [
-            'total' => Booking::count(),
-            'checked_in' => Booking::where('status', 'checked_in')->count(),
-            'checked_out' => Booking::where('status', 'checked_out')->count(),
-            'today_checkins' => Booking::whereDate('check_in_date', today())->where('status', 'checked_in')->count(),
-            'today_checkouts' => Booking::where('check_out_date', now()->toDateString())
+            'total' => Booking::forUserBuilding()->count(),
+            'checked_in' => Booking::forUserBuilding()->where('status', 'checked_in')->count(),
+            'checked_out' => Booking::forUserBuilding()->where('status', 'checked_out')->count(),
+            'today_checkins' => Booking::forUserBuilding()->whereDate('check_in_date', today())->where('status', 'checked_in')->count(),
+            'today_checkouts' => Booking::forUserBuilding()->where('check_out_date', now()->toDateString())
                 ->where('status', 'checked_in')->count(),
         ];
 
@@ -90,6 +94,7 @@ class BookingController extends Controller
     public function currentGuests(Request $request)
     {
         $query = Booking::with(['room.roomType', 'room.floor.building', 'guest'])
+            ->forUserBuilding()
             ->where('status', 'checked_in')
             ->orderBy('check_in_date', 'desc');
 
@@ -98,21 +103,21 @@ class BookingController extends Controller
             $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('guest_name', 'like', "%{$search}%")
-                  ->orWhere('guest_email', 'like', "%{$search}%")
-                  ->orWhere('booking_number', 'like', "%{$search}%")
-                  ->orWhere('guest_phone', 'like', "%{$search}%")
-                  ->orWhereHas('room', function ($rq) use ($search) {
-                      $rq->where('room_number', 'like', "%{$search}%");
-                  });
+                    ->orWhere('guest_email', 'like', "%{$search}%")
+                    ->orWhere('booking_number', 'like', "%{$search}%")
+                    ->orWhere('guest_phone', 'like', "%{$search}%")
+                    ->orWhereHas('room', function ($rq) use ($search) {
+                        $rq->where('room_number', 'like', "%{$search}%");
+                    });
             });
         }
 
         $currentGuests = $query->paginate(min($request->input('per_page', 20), 100));
 
-        $totalGuests = Booking::where('status', 'checked_in')->count();
-        $totalRooms = Booking::where('status', 'checked_in')->distinct()->count('room_id');
-        $todayCheckins = Booking::whereDate('check_in_date', today())->where('status', 'checked_in')->count();
-        $todayCheckouts = Booking::whereDate('check_out_date', today())->where('status', 'checked_in')->count();
+        $totalGuests = Booking::forUserBuilding()->where('status', 'checked_in')->count();
+        $totalRooms = Booking::forUserBuilding()->where('status', 'checked_in')->distinct()->count('room_id');
+        $todayCheckins = Booking::forUserBuilding()->whereDate('check_in_date', today())->where('status', 'checked_in')->count();
+        $todayCheckouts = Booking::forUserBuilding()->whereDate('check_out_date', today())->where('status', 'checked_in')->count();
 
         return view('bookings.current-guests', compact('currentGuests', 'totalGuests', 'totalRooms', 'todayCheckins', 'todayCheckouts'));
     }
@@ -122,21 +127,22 @@ class BookingController extends Controller
      */
     public function create(Request $request)
     {
-        $guests = Guest::orderBy('first_name')->get();
+        $guests = Guest::forUserBuilding()->orderBy('first_name')->get();
         $roomTypes = RoomType::all();
 
         // Pre-select guest if provided
         $selectedGuest = null;
         if ($request->has('guest_id')) {
-            $selectedGuest = Guest::find($request->guest_id);
+            $selectedGuest = Guest::forUserBuilding()->find($request->guest_id);
         }
 
         // Get available rooms if dates are provided
         $availableRooms = collect();
         if ($request->filled('check_in') && $request->filled('check_out')) {
             $availableRooms = Room::with(['roomType', 'floor.building'])
+                ->forUserBuilding()
                 ->availableForDates($request->check_in, $request->check_out)
-                ->when($request->room_type, fn($q) => $q->where('room_type_id', $request->room_type))
+                ->when($request->room_type, fn ($q) => $q->where('room_type_id', $request->room_type))
                 ->orderBy('room_number')
                 ->get();
         }
@@ -154,7 +160,7 @@ class BookingController extends Controller
         $guestId = $request->input('guest_id');
         $createNewGuest = $request->input('create_new_guest') === '1';
 
-        if ($createNewGuest || !$guestId) {
+        if ($createNewGuest || ! $guestId) {
             // Validate and create new guest
             $guestData = $request->validate([
                 'guest_first_name' => 'required|string|max:255',
@@ -172,6 +178,7 @@ class BookingController extends Controller
                 'phone_number' => $guestData['guest_phone'],
                 'id_number' => $guestData['guest_id_number'],
                 'nationality' => $guestData['guest_nationality'],
+                'building_id' => BuildingContext::isAdmin() ? null : BuildingContext::buildingId(),
             ]);
 
             $guestId = $guest->id;
@@ -189,17 +196,19 @@ class BookingController extends Controller
         ]);
 
         $room = Room::with('roomType')->findOrFail($validated['room_id']);
+        BuildingContext::enforce($room->building_id);
 
         // Use transaction with lock to prevent double-booking race conditions
         try {
             $booking = DB::transaction(function () use ($validated, $room, $guestId) {
                 // Check room availability with pessimistic lock
-                if (!Booking::isRoomAvailable($room->id, $validated['check_in_date'], $validated['check_out_date'], null, true)) {
+                if (! Booking::isRoomAvailable($room->id, $validated['check_in_date'], $validated['check_out_date'], null, true)) {
                     throw new \RuntimeException('This room is not available for the selected dates.');
                 }
 
                 // Get guest data for legacy fields
                 $guest = Guest::findOrFail($guestId);
+                BuildingContext::enforce($guest->building_id);
 
                 // Create booking with checked_in status (walk-in = immediate check-in)
                 return Booking::create([
@@ -209,6 +218,7 @@ class BookingController extends Controller
                     'guest_phone' => $guest->phone_number,
                     'guest_country' => $guest->nationality,
                     'room_id' => $room->id,
+                    'building_id' => $room->building_id,
                     'check_in_date' => $validated['check_in_date'],
                     'check_out_date' => $validated['check_out_date'],
                     'number_of_guests' => $validated['number_of_guests'],
@@ -226,23 +236,23 @@ class BookingController extends Controller
         }
 
         // Dispatch booking confirmation (email + SMS)
-        \App\Jobs\SendBookingConfirmationJob::dispatch([
-            'reference'   => $booking->booking_number,
-            'guest_name'  => $booking->guest?->full_name ?? $booking->guest_name,
-            'email'       => $booking->guest?->email ?? $booking->guest_email,
-            'phone'       => $booking->guest?->phone_number ?? $booking->guest_phone,
+        SendBookingConfirmationJob::dispatch([
+            'reference' => $booking->booking_number,
+            'guest_name' => $booking->guest?->full_name ?? $booking->guest_name,
+            'email' => $booking->guest?->email ?? $booking->guest_email,
+            'phone' => $booking->guest?->phone_number ?? $booking->guest_phone,
             'room_number' => $booking->room?->room_number ?? '',
-            'room_type'   => $booking->room?->roomType?->name ?? '',
-            'check_in'    => $booking->check_in_date,
-            'check_out'   => $booking->check_out_date,
-            'nights'      => $booking->check_in_date && $booking->check_out_date
-                ? \Carbon\Carbon::parse($booking->check_in_date)->diffInDays($booking->check_out_date) : 1,
-            'rate'        => $booking->room?->roomType?->base_price ?? 0,
-            'total'       => $booking->total_amount ?? 0,
+            'room_type' => $booking->room?->roomType?->name ?? '',
+            'check_in' => $booking->check_in_date,
+            'check_out' => $booking->check_out_date,
+            'nights' => $booking->check_in_date && $booking->check_out_date
+                ? Carbon::parse($booking->check_in_date)->diffInDays($booking->check_out_date) : 1,
+            'rate' => $booking->room?->roomType?->base_price ?? 0,
+            'total' => $booking->total_amount ?? 0,
         ])->onQueue('notifications');
 
         return redirect()->route('bookings.index')
-            ->with('success', 'Walk-in guest checked in. Booking #' . $booking->booking_number . ' created.');
+            ->with('success', 'Walk-in guest checked in. Booking #'.$booking->booking_number.' created.');
     }
 
     /**
@@ -251,6 +261,7 @@ class BookingController extends Controller
     public function show(Booking $booking)
     {
         $this->authorize('view', $booking);
+        BuildingContext::enforce($booking->building_id);
 
         $booking->load(['room.roomType', 'room.floor.building', 'guest', 'creator', 'reservation', 'laundryOrders', 'bookingCharges']);
 
@@ -263,17 +274,19 @@ class BookingController extends Controller
     public function edit(Booking $booking)
     {
         $this->authorize('update', $booking);
+        BuildingContext::enforce($booking->building_id);
 
-        if (!$booking->canBeEdited()) {
+        if (! $booking->canBeEdited()) {
             return back()->with('error', 'Only active (checked-in) bookings can be edited.');
         }
 
         $booking->load(['room.roomType', 'guest']);
-        $guests = Guest::orderBy('first_name')->get();
+        $guests = Guest::forUserBuilding()->orderBy('first_name')->get();
         $roomTypes = RoomType::all();
 
         // Get available rooms (include currently assigned room)
         $availableRooms = Room::with(['roomType', 'floor.building'])
+            ->forUserBuilding()
             ->where(function ($query) use ($booking) {
                 $query->where(function ($q) use ($booking) {
                     $q->availableForDates(
@@ -294,8 +307,9 @@ class BookingController extends Controller
     public function update(Request $request, Booking $booking)
     {
         $this->authorize('update', $booking);
+        BuildingContext::enforce($booking->building_id);
 
-        if (!$booking->canBeEdited()) {
+        if (! $booking->canBeEdited()) {
             return back()->with('error', 'Only active (checked-in) bookings can be edited.');
         }
 
@@ -309,8 +323,11 @@ class BookingController extends Controller
             'guest_id' => 'nullable|uuid|exists:guests,id',
         ]);
 
+        $room = Room::findOrFail($validated['room_id']);
+        BuildingContext::enforce($room->building_id);
+
         // Check room availability (excluding current booking)
-        if (!Booking::isRoomAvailable($validated['room_id'], $validated['check_in_date'], $validated['check_out_date'], $booking->id)) {
+        if (! Booking::isRoomAvailable($validated['room_id'], $validated['check_in_date'], $validated['check_out_date'], $booking->id)) {
             return back()
                 ->withInput()
                 ->with('error', 'The selected room is not available for these dates.');
@@ -319,6 +336,7 @@ class BookingController extends Controller
         // Update data
         $updateData = [
             'room_id' => $validated['room_id'],
+            'building_id' => $room->building_id,
             'check_in_date' => $validated['check_in_date'],
             'check_out_date' => $validated['check_out_date'],
             'number_of_guests' => $validated['number_of_guests'],
@@ -328,6 +346,7 @@ class BookingController extends Controller
 
         if ($request->filled('guest_id')) {
             $guest = Guest::findOrFail($validated['guest_id']);
+            BuildingContext::enforce($guest->building_id);
             $updateData['guest_id'] = $guest->id;
             $updateData['guest_name'] = $guest->full_name;
             $updateData['guest_email'] = $guest->email;
@@ -347,7 +366,7 @@ class BookingController extends Controller
 
     /**
      * Check out a checked-in booking.
-     * 
+     *
      * UNIFIED CHECKOUT FLOW:
      * - Redirect to Finance Checkout if there are unpaid charges
      * - Finance Checkout handles all payment processing
@@ -356,8 +375,9 @@ class BookingController extends Controller
     public function checkOut(Booking $booking)
     {
         $this->authorize('update', $booking);
+        BuildingContext::enforce($booking->building_id);
 
-        if (!$booking->canBeCheckedOut()) {
+        if (! $booking->canBeCheckedOut()) {
             return back()->with('error', 'Only checked-in bookings can be checked out.');
         }
 
@@ -369,16 +389,16 @@ class BookingController extends Controller
             ->count();
 
         if ($pendingLaundry > 0) {
-            return back()->with('error', 'Cannot check out: there are ' . $pendingLaundry . ' undelivered laundry order(s). Please deliver all laundry first.');
+            return back()->with('error', 'Cannot check out: there are '.$pendingLaundry.' undelivered laundry order(s). Please deliver all laundry first.');
         }
 
         // Check for unserved restaurant/bar orders (charged are in the folio, settled are done)
-        $pendingOrders = \App\Models\Order::where('booking_id', $booking->id)
+        $pendingOrders = Order::where('booking_id', $booking->id)
             ->whereIn('status', ['open', 'sent', 'ready', 'served'])
             ->count();
 
         if ($pendingOrders > 0) {
-            return back()->with('error', 'Cannot check out: there are ' . $pendingOrders . ' unserved restaurant/bar order(s). Please serve all orders first.');
+            return back()->with('error', 'Cannot check out: there are '.$pendingOrders.' unserved restaurant/bar order(s). Please serve all orders first.');
         }
 
         // Check for unpaid charges
@@ -388,7 +408,7 @@ class BookingController extends Controller
             // Redirect to Finance Checkout to process payment
             return redirect()
                 ->route('finance.checkout.show', $booking->id)
-                ->with('info', 'Please complete payment for all charges (Total: ' . number_format($unpaidCharges, 0) . ' TZS) before checking out.');
+                ->with('info', 'Please complete payment for all charges (Total: '.number_format($unpaidCharges, 0).' TZS) before checking out.');
         }
 
         // No unpaid charges - proceed with checkout
@@ -397,7 +417,7 @@ class BookingController extends Controller
         // Award loyalty points for the stay
         if ($booking->guest) {
             $nights = $booking->check_in_date && $booking->check_out_date
-                ? max(1, \Carbon\Carbon::parse($booking->check_in_date)->diffInDays($booking->check_out_date))
+                ? max(1, Carbon::parse($booking->check_in_date)->diffInDays($booking->check_out_date))
                 : 1;
             $booking->guest->addPoints(
                 points: $nights * 100,
@@ -417,8 +437,9 @@ class BookingController extends Controller
     public function cancel(Request $request, Booking $booking)
     {
         $this->authorize('update', $booking);
+        BuildingContext::enforce($booking->building_id);
 
-        if (!$booking->canBeCancelled()) {
+        if (! $booking->canBeCancelled()) {
             return back()->with('error', 'Only active (checked-in) bookings can be cancelled.');
         }
 
@@ -430,14 +451,14 @@ class BookingController extends Controller
         ]);
 
         // Dispatch cancellation notification (email + SMS)
-        \App\Jobs\SendBookingCancellationJob::dispatch([
-            'reference'           => $booking->booking_number,
-            'guest_name'          => $booking->guest?->full_name ?? $booking->guest_name,
-            'email'               => $booking->guest?->email ?? $booking->guest_email,
-            'phone'               => $booking->guest?->phone_number ?? $booking->guest_phone,
-            'room_number'         => $booking->room?->room_number ?? '',
-            'check_in'            => $booking->check_in_date,
-            'check_out'           => $booking->check_out_date,
+        SendBookingCancellationJob::dispatch([
+            'reference' => $booking->booking_number,
+            'guest_name' => $booking->guest?->full_name ?? $booking->guest_name,
+            'email' => $booking->guest?->email ?? $booking->guest_email,
+            'phone' => $booking->guest?->phone_number ?? $booking->guest_phone,
+            'room_number' => $booking->room?->room_number ?? '',
+            'check_in' => $booking->check_in_date,
+            'check_out' => $booking->check_out_date,
             'cancellation_reason' => $reason,
         ])->onQueue('notifications');
 
@@ -450,8 +471,9 @@ class BookingController extends Controller
     public function destroy(Booking $booking)
     {
         $this->authorize('delete', $booking);
+        BuildingContext::enforce($booking->building_id);
 
-        if (!in_array($booking->status, ['cancelled', 'checked_out'])) {
+        if (! in_array($booking->status, ['cancelled', 'checked_out'])) {
             return back()->with('error', 'Only checked-out or cancelled bookings can be deleted.');
         }
 
@@ -463,13 +485,18 @@ class BookingController extends Controller
 
     public function archived()
     {
-        $bookings = Booking::onlyDeleted()->with(['guest', 'room'])->latest('deleted_at')->paginate(20);
+        $bookings = Booking::onlyDeleted()
+            ->forUserBuilding()
+            ->with(['guest', 'room'])
+            ->latest('deleted_at')
+            ->paginate(20);
 
         return view('bookings.archived', compact('bookings'));
     }
 
     public function restore(Booking $booking)
     {
+        BuildingContext::enforce($booking->building_id);
         $this->restoreModel($booking);
 
         return redirect()->route('bookings.index')->with('success', 'Booking restored successfully.');
@@ -490,6 +517,9 @@ class BookingController extends Controller
             'check_out' => 'required|date|after:check_in',
             'exclude_booking_id' => 'nullable|uuid',
         ]);
+
+        $room = Room::findOrFail($request->room_id);
+        BuildingContext::enforce($room->building_id);
 
         $available = Booking::isRoomAvailable(
             $request->room_id,
@@ -518,11 +548,12 @@ class BookingController extends Controller
         ]);
 
         $rooms = Room::with(['roomType', 'floor.building'])
+            ->forUserBuilding()
             ->availableForDates($request->check_in, $request->check_out)
-            ->when($request->room_type_id, fn($q) => $q->where('room_type_id', $request->room_type_id))
+            ->when($request->room_type_id, fn ($q) => $q->where('room_type_id', $request->room_type_id))
             ->orderBy('room_number')
             ->get()
-            ->each(fn($room) => $room->roomType?->append(['price_per_night', 'formatted_rate']));
+            ->each(fn ($room) => $room->roomType?->append(['price_per_night', 'formatted_rate']));
 
         return response()->json([
             'rooms' => $rooms,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Services\BuildingContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,17 +14,17 @@ class GuestController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Guest::query();
+        $query = Guest::forUserBuilding();
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone_number', 'like', "%{$search}%")
-                  ->orWhere('id_number', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone_number', 'like', "%{$search}%")
+                    ->orWhere('id_number', 'like', "%{$search}%");
             });
         }
 
@@ -65,6 +66,10 @@ class GuestController extends Controller
         // Remove file fields from validated data (handled separately via Media Library)
         unset($validated['photo'], $validated['id_documents']);
 
+        if (! BuildingContext::isAdmin()) {
+            $validated['building_id'] = BuildingContext::buildingId();
+        }
+
         // Create the guest
         $guest = Guest::create($validated);
 
@@ -97,7 +102,9 @@ class GuestController extends Controller
      */
     public function show(Guest $guest)
     {
+        BuildingContext::enforce($guest->building_id);
         $guest->load(['reservations.room.roomType', 'bookings.room.roomType', 'media']);
+
         return view('guests.show', compact('guest'));
     }
 
@@ -106,7 +113,9 @@ class GuestController extends Controller
      */
     public function edit(Guest $guest)
     {
+        BuildingContext::enforce($guest->building_id);
         $guest->load('media');
+
         return view('guests.edit', compact('guest'));
     }
 
@@ -115,6 +124,7 @@ class GuestController extends Controller
      */
     public function update(Request $request, Guest $guest)
     {
+        BuildingContext::enforce($guest->building_id);
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -182,6 +192,8 @@ class GuestController extends Controller
      */
     public function destroy(Guest $guest)
     {
+        BuildingContext::enforce($guest->building_id);
+
         // Check if guest has reservations
         if ($guest->reservations()->count() > 0) {
             return back()->with('error', 'Cannot delete guest with existing reservations.');
@@ -196,13 +208,17 @@ class GuestController extends Controller
 
     public function archived()
     {
-        $guests = Guest::onlyDeleted()->latest('deleted_at')->paginate(20);
+        $guests = Guest::onlyDeleted()
+            ->forUserBuilding()
+            ->latest('deleted_at')
+            ->paginate(20);
 
         return view('guests.archived', compact('guests'));
     }
 
     public function restore(Guest $guest)
     {
+        BuildingContext::enforce($guest->building_id);
         $this->restoreModel($guest);
 
         return redirect()->route('guests.index')->with('success', 'Guest restored successfully.');
@@ -213,9 +229,11 @@ class GuestController extends Controller
      */
     public function removeMedia(Guest $guest, $mediaId)
     {
+        BuildingContext::enforce($guest->building_id);
+
         $media = $guest->media()->find($mediaId);
-        
-        if (!$media) {
+
+        if (! $media) {
             return back()->with('error', 'Media not found.');
         }
 
@@ -230,13 +248,14 @@ class GuestController extends Controller
     public function search(Request $request)
     {
         $search = str_replace(['%', '_'], ['\%', '\_'], $request->get('q', ''));
-        
-        $guests = Guest::where(function ($query) use ($search) {
-            $query->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
-        })
-        ->limit(10)
-        ->get(['id', 'first_name', 'last_name']);
+
+        $guests = Guest::forUserBuilding()
+            ->where(function ($query) use ($search) {
+                $query->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
+            })
+            ->limit(10)
+            ->get(['id', 'first_name', 'last_name']);
 
         return response()->json($guests->map(function ($guest) {
             return [

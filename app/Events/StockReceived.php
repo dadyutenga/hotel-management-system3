@@ -10,7 +10,5 @@ class StockReceived
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public StockReceiving $receiving)
-    {
-    }
+    public function __construct(public StockReceiving $receiving) {}
 }

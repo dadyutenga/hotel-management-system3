@@ -37,23 +37,24 @@ class BroadcastController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'title'        => 'required|string|max:200',
-            'body'         => 'required|string',
-            'sms_message'  => 'nullable|string|max:160',
-            'type'         => 'required|in:offer,event,announcement',
-            'target'       => 'required|in:all,Silver,Gold,Platinum,walkin,guests',
-            'channels'     => 'required|in:email,sms,both',
+            'title' => 'required|string|max:200',
+            'body' => 'required|string',
+            'sms_message' => 'nullable|string|max:160',
+            'type' => 'required|in:offer,event,announcement',
+            'target' => 'required|in:all,Silver,Gold,Platinum,walkin,guests',
+            'channels' => 'required|in:email,sms,both',
             'scheduled_at' => 'nullable|date|after:now',
         ]);
 
         $broadcast = Broadcast::create([
             ...$data,
-            'status'     => $data['scheduled_at'] ? 'scheduled' : 'draft',
+            'status' => $data['scheduled_at'] ? 'scheduled' : 'draft',
             'created_by' => auth()->id(),
         ]);
 
         if ($request->input('action') === 'send') {
             $this->dispatchBroadcast($broadcast);
+
             return redirect()
                 ->route('admin.broadcasts.index')
                 ->with('success', 'Broadcast is being sent.');

@@ -3,9 +3,9 @@
 namespace App\Services\Payment;
 
 use App\Contracts\PaymentProvider;
-use App\Models\Payment;
 use App\Models\Booking;
 use App\Models\BookingCharge;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -33,8 +33,8 @@ class PaymentEngine
         $default = config('payment.default', 'azampesa');
 
         return match ($default) {
-            'azampesa' => new AzamPesaProvider(),
-            default    => throw new \InvalidArgumentException("Unsupported payment provider: {$default}"),
+            'azampesa' => new AzamPesaProvider,
+            default => throw new \InvalidArgumentException("Unsupported payment provider: {$default}"),
         };
     }
 
@@ -73,31 +73,31 @@ class PaymentEngine
 
         // Create payment record
         $payment = Payment::create([
-            'booking_id'       => $booking->id,
-            'charge_type'      => $charge ? $charge->charge_type : 'booking',
-            'reference_id'     => $charge?->id,
-            'provider_name'    => $this->provider->name(),
-            'payment_method'   => $method,
-            'amount'           => $amount,
-            'currency'         => $currency,
-            'status'           => Payment::STATUS_PENDING,
-            'created_by'       => $userId,
-            'idempotency_key'  => $idempotencyKey,
+            'booking_id' => $booking->id,
+            'charge_type' => $charge ? $charge->charge_type : 'booking',
+            'reference_id' => $charge?->id,
+            'provider_name' => $this->provider->name(),
+            'payment_method' => $method,
+            'amount' => $amount,
+            'currency' => $currency,
+            'status' => Payment::STATUS_PENDING,
+            'created_by' => $userId,
+            'idempotency_key' => $idempotencyKey,
         ]);
 
         // Build metadata for the provider
         $metadata = array_merge([
-            'booking_id'       => $booking->id,
-            'charge_id'        => $charge?->id,
-            'payment_id'       => $payment->id,
-            'booking_number'   => $booking->booking_number,
-            'description'      => $charge
+            'booking_id' => $booking->id,
+            'charge_id' => $charge?->id,
+            'payment_id' => $payment->id,
+            'booking_number' => $booking->booking_number,
+            'description' => $charge
                 ? "Payment for {$charge->charge_type_label} — {$booking->booking_number}"
                 : "Room payment — {$booking->booking_number}",
             'guest_first_name' => $booking->guest?->first_name ?? explode(' ', $booking->guest_name ?? 'Guest')[0],
-            'guest_last_name'  => $booking->guest?->last_name ?? '',
-            'guest_email'      => $booking->guest_display_email ?? '',
-            'idempotency_key'  => $idempotencyKey,
+            'guest_last_name' => $booking->guest?->last_name ?? '',
+            'guest_email' => $booking->guest_display_email ?? '',
+            'idempotency_key' => $idempotencyKey,
         ], $options);
 
         // Call the provider
@@ -107,23 +107,23 @@ class PaymentEngine
         if ($result['success']) {
             $payment->update([
                 'provider_reference' => $result['reference'],
-                'payment_url'        => $result['payment_url'] ?? null,
-                'payment_qr_code'    => $result['payment_qr_code'] ?? null,
-                'payment_token'      => $result['payment_token'] ?? null,
-                'metadata'           => $result['raw'] ?? [],
+                'payment_url' => $result['payment_url'] ?? null,
+                'payment_qr_code' => $result['payment_qr_code'] ?? null,
+                'payment_token' => $result['payment_token'] ?? null,
+                'metadata' => $result['raw'] ?? [],
             ]);
 
             Log::info('Payment initiated', [
                 'payment_id' => $payment->id,
-                'reference'  => $result['reference'],
-                'method'     => $method,
+                'reference' => $result['reference'],
+                'method' => $method,
             ]);
         } else {
             $payment->markFailed(['error' => $result['error'] ?? 'Unknown error', 'raw' => $result['raw'] ?? []]);
 
             Log::error('Payment initiation failed', [
                 'payment_id' => $payment->id,
-                'error'      => $result['error'] ?? 'Unknown error',
+                'error' => $result['error'] ?? 'Unknown error',
             ]);
         }
 
@@ -135,7 +135,7 @@ class PaymentEngine
      */
     public function verify(Payment $payment): Payment
     {
-        if (!$payment->provider_reference) {
+        if (! $payment->provider_reference) {
             return $payment;
         }
 
@@ -167,11 +167,11 @@ class PaymentEngine
      */
     public function refund(Payment $payment, ?float $amount = null): Payment
     {
-        if (!$payment->canBeRefunded()) {
-            throw new \RuntimeException('Payment cannot be refunded — status: ' . $payment->status);
+        if (! $payment->canBeRefunded()) {
+            throw new \RuntimeException('Payment cannot be refunded — status: '.$payment->status);
         }
 
-        if (!$payment->provider_reference) {
+        if (! $payment->provider_reference) {
             throw new \RuntimeException('No provider reference to refund.');
         }
 
@@ -180,8 +180,8 @@ class PaymentEngine
         if ($result['success']) {
             $payment->markRefunded([
                 'refund_reference' => $result['refund_reference'] ?? null,
-                'refund_amount'    => $amount ?? $payment->amount,
-                'raw'              => $result['raw'] ?? [],
+                'refund_amount' => $amount ?? $payment->amount,
+                'raw' => $result['raw'] ?? [],
             ]);
 
             // If linked to a charge, revert to unpaid
@@ -193,7 +193,7 @@ class PaymentEngine
         } else {
             Log::error('Refund failed', [
                 'payment_id' => $payment->id,
-                'error'      => $result['error'] ?? 'Unknown error',
+                'error' => $result['error'] ?? 'Unknown error',
             ]);
 
             throw new \RuntimeException($result['error'] ?? 'Refund failed');
@@ -211,8 +211,9 @@ class PaymentEngine
     public function handleWebhook(array $payload, array $headers): ?Payment
     {
         // Validate signature
-        if (!$this->provider->validateWebhook($payload, $headers)) {
+        if (! $this->provider->validateWebhook($payload, $headers)) {
             Log::warning('Webhook signature validation failed', ['provider' => $this->provider->name()]);
+
             return null;
         }
 
@@ -221,6 +222,7 @@ class PaymentEngine
 
         if (empty($parsed['reference'])) {
             Log::warning('Webhook has no reference', ['event' => $parsed['event'] ?? 'unknown']);
+
             return null;
         }
 
@@ -229,7 +231,7 @@ class PaymentEngine
             ->where('provider_name', $this->provider->name())
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             // Try to find by metadata payment_id
             $metaPaymentId = $parsed['metadata']['payment_id'] ?? null;
             if ($metaPaymentId) {
@@ -237,20 +239,22 @@ class PaymentEngine
             }
         }
 
-        if (!$payment) {
+        if (! $payment) {
             Log::warning('No payment found for webhook', [
                 'reference' => $parsed['reference'],
-                'provider'  => $this->provider->name(),
+                'provider' => $this->provider->name(),
             ]);
+
             return null;
         }
 
         // Only update if payment is still pending
-        if (!$payment->isPending()) {
+        if (! $payment->isPending()) {
             Log::info('Webhook received for non-pending payment', [
                 'payment_id' => $payment->id,
-                'status'     => $payment->status,
+                'status' => $payment->status,
             ]);
+
             return $payment;
         }
 

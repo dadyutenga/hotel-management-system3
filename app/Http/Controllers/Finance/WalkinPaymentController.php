@@ -8,14 +8,15 @@ use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
 use App\Models\LaundryOrder;
 use App\Models\Order;
-use App\Models\SystemSetting;
+use App\Models\Table;
 use App\Models\WalkinTransaction;
-use App\Services\Bartender\BarOrderStockService;
 use App\Services\AccountingService;
-use App\Services\Payment\StandardizedPaymentService;
+use App\Services\Bartender\BarOrderStockService;
 use App\Services\Payment\AzamPesaProvider;
+use App\Services\Payment\StandardizedPaymentService;
 use App\Services\ReceiptService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,10 +26,10 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 /**
  * WalkinPaymentController — handles walk-in payment processing.
- * 
+ *
  * This controller provides a unified payment flow for walk-in customers
  * across Laundry, Restaurant, and Bar modules.
- * 
+ *
  * Uses StandardizedPaymentService to ensure correct customer identity
  * is passed to AzamPesa for all payment types:
  * - Cash: Records payment directly (physical cash handled at POS)
@@ -38,47 +39,47 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 class WalkinPaymentController extends Controller
 {
     protected StandardizedPaymentService $paymentService;
+
     protected AzamPesaProvider $azampesaProvider;
 
     public function __construct(
         StandardizedPaymentService $paymentService,
         protected ReceiptService $receiptService
-    )
-    {
+    ) {
         $this->paymentService = $paymentService;
         $this->azampesaProvider = $paymentService->getProvider();
     }
 
     /**
      * Process a walk-in payment.
-     * 
+     *
      * Handles cash, card, and mobile money payments for walk-in orders.
      */
     public function process(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'order_id'       => 'required|uuid',
-            'module'         => 'required|in:laundry,restaurant,bar',
-            'amount'         => 'required|numeric|min:1',
-            'customer_name'  => 'required|string|max:150',
+            'order_id' => 'required|uuid',
+            'module' => 'required|in:laundry,restaurant,bar',
+            'amount' => 'required|numeric|min:1',
+            'customer_name' => 'required|string|max:150',
             'customer_phone' => 'nullable|string|max:30',
             'payment_method' => 'required|in:cash,card,mobile',
-            'mobile_phone'   => 'required_if:payment_method,mobile|nullable|string|max:30',
+            'mobile_phone' => 'required_if:payment_method,mobile|nullable|string|max:30',
             'payment_reference' => 'nullable|string|max:100',
         ]);
 
         try {
             // Find the order based on module
             $order = $this->findOrder($data['module'], $data['order_id']);
-            
-            if (!$order) {
+
+            if (! $order) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Order not found.',
                 ], 404);
             }
 
-            if (!$this->canProcessModulePayment($data['module'])) {
+            if (! $this->canProcessModulePayment($data['module'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have permission to process this walk-in payment.',
@@ -93,7 +94,7 @@ class WalkinPaymentController extends Controller
                 ], 422);
             }
 
-            if (!$this->canUseWalkinPaymentFlow($order, $data['module'])) {
+            if (! $this->canUseWalkinPaymentFlow($order, $data['module'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This order must use its module billing flow and cannot be settled as a walk-in payment.',
@@ -107,16 +108,16 @@ class WalkinPaymentController extends Controller
 
             // Process based on payment method
             return match ($data['payment_method']) {
-                'cash'   => $this->processCashPayment($order, $data),
-                'card'   => $this->processCardPayment($order, $data),
+                'cash' => $this->processCashPayment($order, $data),
+                'card' => $this->processCardPayment($order, $data),
                 'mobile' => $this->processMobilePayment($order, $data),
             };
 
         } catch (\Exception $e) {
             Log::error('Walk-in payment error', [
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-                'module'  => $data['module'] ?? 'unknown',
+                'trace' => $e->getTraceAsString(),
+                'module' => $data['module'] ?? 'unknown',
                 'order_id' => $data['order_id'] ?? 'unknown',
             ]);
 
@@ -141,10 +142,10 @@ class WalkinPaymentController extends Controller
     {
         $walkinTxn = WalkinTransaction::where('provider_reference', $reference)->first();
 
-        if (!$walkinTxn) {
+        if (! $walkinTxn) {
             return response()->json([
                 'success' => false,
-                'status'  => 'not_found',
+                'status' => 'not_found',
                 'message' => 'Transaction not found.',
             ], 404);
         }
@@ -152,43 +153,43 @@ class WalkinPaymentController extends Controller
         // If still pending, check with AzamPesa
         if ($walkinTxn->status === 'pending' && $walkinTxn->provider_reference) {
             $result = $this->azampesaProvider->verifyPayment($walkinTxn->provider_reference);
-            
+
             if ($result['success']) {
                 $providerStatus = $result['status'] ?? 'unknown';
-                
+
                 if ($providerStatus === 'completed') {
                     // Payment confirmed - settle the order
                     $order = $this->findOrder($walkinTxn->module, $walkinTxn->order_id);
-                    
-                    if ($order && !$this->isOrderAlreadySettled($order)) {
+
+                    if ($order && ! $this->isOrderAlreadySettled($order)) {
                         DB::transaction(function () use ($order, $walkinTxn) {
                             $data = [
-                                'module'         => $walkinTxn->module,
-                                'amount'         => $walkinTxn->amount,
+                                'module' => $walkinTxn->module,
+                                'amount' => $walkinTxn->amount,
                                 'payment_method' => $walkinTxn->payment_method,
-                                'customer_name'  => $walkinTxn->customer_name,
+                                'customer_name' => $walkinTxn->customer_name,
                                 'payment_reference' => $walkinTxn->provider_reference,
                             ];
-                            
+
                             $this->settleOrder($order, $data);
                             $this->recordFinancePayment($order, $data, $walkinTxn);
                             $this->createOrderReceiptIfNeeded($order);
                             $walkinTxn->markCompleted(['verified_at' => now()]);
                         });
                     }
-                    
+
                     return response()->json([
-                        'success'      => true,
-                        'status'       => 'completed',
-                        'message'      => 'Payment confirmed!',
+                        'success' => true,
+                        'status' => 'completed',
+                        'message' => 'Payment confirmed!',
                         'redirect_url' => $this->getRedirectUrl($walkinTxn->module, $order),
                     ]);
                 } elseif ($providerStatus === 'failed') {
                     $walkinTxn->markFailed(['reason' => 'Payment failed at provider']);
-                    
+
                     return response()->json([
                         'success' => false,
-                        'status'  => 'failed',
+                        'status' => 'failed',
                         'message' => 'Payment failed or was cancelled.',
                     ]);
                 }
@@ -197,9 +198,9 @@ class WalkinPaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'status'  => $walkinTxn->status,
-            'message' => $walkinTxn->status === 'completed' 
-                ? 'Payment completed!' 
+            'status' => $walkinTxn->status,
+            'message' => $walkinTxn->status === 'completed'
+                ? 'Payment completed!'
                 : 'Payment is still pending.',
         ]);
     }
@@ -243,7 +244,7 @@ class WalkinPaymentController extends Controller
 
             return match ($module) {
                 'bar' => str_contains($locationCode, 'bar'),
-                'restaurant' => !str_contains($locationCode, 'bar'),
+                'restaurant' => ! str_contains($locationCode, 'bar'),
                 default => false,
             };
         }
@@ -255,7 +256,7 @@ class WalkinPaymentController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -274,17 +275,17 @@ class WalkinPaymentController extends Controller
         DB::transaction(function () use ($order, $data) {
             // Create walk-in transaction record
             $walkinTxn = WalkinTransaction::create([
-                'module'         => $data['module'],
-                'order_id'       => $order->id,
-                'order_number'   => $order->order_number,
-                'customer_name'  => $data['customer_name'],
+                'module' => $data['module'],
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
-                'amount'         => $data['amount'],
-                'currency'       => 'TZS',
+                'amount' => $data['amount'],
+                'currency' => 'TZS',
                 'payment_method' => 'cash',
-                'status'         => 'completed',
-                'created_by'     => (string) Auth::id(),
-                'completed_at'   => now(),
+                'status' => 'completed',
+                'created_by' => (string) Auth::id(),
+                'completed_at' => now(),
                 'provider_reference' => $data['payment_reference'] ?? null,
             ]);
 
@@ -297,8 +298,8 @@ class WalkinPaymentController extends Controller
         });
 
         return response()->json([
-            'success'      => true,
-            'message'      => 'Cash payment recorded. Order has been settled.',
+            'success' => true,
+            'message' => 'Cash payment recorded. Order has been settled.',
             'redirect_url' => $this->getRedirectUrl($data['module'], $order),
         ]);
     }
@@ -310,25 +311,25 @@ class WalkinPaymentController extends Controller
     protected function processCardPayment($order, array $data): JsonResponse
     {
         $idempotencyKey = Str::uuid()->toString();
-        
+
         // Create pending transaction record
         $walkinTxn = WalkinTransaction::create([
-            'module'         => $data['module'],
-            'order_id'       => $order->id,
-            'order_number'   => $order->order_number,
-            'customer_name'  => $data['customer_name'],
+            'module' => $data['module'],
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'customer_name' => $data['customer_name'],
             'customer_phone' => $data['customer_phone'],
-            'amount'         => $data['amount'],
-            'currency'       => 'TZS',
+            'amount' => $data['amount'],
+            'currency' => 'TZS',
             'payment_method' => 'card',
-            'status'         => 'pending',
-            'created_by'     => (string) Auth::id(),
-            'metadata'       => ['idempotency_key' => $idempotencyKey],
+            'status' => 'pending',
+            'created_by' => (string) Auth::id(),
+            'metadata' => ['idempotency_key' => $idempotencyKey],
         ]);
 
         // Get customer identity using standardized service
         $identity = $this->paymentService->resolveIdentity(null, [
-            'customer_name'  => $data['customer_name'],
+            'customer_name' => $data['customer_name'],
             'customer_phone' => $data['customer_phone'],
         ]);
 
@@ -338,37 +339,37 @@ class WalkinPaymentController extends Controller
             currency: 'TZS',
             identity: $identity,
             metadata: [
-                'payment_id'     => $walkinTxn->id,
-                'order_id'       => $order->id,
-                'order_number'   => $order->order_number,
-                'module'         => $data['module'],
+                'payment_id' => $walkinTxn->id,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'module' => $data['module'],
                 'idempotency_key' => $idempotencyKey,
-                'redirect_url'   => route('finance.walkin-payment.callback', [
+                'redirect_url' => route('finance.walkin-payment.callback', [
                     'transaction' => $walkinTxn->id,
-                    'status'      => 'success',
+                    'status' => 'success',
                 ]),
-                'cancel_url'     => route('finance.walkin-payment.callback', [
+                'cancel_url' => route('finance.walkin-payment.callback', [
                     'transaction' => $walkinTxn->id,
-                    'status'      => 'cancel',
+                    'status' => 'cancel',
                 ]),
             ]
         );
 
-        if ($result['success'] && !empty($result['payment_url'])) {
+        if ($result['success'] && ! empty($result['payment_url'])) {
             // Update transaction with AzamPesa reference
             $walkinTxn->update([
                 'provider_reference' => $result['reference'],
-                'metadata'           => array_merge($walkinTxn->metadata ?? [], [
+                'metadata' => array_merge($walkinTxn->metadata ?? [], [
                     'provider_response' => $result['raw'] ?? [],
                     'customer_identity' => $identity,
                 ]),
             ]);
 
             return response()->json([
-                'success'     => true,
-                'message'     => 'Redirecting to secure payment page...',
+                'success' => true,
+                'message' => 'Redirecting to secure payment page...',
                 'payment_url' => $result['payment_url'],
-                'reference'   => $result['reference'],
+                'reference' => $result['reference'],
             ]);
         }
 
@@ -392,7 +393,7 @@ class WalkinPaymentController extends Controller
 
         // Validate phone number first using standardized service
         $phoneValidation = $this->paymentService->validatePhone($mobilePhone);
-        if (!$phoneValidation['valid']) {
+        if (! $phoneValidation['valid']) {
             return response()->json([
                 'success' => false,
                 'message' => $phoneValidation['error'],
@@ -401,22 +402,22 @@ class WalkinPaymentController extends Controller
 
         // Create pending transaction record
         $walkinTxn = WalkinTransaction::create([
-            'module'         => $data['module'],
-            'order_id'       => $order->id,
-            'order_number'   => $order->order_number,
-            'customer_name'  => $data['customer_name'],
+            'module' => $data['module'],
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'customer_name' => $data['customer_name'],
             'customer_phone' => $mobilePhone,
-            'amount'         => $data['amount'],
-            'currency'       => 'TZS',
+            'amount' => $data['amount'],
+            'currency' => 'TZS',
             'payment_method' => 'mobile',
-            'status'         => 'pending',
-            'created_by'     => (string) Auth::id(),
-            'metadata'       => ['idempotency_key' => $idempotencyKey],
+            'status' => 'pending',
+            'created_by' => (string) Auth::id(),
+            'metadata' => ['idempotency_key' => $idempotencyKey],
         ]);
 
         // Get customer identity using standardized service
         $identity = $this->paymentService->resolveIdentity(null, [
-            'customer_name'  => $data['customer_name'],
+            'customer_name' => $data['customer_name'],
             'customer_phone' => $mobilePhone,
         ]);
 
@@ -426,11 +427,11 @@ class WalkinPaymentController extends Controller
             currency: 'TZS',
             identity: $identity,
             metadata: [
-                'payment_id'       => $walkinTxn->id,
-                'order_id'         => $order->id,
-                'order_number'     => $order->order_number,
-                'module'           => $data['module'],
-                'idempotency_key'  => $idempotencyKey,
+                'payment_id' => $walkinTxn->id,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'module' => $data['module'],
+                'idempotency_key' => $idempotencyKey,
             ]
         );
 
@@ -438,16 +439,16 @@ class WalkinPaymentController extends Controller
             // Update transaction with AzamPesa reference
             $walkinTxn->update([
                 'provider_reference' => $result['reference'],
-                'metadata'           => array_merge($walkinTxn->metadata ?? [], [
+                'metadata' => array_merge($walkinTxn->metadata ?? [], [
                     'provider_response' => $result['raw'] ?? [],
                     'customer_identity' => $identity,
                 ]),
             ]);
 
             return response()->json([
-                'success'   => true,
-                'pending'   => true,
-                'message'   => 'Payment request sent! Please check your phone and enter PIN to confirm.',
+                'success' => true,
+                'pending' => true,
+                'message' => 'Payment request sent! Please check your phone and enter PIN to confirm.',
                 'reference' => $result['reference'],
             ]);
         }
@@ -464,7 +465,7 @@ class WalkinPaymentController extends Controller
     /**
      * Handle callback from AzamPesa after card payment.
      */
-    public function callback(Request $request, string $transaction): \Illuminate\Http\RedirectResponse
+    public function callback(Request $request, string $transaction): RedirectResponse
     {
         $walkinTxn = WalkinTransaction::findOrFail($transaction);
         $status = $request->query('status', 'cancel');
@@ -472,27 +473,27 @@ class WalkinPaymentController extends Controller
         if ($status === 'success' && $walkinTxn->provider_reference) {
             // Verify payment with AzamPesa
             $result = $this->azampesaProvider->verifyPayment($walkinTxn->provider_reference);
-            
+
             if ($result['success'] && ($result['status'] ?? '') === 'completed') {
                 // Payment confirmed - settle the order
                 $order = $this->findOrder($walkinTxn->module, $walkinTxn->order_id);
-                
-                if ($order && !$this->isOrderAlreadySettled($order)) {
+
+                if ($order && ! $this->isOrderAlreadySettled($order)) {
                     DB::transaction(function () use ($order, $walkinTxn) {
                         $data = [
-                            'module'         => $walkinTxn->module,
-                            'amount'         => $walkinTxn->amount,
+                            'module' => $walkinTxn->module,
+                            'amount' => $walkinTxn->amount,
                             'payment_method' => $walkinTxn->payment_method,
-                            'customer_name'  => $walkinTxn->customer_name,
+                            'customer_name' => $walkinTxn->customer_name,
                             'payment_reference' => $walkinTxn->provider_reference,
                         ];
-                        
+
                         $this->settleOrder($order, $data);
                         $this->recordFinancePayment($order, $data, $walkinTxn);
                         $this->createOrderReceiptIfNeeded($order);
                         $walkinTxn->markCompleted(['callback_verified' => true]);
                     });
-                    
+
                     return redirect($this->getRedirectUrl($walkinTxn->module, $order))
                         ->with('success', 'Payment successful! Order has been settled.');
                 }
@@ -505,7 +506,7 @@ class WalkinPaymentController extends Controller
         }
 
         $order = $this->findOrder($walkinTxn->module, $walkinTxn->order_id);
-        
+
         return redirect($this->getRedirectUrl($walkinTxn->module, $order))
             ->with('error', 'Payment was cancelled or failed. Please try again.');
     }
@@ -517,7 +518,7 @@ class WalkinPaymentController extends Controller
     {
         if ($order instanceof LaundryOrder) {
             $order->update([
-                'customer_name'  => $data['customer_name'],
+                'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'] ?? $data['mobile_phone'] ?? $order->customer_phone,
             ]);
         } else {
@@ -537,10 +538,10 @@ class WalkinPaymentController extends Controller
 
         if ($order instanceof LaundryOrder) {
             $updateData = [
-                'status'         => 'settled',
+                'status' => 'settled',
                 'payment_method' => $paymentMethod,
-                'settled_by'     => (string) Auth::id(),
-                'settled_at'     => now(),
+                'settled_by' => (string) Auth::id(),
+                'settled_at' => now(),
             ];
 
             $order->update($updateData);
@@ -555,17 +556,17 @@ class WalkinPaymentController extends Controller
             );
         } else {
             // Restaurant/Bar order
-            
+
             app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());
 
             $order->update([
-                'status'         => 'settled',
+                'status' => 'settled',
                 'bartender_status' => 'served',
                 'bartender_status_updated_at' => now(),
                 'payment_method' => $paymentMethod,
                 'payment_reference' => $data['payment_reference'] ?? null,
-                'settled_by'     => (string) Auth::id(),
-                'settled_at'     => now(),
+                'settled_by' => (string) Auth::id(),
+                'settled_at' => now(),
             ]);
 
             // Post to accounting
@@ -579,7 +580,7 @@ class WalkinPaymentController extends Controller
 
             // Free up the table if applicable
             if ($order->table_id) {
-                \App\Models\Table::where('id', $order->table_id)->update(['status' => 'available']);
+                Table::where('id', $order->table_id)->update(['status' => 'available']);
             }
         }
     }
@@ -593,19 +594,19 @@ class WalkinPaymentController extends Controller
         $amountUsd = FinancePayment::toUsd((float) $data['amount'], 'TZS', $exchangeRate);
 
         $payment = FinancePayment::create([
-            'payment_type'  => 'walkin',
-            'checkout_id'   => null,
-            'order_id'      => $order instanceof Order ? $order->id : null,
-            'method'        => $data['payment_method'] === 'mobile' ? 'mobile_money' : $data['payment_method'],
-            'currency'      => 'TZS',
-            'amount'        => $data['amount'],
-            'amount_usd'    => $amountUsd,
+            'payment_type' => 'walkin',
+            'checkout_id' => null,
+            'order_id' => $order instanceof Order ? $order->id : null,
+            'method' => $data['payment_method'] === 'mobile' ? 'mobile_money' : $data['payment_method'],
+            'currency' => 'TZS',
+            'amount' => $data['amount'],
+            'amount_usd' => $amountUsd,
             'exchange_rate' => $exchangeRate,
-            'status'        => 'completed',
-            'reference'     => $walkinTxn?->provider_reference ?? $data['payment_reference'] ?? null,
-            'notes'         => "{$data['module']} walk-in — {$order->order_number} — {$data['customer_name']}",
-            'created_by'    => (string) Auth::id(),
-            'paid_at'       => now(),
+            'status' => 'completed',
+            'reference' => $walkinTxn?->provider_reference ?? $data['payment_reference'] ?? null,
+            'notes' => "{$data['module']} walk-in — {$order->order_number} — {$data['customer_name']}",
+            'created_by' => (string) Auth::id(),
+            'paid_at' => now(),
         ]);
 
         // Determine source module
@@ -618,17 +619,17 @@ class WalkinPaymentController extends Controller
         }
 
         FinancialTransaction::record([
-            'type'           => 'walkin_sale',
-            'source_module'  => $sourceModule,
-            'payment_id'     => $payment->id,
-            'order_id'       => $order instanceof Order ? $order->id : null,
-            'currency'       => 'TZS',
-            'amount'         => $data['amount'],
-            'amount_usd'     => $amountUsd,
-            'exchange_rate'  => $exchangeRate,
+            'type' => 'walkin_sale',
+            'source_module' => $sourceModule,
+            'payment_id' => $payment->id,
+            'order_id' => $order instanceof Order ? $order->id : null,
+            'currency' => 'TZS',
+            'amount' => $data['amount'],
+            'amount_usd' => $amountUsd,
+            'exchange_rate' => $exchangeRate,
             'payment_method' => $data['payment_method'] === 'mobile' ? 'mobile_money' : $data['payment_method'],
-            'description'    => "Walk-in {$data['module']} payment — {$order->order_number} — {$data['customer_name']}" .
-                (($walkinTxn?->provider_reference ?? $data['payment_reference'] ?? null) ? " (Ref: " . ($walkinTxn?->provider_reference ?? $data['payment_reference']) . ")" : ''),
+            'description' => "Walk-in {$data['module']} payment — {$order->order_number} — {$data['customer_name']}".
+                (($walkinTxn?->provider_reference ?? $data['payment_reference'] ?? null) ? ' (Ref: '.($walkinTxn?->provider_reference ?? $data['payment_reference']).')' : ''),
         ], (string) Auth::id());
     }
 

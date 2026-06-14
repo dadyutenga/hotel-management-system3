@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class LoyaltyTransaction extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     public $timestamps = false;
 

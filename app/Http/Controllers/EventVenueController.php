@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ConferenceBooking;
+use App\Models\ConferenceHall;
 use App\Models\Event;
 use App\Models\EventVenue;
-use App\Models\ConferenceHall;
-use App\Models\ConferenceBooking;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 
@@ -56,12 +56,14 @@ class EventVenueController extends Controller
     public function show(Organization $organization, Event $event, EventVenue $venue)
     {
         $venue->load(['conferenceHall', 'booking']);
+
         return view('event-venues.show', compact('organization', 'event', 'venue'));
     }
 
     public function edit(Organization $organization, Event $event, EventVenue $venue)
     {
         $halls = ConferenceHall::where('status', 'available')->orderBy('name')->get();
+
         return view('event-venues.edit', compact('organization', 'event', 'venue', 'halls'));
     }
 

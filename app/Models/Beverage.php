@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Beverage extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'barcode', 'name', 'category_id', 'unit', 'buying_price',
         'selling_price', 'reorder_level', 'description', 'image',
-        'is_active', 'created_by',
+        'is_active', 'created_by', 'building_id',
     ];
 
     protected $casts = [
@@ -35,6 +36,11 @@ class Beverage extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function inventory(): HasOne

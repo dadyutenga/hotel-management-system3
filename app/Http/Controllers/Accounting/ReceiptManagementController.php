@@ -85,7 +85,7 @@ class ReceiptManagementController extends Controller
     {
         $receipt->load(['cashier', 'receiptable']);
 
-        if (!$receipt->receiptable && $receipt->receiptable_type && $receipt->receiptable_id) {
+        if (! $receipt->receiptable && $receipt->receiptable_type && $receipt->receiptable_id) {
             Log::warning('Missing receipt source linkage', [
                 'receipt_id' => $receipt->id,
                 'receipt_number' => $receipt->receipt_number,
@@ -102,36 +102,36 @@ class ReceiptManagementController extends Controller
 
     private function applyFilters(Builder $query, array $filters): void
     {
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('issued_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('issued_at', '<=', $filters['date_to']);
         }
 
-        if (!empty($filters['module'])) {
+        if (! empty($filters['module'])) {
             $query->where('module', $filters['module']);
         }
 
-        if (!empty($filters['receipt_number'])) {
-            $query->where('receipt_number', 'like', '%' . $filters['receipt_number'] . '%');
+        if (! empty($filters['receipt_number'])) {
+            $query->where('receipt_number', 'like', '%'.$filters['receipt_number'].'%');
         }
 
-        if (!empty($filters['payment_method'])) {
+        if (! empty($filters['payment_method'])) {
             $query->where('payment_method', $filters['payment_method']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('payment_status', $filters['status']);
         }
 
-        if (!empty($filters['q'])) {
+        if (! empty($filters['q'])) {
             $search = $filters['q'];
             $query->where(function (Builder $inner) use ($search) {
-                $inner->where('customer_name', 'like', '%' . $search . '%')
-                    ->orWhere('customer_phone', 'like', '%' . $search . '%')
-                    ->orWhere('transaction_reference', 'like', '%' . $search . '%');
+                $inner->where('customer_name', 'like', '%'.$search.'%')
+                    ->orWhere('customer_phone', 'like', '%'.$search.'%')
+                    ->orWhere('transaction_reference', 'like', '%'.$search.'%');
             });
         }
     }
@@ -217,4 +217,3 @@ class ReceiptManagementController extends Controller
         return null;
     }
 }
-

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Services\BarcodeStockService;
+use App\Services\BuildingContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,8 +12,7 @@ class BarcodeScanController extends Controller
 {
     public function __construct(
         protected BarcodeStockService $barcodeService,
-    ) {
-    }
+    ) {}
 
     public function scan(Request $request): JsonResponse
     {
@@ -23,6 +23,7 @@ class BarcodeScanController extends Controller
         $beverage = $this->barcodeService->resolveBarcode($request->barcode);
 
         if ($beverage) {
+            BuildingContext::enforce($beverage->building_id);
             $beverage->load('category');
 
             return response()->json([

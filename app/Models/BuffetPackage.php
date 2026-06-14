@@ -2,20 +2,22 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\HasSoftDelete;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class BuffetPackage extends Model implements HasMedia
 {
-    use HasUuid, HasSoftDelete, InteractsWithMedia;
+    use BuildingScoped, HasSoftDelete, HasUuid, InteractsWithMedia;
 
     protected $fillable = [
+        'building_id',
         'name',
         'adult_price',
         'child_price',
@@ -64,6 +66,7 @@ class BuffetPackage extends Model implements HasMedia
             return $this->getFirstMediaUrl('buffet_image', 'medium')
                 ?: $this->getFirstMediaUrl('buffet_image');
         }
+
         return '';
     }
 
@@ -73,12 +76,18 @@ class BuffetPackage extends Model implements HasMedia
             return $this->getFirstMediaUrl('buffet_image', 'thumb')
                 ?: $this->getFirstMediaUrl('buffet_image');
         }
+
         return '';
     }
 
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function buffetSales(): HasMany
@@ -91,4 +100,3 @@ class BuffetPackage extends Model implements HasMedia
         return $this->belongsToMany(MenuItem::class, 'buffet_package_menu_item');
     }
 }
-

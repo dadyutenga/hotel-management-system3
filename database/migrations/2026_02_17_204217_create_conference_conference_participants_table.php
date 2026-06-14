@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2026_02_18_000004_create_conference_participants_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -23,7 +24,7 @@ return new class extends Migration
             $table->integer('checked_in_count')->default(0);
             $table->timestamp('last_check_in_at')->nullable();
             $table->timestamps();
-            
+
             $table->index('access_token');
             $table->index('access_code');
         });

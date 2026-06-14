@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Events\PasskeyLockout;
+use App\Events\StaffLoggedIn;
+use App\Events\StaffLoggedOut;
 use App\Models\AuditLog;
 use App\Models\PasskeySession;
 use App\Models\User;
-use App\Events\StaffLoggedIn;
-use App\Events\StaffLoggedOut;
-use App\Events\PasskeyLockout;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -15,12 +15,13 @@ class PasskeyAuthService
 {
     public function verifyPasskey(User $user, string $passkey): array
     {
-        if (!$user->passkey_enabled) {
+        if (! $user->passkey_enabled) {
             return ['success' => false, 'message' => 'Passkey login is not enabled for this user.'];
         }
 
         if ($user->isPasskeyLocked()) {
             $minutes = now()->diffInMinutes($user->passkey_locked_until, false);
+
             return [
                 'success' => false,
                 'locked' => true,
@@ -29,7 +30,7 @@ class PasskeyAuthService
             ];
         }
 
-        if (!Hash::check($passkey, $user->passkey)) {
+        if (! Hash::check($passkey, $user->passkey)) {
             return $this->handleFailedAttempt($user);
         }
 
@@ -122,7 +123,7 @@ class PasskeyAuthService
             event(new StaffLoggedOut($session->user, $closedByUserId));
 
             AuditLog::log('passkey_logout', $userId, [
-                'session_token' => substr($token, 0, 8) . '...',
+                'session_token' => substr($token, 0, 8).'...',
                 'closed_by' => $closedByUserId,
             ], $closedByUserId ?? $userId);
         }
@@ -135,12 +136,13 @@ class PasskeyAuthService
             ->whereNull('logged_out_at')
             ->first();
 
-        if (!$session) {
+        if (! $session) {
             return null;
         }
 
         if ($session->session_expires_at && $session->session_expires_at->isPast()) {
             $session->update(['logged_out_at' => now()]);
+
             return null;
         }
 

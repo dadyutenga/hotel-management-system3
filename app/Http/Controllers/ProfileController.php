@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Support\PhoneNumber;
@@ -9,14 +10,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
-class ProfileController extends Controller {
-    public function edit(Request $request) {
+class ProfileController extends Controller
+{
+    public function edit(Request $request)
+    {
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
     }
 
-    public function update(Request $request) {
+    public function update(Request $request)
+    {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.Auth::id()],
@@ -25,7 +29,7 @@ class ProfileController extends Controller {
 
         $validated['phone'] = PhoneNumber::normalize($validated['phone']);
 
-        if (!PhoneNumber::isValid($validated['phone'])) {
+        if (! PhoneNumber::isValid($validated['phone'])) {
             return back()->withErrors(['phone' => __('auth.reset.invalid_phone')])->withInput();
         }
 
@@ -50,7 +54,8 @@ class ProfileController extends Controller {
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 
-    public function updatePassword(Request $request) {
+    public function updatePassword(Request $request)
+    {
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],

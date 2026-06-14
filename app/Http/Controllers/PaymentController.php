@@ -19,7 +19,7 @@ class PaymentController extends Controller
 
     public function __construct()
     {
-        $this->engine = new PaymentEngine();
+        $this->engine = new PaymentEngine;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -55,10 +55,10 @@ class PaymentController extends Controller
     public function store(Request $request, Booking $booking)
     {
         $request->validate([
-            'amount'         => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:1',
             'payment_method' => 'required|string|in:mobile,card,dynamic-qr',
-            'phone_number'   => 'required_if:payment_method,mobile|nullable|string',
-            'charge_id'      => 'nullable|uuid|exists:booking_charges,id',
+            'phone_number' => 'required_if:payment_method,mobile|nullable|string',
+            'charge_id' => 'nullable|uuid|exists:booking_charges,id',
         ]);
 
         $charge = null;
@@ -96,6 +96,7 @@ class PaymentController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Payment store exception', ['message' => $e->getMessage()]);
+
             return back()->with('error', 'An error occurred while processing your payment.');
         }
     }
@@ -110,6 +111,7 @@ class PaymentController extends Controller
     public function status(Payment $payment)
     {
         $payment->load('booking', 'bookingCharge');
+
         return view('payments.status', compact('payment'));
     }
 
@@ -124,9 +126,9 @@ class PaymentController extends Controller
         }
 
         return response()->json([
-            'status'     => $payment->status,
+            'status' => $payment->status,
             'successful' => $payment->isSuccessful(),
-            'failed'     => $payment->isFailed(),
+            'failed' => $payment->isFailed(),
         ]);
     }
 
@@ -135,7 +137,7 @@ class PaymentController extends Controller
      */
     public function triggerPush(Payment $payment)
     {
-        if (!$payment->isPending()) {
+        if (! $payment->isPending()) {
             return response()->json(['success' => false, 'error' => 'Payment is no longer pending.']);
         }
 
@@ -154,7 +156,7 @@ class PaymentController extends Controller
     public function callback(Request $request)
     {
         $provider = $request->query('provider', 'azampesa');
-        $status   = $request->query('status', 'success');
+        $status = $request->query('status', 'success');
 
         // Try to find the payment from query params
         $reference = $request->query('reference')
@@ -212,6 +214,7 @@ class PaymentController extends Controller
     public function show(Payment $payment)
     {
         $payment->load('booking', 'bookingCharge', 'creator');
+
         return view('payments.show', compact('payment'));
     }
 
@@ -227,7 +230,7 @@ class PaymentController extends Controller
     {
         // Authorization: only admin or supervisor can process refunds
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isSupervisor()) {
+        if (! $user->isAdmin() && ! $user->isSupervisor()) {
             Log::warning('Unauthorized refund attempt', [
                 'user_id' => $user->id,
                 'payment_id' => $payment->id,
@@ -237,7 +240,7 @@ class PaymentController extends Controller
         }
 
         $request->validate([
-            'amount' => 'nullable|numeric|min:1|max:' . $payment->amount,
+            'amount' => 'nullable|numeric|min:1|max:'.$payment->amount,
         ]);
 
         try {

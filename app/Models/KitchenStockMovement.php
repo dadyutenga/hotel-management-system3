@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class KitchenStockMovement extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'kitchen_stock_item_id', 'movement_type', 'quantity', 'notes', 'recorded_by',

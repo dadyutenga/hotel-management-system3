@@ -107,6 +107,6 @@ class SeedBeverageBarcodes extends Command
 
         $check = (10 - ($sum % 10)) % 10;
 
-        return $code . $check;
+        return $code.$check;
     }
 }

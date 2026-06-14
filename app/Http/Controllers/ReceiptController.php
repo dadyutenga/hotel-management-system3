@@ -12,6 +12,7 @@ use App\Models\Receipt;
 use App\Models\StockAdjustment;
 use App\Models\StockTransfer;
 use App\Models\SupplierPayment;
+use App\Models\User;
 use App\Models\WalkinTransaction;
 use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
@@ -33,13 +34,13 @@ class ReceiptController extends Controller
     public function show(string $uuid): View|RedirectResponse
     {
         $receipt = $this->receiptService->findByUuid($uuid);
-        
-        if (!$receipt) {
+
+        if (! $receipt) {
             abort(404, 'Receipt not found');
         }
 
         // Authorization: user must have access to the source module
-        if (!$this->hasModuleAccess($receipt->module)) {
+        if (! $this->hasModuleAccess($receipt->module)) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to view this receipt.');
         }
@@ -53,7 +54,7 @@ class ReceiptController extends Controller
      */
     public function laundry(LaundryOrder $laundryOrder): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('laundry')) {
+        if (! $this->hasModuleAccess('laundry')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print laundry receipts.');
         }
@@ -71,7 +72,7 @@ class ReceiptController extends Controller
     {
         $module = $order->location?->slug === 'bar' ? 'bar' : 'restaurant';
 
-        if (!$this->hasModuleAccess($module)) {
+        if (! $this->hasModuleAccess($module)) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print this receipt.');
         }
@@ -87,7 +88,7 @@ class ReceiptController extends Controller
      */
     public function checkout(Checkout $checkout): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('checkout')) {
+        if (! $this->hasModuleAccess('checkout')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print checkout receipts.');
         }
@@ -96,11 +97,11 @@ class ReceiptController extends Controller
 
         $booking = $checkout->booking;
         $extraFields = [
-            __('general.receipt.booking_number')  => $booking?->booking_number,
-            __('general.receipt.room_number')     => $booking?->room?->room_number,
-            __('general.receipt.check_in')        => $booking?->check_in_date?->format('d M Y'),
-            __('general.receipt.check_out')       => $booking?->check_out_date?->format('d M Y'),
-            __('general.receipt.nights')          => $booking?->nights,
+            __('general.receipt.booking_number') => $booking?->booking_number,
+            __('general.receipt.room_number') => $booking?->room?->room_number,
+            __('general.receipt.check_in') => $booking?->check_in_date?->format('d M Y'),
+            __('general.receipt.check_out') => $booking?->check_out_date?->format('d M Y'),
+            __('general.receipt.nights') => $booking?->nights,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -112,7 +113,7 @@ class ReceiptController extends Controller
      */
     public function walkin(WalkinTransaction $walkinTransaction): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('walkin')) {
+        if (! $this->hasModuleAccess('walkin')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print walk-in receipts.');
         }
@@ -130,11 +131,11 @@ class ReceiptController extends Controller
     {
         $receipt = $this->receiptService->findByNumber($receiptNumber);
 
-        if (!$receipt) {
+        if (! $receipt) {
             abort(404, 'Receipt not found');
         }
 
-        if (!$this->hasModuleAccess($receipt->module)) {
+        if (! $this->hasModuleAccess($receipt->module)) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to reprint this receipt.');
         }
@@ -143,7 +144,7 @@ class ReceiptController extends Controller
         $this->receiptService->markPrinted($receipt);
 
         return view('receipts.print', [
-            'receipt'   => $receipt,
+            'receipt' => $receipt,
             'isReprint' => true,
         ]);
     }
@@ -156,11 +157,11 @@ class ReceiptController extends Controller
     {
         $receipt = $this->receiptService->findByUuid($uuid);
 
-        if (!$receipt) {
+        if (! $receipt) {
             abort(404, 'Receipt not found');
         }
 
-        if (!$this->hasModuleAccess($receipt->module)) {
+        if (! $this->hasModuleAccess($receipt->module)) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to refresh this receipt.');
         }
@@ -177,7 +178,7 @@ class ReceiptController extends Controller
      */
     public function lpo(LocalPurchaseOrder $lpo): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('procurement')) {
+        if (! $this->hasModuleAccess('procurement')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print procurement receipts.');
         }
@@ -186,8 +187,8 @@ class ReceiptController extends Controller
 
         $extraFields = [
             __('general.receipt.lpo_number') => $lpo->lpo_number,
-            __('general.receipt.supplier')   => $lpo->supplier_name,
-            __('general.receipt.status')     => $lpo->status,
+            __('general.receipt.supplier') => $lpo->supplier_name,
+            __('general.receipt.status') => $lpo->status,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -199,7 +200,7 @@ class ReceiptController extends Controller
      */
     public function grn(GoodsReceivedNote $grn): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('procurement')) {
+        if (! $this->hasModuleAccess('procurement')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print procurement receipts.');
         }
@@ -207,9 +208,9 @@ class ReceiptController extends Controller
         $receipt = $this->receiptService->getOrCreateReceipt($grn);
 
         $extraFields = [
-            __('general.receipt.grn_number')    => $grn->grn_number,
-            __('general.receipt.lpo_number')    => $grn->lpo?->lpo_number,
-            __('general.receipt.supplier')      => $grn->supplier_name,
+            __('general.receipt.grn_number') => $grn->grn_number,
+            __('general.receipt.lpo_number') => $grn->lpo?->lpo_number,
+            __('general.receipt.supplier') => $grn->supplier_name,
             __('general.receipt.received_date') => $grn->received_date?->format('d M Y'),
         ];
 
@@ -222,7 +223,7 @@ class ReceiptController extends Controller
      */
     public function supplierPayment(SupplierPayment $payment): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('procurement')) {
+        if (! $this->hasModuleAccess('procurement')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print procurement receipts.');
         }
@@ -230,10 +231,10 @@ class ReceiptController extends Controller
         $receipt = $this->receiptService->getOrCreateReceipt($payment);
 
         $extraFields = [
-            __('general.receipt.supplier')      => $payment->supplier?->name,
-            __('general.receipt.reference')     => $payment->reference,
-            __('general.receipt.payment_date')  => $payment->payment_date?->format('d M Y'),
-            __('general.receipt.status')        => $payment->status,
+            __('general.receipt.supplier') => $payment->supplier?->name,
+            __('general.receipt.reference') => $payment->reference,
+            __('general.receipt.payment_date') => $payment->payment_date?->format('d M Y'),
+            __('general.receipt.status') => $payment->status,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -245,7 +246,7 @@ class ReceiptController extends Controller
      */
     public function stockAdjustment(StockAdjustment $adjustment): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('store')) {
+        if (! $this->hasModuleAccess('store')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print store receipts.');
         }
@@ -253,8 +254,8 @@ class ReceiptController extends Controller
         $receipt = $this->receiptService->getOrCreateReceipt($adjustment);
 
         $extraFields = [
-            __('general.receipt.reason')  => $adjustment->reason,
-            __('general.receipt.status')  => $adjustment->status,
+            __('general.receipt.reason') => $adjustment->reason,
+            __('general.receipt.status') => $adjustment->status,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -266,7 +267,7 @@ class ReceiptController extends Controller
      */
     public function stockTransfer(StockTransfer $transfer): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('store')) {
+        if (! $this->hasModuleAccess('store')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print store receipts.');
         }
@@ -275,9 +276,9 @@ class ReceiptController extends Controller
 
         $extraFields = [
             __('general.receipt.from_location') => $transfer->fromLocation?->name,
-            __('general.receipt.to_location')   => $transfer->toLocation?->name,
-            __('general.receipt.reason')        => $transfer->reason,
-            __('general.receipt.status')        => $transfer->status,
+            __('general.receipt.to_location') => $transfer->toLocation?->name,
+            __('general.receipt.reason') => $transfer->reason,
+            __('general.receipt.status') => $transfer->status,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -289,7 +290,7 @@ class ReceiptController extends Controller
      */
     public function internalRequest(InternalUsageRequest $internalRequest): View|RedirectResponse
     {
-        if (!$this->hasModuleAccess('store')) {
+        if (! $this->hasModuleAccess('store')) {
             return redirect()->route('dashboard')
                 ->with('unauthorized', 'You do not have permission to print store receipts.');
         }
@@ -298,8 +299,8 @@ class ReceiptController extends Controller
 
         $extraFields = [
             __('general.receipt.department') => $internalRequest->department,
-            __('general.receipt.reason')     => $internalRequest->reason,
-            __('general.receipt.status')     => $internalRequest->status,
+            __('general.receipt.reason') => $internalRequest->reason,
+            __('general.receipt.status') => $internalRequest->status,
         ];
 
         return view('receipts.print', compact('receipt', 'extraFields'));
@@ -327,18 +328,18 @@ class ReceiptController extends Controller
     {
         $receipt = $this->receiptService->findByUuid($uuid);
 
-        if (!$receipt) {
+        if (! $receipt) {
             return response()->json(['error' => 'Receipt not found'], 404);
         }
 
-        if (!$this->hasModuleAccess($receipt->module)) {
+        if (! $this->hasModuleAccess($receipt->module)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $this->receiptService->markPrinted($receipt);
 
         return response()->json([
-            'success'     => true,
+            'success' => true,
             'print_count' => $receipt->fresh()->print_count,
         ]);
     }
@@ -351,15 +352,15 @@ class ReceiptController extends Controller
     protected function getModuleRoles(): array
     {
         return [
-            'laundry'     => ['laundry_manager', 'house_help', 'front_desk', 'supervisor', 'manager', 'admin', 'accountant'],
-            'restaurant'  => ['restaurant_manager', 'bar_tender', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
-            'bar'         => ['restaurant_manager', 'bar_tender', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
-            'checkout'    => ['front_desk', 'manager', 'admin', 'accountant'],
-            'walkin'      => ['front_desk', 'bar_tender', 'restaurant_manager', 'manager', 'admin', 'accountant'],
-            'conference'  => ['front_desk', 'supervisor', 'manager', 'admin', 'accountant'],
+            'laundry' => ['laundry_manager', 'house_help', 'front_desk', 'supervisor', 'manager', 'admin', 'accountant'],
+            'restaurant' => ['restaurant_manager', 'bar_tender', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
+            'bar' => ['restaurant_manager', 'bar_tender', 'waiter', 'front_desk', 'manager', 'admin', 'accountant'],
+            'checkout' => ['front_desk', 'manager', 'admin', 'accountant'],
+            'walkin' => ['front_desk', 'bar_tender', 'restaurant_manager', 'manager', 'admin', 'accountant'],
+            'conference' => ['front_desk', 'supervisor', 'manager', 'admin', 'accountant'],
             'procurement' => ['supervisor', 'manager', 'admin', 'accountant'],
-            'store'       => ['supervisor', 'manager', 'admin', 'accountant'],
-            'accounting'  => ['manager', 'admin', 'accountant'],
+            'store' => ['supervisor', 'manager', 'admin', 'accountant'],
+            'accounting' => ['manager', 'admin', 'accountant'],
         ];
     }
 
@@ -368,10 +369,10 @@ class ReceiptController extends Controller
      */
     protected function hasModuleAccess(string $module): bool
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

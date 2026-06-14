@@ -8,12 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class LaundryServiceItem extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = ['laundry_service_id', 'item_name', 'price', 'is_active'];
 
     protected $casts = [
-        'price'     => 'decimal:2',
+        'price' => 'decimal:2',
         'is_active' => 'boolean',
         'deleted_at' => 'datetime',
     ];

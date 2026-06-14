@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -26,7 +26,7 @@ return new class extends Migration
 
         // 2. Rename 'manager' role → 'store_manager'
         DB::table('roles')->where('name', 'manager')->update([
-            'name'        => 'store_manager',
+            'name' => 'store_manager',
             'description' => 'Full store control — products, pricing, stock, reports',
         ]);
 

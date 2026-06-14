@@ -1,20 +1,26 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 
-class RoomTypeController extends Controller {
-    public function index() {
+class RoomTypeController extends Controller
+{
+    public function index()
+    {
         $roomTypes = RoomType::withCount('rooms')->latest()->paginate(15);
+
         return view('room-types.index', compact('roomTypes'));
     }
 
-    public function create() {
+    public function create()
+    {
         return view('room-types.create');
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'name' => 'required|max:255',
             'code' => 'required|unique:room_types|max:255',
@@ -49,17 +55,22 @@ class RoomTypeController extends Controller {
         return redirect()->route('room-types.index')->with('success', 'Room type created successfully.');
     }
 
-    public function show(RoomType $roomType) {
+    public function show(RoomType $roomType)
+    {
         $roomType->load('media');
+
         return view('room-types.show', compact('roomType'));
     }
 
-    public function edit(RoomType $roomType) {
+    public function edit(RoomType $roomType)
+    {
         $roomType->load('media');
+
         return view('room-types.edit', compact('roomType'));
     }
 
-    public function update(Request $request, RoomType $roomType) {
+    public function update(Request $request, RoomType $roomType)
+    {
         $validated = $request->validate([
             'name' => 'required|max:255',
             'code' => 'required|unique:room_types,code,'.$roomType->id.'|max:255',
@@ -112,19 +123,25 @@ class RoomTypeController extends Controller {
         return redirect()->route('room-types.index')->with('success', 'Room type updated successfully.');
     }
 
-    public function destroy(RoomType $roomType) {
+    public function destroy(RoomType $roomType)
+    {
         // Media files are automatically deleted by Spatie Media Library
         $this->softDelete($roomType);
+
         return redirect()->route('room-types.index')->with('success', 'Room type deleted successfully.');
     }
 
-    public function archived() {
+    public function archived()
+    {
         $records = RoomType::onlyDeleted()->latest('deleted_at')->paginate(20);
+
         return view('room-types.archived', compact('records'));
     }
 
-    public function restore(RoomType $room_type) {
+    public function restore(RoomType $room_type)
+    {
         $this->restoreModel($room_type);
+
         return redirect()->route('room-types.index')->with('success', 'Room type restored successfully.');
     }
 
@@ -134,8 +151,8 @@ class RoomTypeController extends Controller {
     public function removeMedia(RoomType $roomType, $mediaId)
     {
         $media = $roomType->media()->find($mediaId);
-        
-        if (!$media) {
+
+        if (! $media) {
             return back()->with('error', 'Media not found.');
         }
 

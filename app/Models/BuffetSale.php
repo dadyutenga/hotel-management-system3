@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\ReceiptPrintable;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +12,10 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class BuffetSale extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
+        'building_id',
         'sale_number',
         'buffet_package_id',
         'booking_id',
@@ -46,7 +48,7 @@ class BuffetSale extends Model implements ReceiptPrintable
         static::creating(function (BuffetSale $sale) {
             if (empty($sale->sale_number)) {
                 $count = self::whereDate('created_at', today())->count() + 1;
-                $sale->sale_number = 'BUF-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $sale->sale_number = 'BUF-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -54,6 +56,11 @@ class BuffetSale extends Model implements ReceiptPrintable
     public function package(): BelongsTo
     {
         return $this->belongsTo(BuffetPackage::class, 'buffet_package_id');
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function booking(): BelongsTo
@@ -116,4 +123,3 @@ class BuffetSale extends Model implements ReceiptPrintable
         return $this->status === 'settled';
     }
 }
-

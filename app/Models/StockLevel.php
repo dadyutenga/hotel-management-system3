@@ -2,22 +2,23 @@
 
 namespace App\Models;
 
-use App\Traits\HasUuid;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class StockLevel extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     public $timestamps = false;
 
-    protected $fillable = ['product_id', 'location_id', 'quantity', 'reserved_qty', 'last_counted_at'];
+    protected $fillable = ['product_id', 'location_id', 'quantity', 'reserved_qty', 'last_counted_at', 'building_id'];
 
     protected $casts = [
-        'quantity'      => 'decimal:3',
-        'reserved_qty'  => 'decimal:3',
-        'deleted_at'    => 'datetime',
+        'quantity' => 'decimal:3',
+        'reserved_qty' => 'decimal:3',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -36,5 +37,10 @@ class StockLevel extends Model
     public function location()
     {
         return $this->belongsTo(StockLocation::class, 'location_id');
+    }
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
     }
 }

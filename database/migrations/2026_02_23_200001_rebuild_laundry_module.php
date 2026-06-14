@@ -1,11 +1,12 @@
 <?php
 
+use App\Models\Role;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Role;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // ── Drop old laundry tables ──────────────────────────────────────────
@@ -39,9 +40,9 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreign('laundry_service_id')
-                  ->references('id')
-                  ->on('laundry_services')
-                  ->cascadeOnDelete();
+                ->references('id')
+                ->on('laundry_services')
+                ->cascadeOnDelete();
 
             $table->unique(['laundry_service_id', 'item_name']);
         });
@@ -111,13 +112,13 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreign('laundry_order_id')
-                  ->references('id')
-                  ->on('laundry_orders')
-                  ->cascadeOnDelete();
+                ->references('id')
+                ->on('laundry_orders')
+                ->cascadeOnDelete();
 
             $table->foreign('laundry_service_item_id')
-                  ->references('id')
-                  ->on('laundry_service_items');
+                ->references('id')
+                ->on('laundry_service_items');
         });
     }
 
