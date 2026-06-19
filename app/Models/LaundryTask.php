@@ -8,6 +8,7 @@ use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class LaundryTask extends Model
 {
