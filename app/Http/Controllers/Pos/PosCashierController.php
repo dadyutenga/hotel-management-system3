@@ -30,8 +30,8 @@ class PosCashierController extends Controller
             ->forBuilding($buildingId)
             ->where('order_source', 'pos_waiter')
             ->whereIn('status', ['open', 'sent', 'ready', 'served'])
-            ->when($staffUser?->isPosBar(), fn ($q) => $q->whereHas('location', fn ($l) => $q->where('stock_locations.code', 'bar')))
-            ->when($staffUser?->isPosKitchen(), fn ($q) => $q->whereHas('location', fn ($l) => $q->where('stock_locations.code', '!=', 'bar')))
+            ->when($staffUser?->isPosBar(), fn ($q) => $q->whereHas('location', fn ($l) => $l->where('stock_locations.code', 'bar')))
+            ->when($staffUser?->isPosKitchen(), fn ($q) => $q->whereHas('location', fn ($l) => $l->where('stock_locations.code', '!=', 'bar')))
             ->latest()
             ->paginate(30);
 
