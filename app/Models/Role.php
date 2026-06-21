@@ -49,6 +49,11 @@ class Role extends Model
 
     public const STOCK_CONTROLLER = 'stock_controller';
 
+    // POS settlement roles (replace generic cashier)
+    public const POS_BAR = 'pos_bar';
+
+    public const POS_KITCHEN = 'pos_kitchen';
+
     public static array $roles = [
         self::ADMIN => 'System administrator with full access',
         self::FRONT_DESK => 'Booking management and guest charges',
@@ -63,6 +68,8 @@ class Role extends Model
         self::ACCOUNTANT => 'Full financial records, reports, payroll, reconciliation',
         self::CASHIER => 'POS cashier — view all orders, process payments',
         self::STOCK_CONTROLLER => 'Stock-take operations and variance reconciliation',
+        self::POS_BAR => 'POS bar — settle and process bar orders',
+        self::POS_KITCHEN => 'POS kitchen — settle and process kitchen/restaurant orders',
     ];
 
     public static function seedRoles(): void

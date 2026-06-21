@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\BuildingScopeMiddleware;
 use App\Http\Middleware\CheckStaffSession;
+use App\Http\Middleware\PreventCrossAuth;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'staff.session' => CheckStaffSession::class,
             'building.scope' => BuildingScopeMiddleware::class,
+            'prevent.cross.auth' => PreventCrossAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

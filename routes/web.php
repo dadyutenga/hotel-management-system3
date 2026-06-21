@@ -129,7 +129,7 @@ Route::post('/payments/callback/azampesa', [AzamPesaPaymentController::class, 'c
 Route::get('/payments/callback', [PaymentController::class, 'callback'])->name('payments.callback');
 
 // Guest Routes — rate-limited to prevent brute-force attacks
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'prevent.cross.auth'])->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
 
@@ -144,7 +144,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // ═══ STAFF PASSKEY LOGIN (Public) ═══
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'prevent.cross.auth'])->group(function () {
     Route::get('/staff/login', [StaffPasskeyLoginController::class, 'showLoginForm'])->name('staff.login');
     Route::post('/staff/login', [StaffPasskeyLoginController::class, 'login'])->name('staff.login.submit')->middleware('throttle:10,1');
 });
@@ -157,11 +157,11 @@ Route::prefix('pos')->name('pos.')->middleware('staff.session')->group(function 
     })->name('dashboard');
     Route::post('/waiters/{user}/force-logout', [StaffPasskeyLoginController::class, 'forceLogout'])->name('waiters.force-logout');
 
-    // Waiter order entry
+    // Waiter/bar_tender order entry
     Route::get('/orders/create', [PosOrderController::class, 'create'])->name('orders.create');
     Route::post('/orders', [PosOrderController::class, 'store'])->name('orders.store');
 
-    // Cashier settlement
+    // POS settlement (bar and kitchen) — role filtering handled in controller
     Route::get('/cashier/orders', [PosCashierController::class, 'index'])->name('cashier.index');
     Route::post('/cashier/orders/{order}/settle', [PosCashierController::class, 'settle'])->name('cashier.settle');
     Route::post('/cashier/orders/{order}/cancel', [PosCashierController::class, 'cancel'])->name('cashier.cancel');

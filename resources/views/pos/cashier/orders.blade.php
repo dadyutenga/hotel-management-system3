@@ -1,6 +1,9 @@
 @extends('pos.layout')
 
-@section('page-title', 'Cashier - Open Orders')
+@php
+    $pageTitle = $staffUser->isPosBar() ? 'Bar POS - Open Orders' : 'Kitchen POS - Open Orders';
+@endphp
+@section('page-title', $pageTitle)
 
 @section('header-actions')
 <a href="{{ route('pos.dashboard') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors">

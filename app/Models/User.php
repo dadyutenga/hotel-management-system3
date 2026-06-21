@@ -186,6 +186,8 @@ class User extends Authenticatable
             Role::normalizeName(Role::BAR_TENDER) => 'shared.sidebar.bar-tender',
             Role::normalizeName(Role::WAITER) => 'shared.sidebar.waiter',
             Role::normalizeName(Role::ACCOUNTANT) => 'shared.sidebar.accountant',
+            Role::normalizeName(Role::POS_BAR) => 'shared.sidebar.front-desk',
+            Role::normalizeName(Role::POS_KITCHEN) => 'shared.sidebar.front-desk',
             default => 'shared.sidebar.front-desk',
         };
     }
@@ -248,6 +250,16 @@ class User extends Authenticatable
     public function isCashier(): bool
     {
         return $this->hasRole('cashier');
+    }
+
+    public function isPosBar(): bool
+    {
+        return $this->hasRole(Role::POS_BAR);
+    }
+
+    public function isPosKitchen(): bool
+    {
+        return $this->hasRole(Role::POS_KITCHEN);
     }
 
     public function isStockController(): bool

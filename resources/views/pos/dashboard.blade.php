@@ -39,7 +39,7 @@
         </a>
         @endif
 
-        @if($staffUser->isCashier())
+        @if($staffUser->isPosBar() || $staffUser->isPosKitchen())
         <a href="{{ route('pos.cashier.index') }}"
            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-primary hover:shadow-md transition-all group">
             <div class="flex items-center gap-4">
@@ -47,25 +47,30 @@
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
                 <div>
-                    <h4 class="font-bold text-gray-800">Open Orders</h4>
-                    <p class="text-sm text-gray-500">View and settle orders placed by waiters.</p>
+                    <h4 class="font-bold text-gray-800">
+                        @if($staffUser->isPosBar()) Bar Orders @else Kitchen Orders @endif
+                    </h4>
+                    <p class="text-sm text-gray-500">View and settle {{ $staffUser->isPosBar() ? 'bar' : 'kitchen/restaurant' }} orders.</p>
                 </div>
             </div>
         </a>
         @endif
 
-        <a href="{{ route('staff.login') }}"
-           class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-primary hover:shadow-md transition-all group">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <form method="POST" action="{{ route('pos.logout') }}">
+            @csrf
+            <button type="submit"
+               class="w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-primary hover:shadow-md transition-all group text-left">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800">Switch Staff</h4>
+                        <p class="text-sm text-gray-500">Log out and let another staff member log in.</p>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="font-bold text-gray-800">Switch Staff</h4>
-                    <p class="text-sm text-gray-500">Log out and let another staff member log in.</p>
-                </div>
-            </div>
-        </a>
+            </button>
+        </form>
     </div>
 </div>
 @endsection

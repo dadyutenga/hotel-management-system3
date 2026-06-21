@@ -30,6 +30,8 @@ class PosCashierController extends Controller
             ->forBuilding($buildingId)
             ->where('order_source', 'pos_waiter')
             ->whereIn('status', ['open', 'sent', 'ready', 'served'])
+            ->when($staffUser?->isPosBar(), fn ($q) => $q->whereHas('location', fn ($l) => $q->where('stock_locations.code', 'bar')))
+            ->when($staffUser?->isPosKitchen(), fn ($q) => $q->whereHas('location', fn ($l) => $q->where('stock_locations.code', '!=', 'bar')))
             ->latest()
             ->paginate(30);
 
@@ -55,6 +57,9 @@ class PosCashierController extends Controller
         abort_if($order->order_source !== 'pos_waiter', 422, 'This order was not created from the staff POS.');
         abort_if(in_array($order->status, ['settled', 'charged', 'cancelled']), 422, 'Order is already finalised.');
         abort_if(! in_array($order->status, ['open', 'sent', 'ready', 'served']), 422, 'Order cannot be settled.');
+
+        // Enforce POS type isolation
+        $this->enforcePosType($staffUser, $order);
 
         $bookingRule = Rule::exists('bookings', 'id');
         if ($buildingId) {
@@ -140,6 +145,9 @@ class PosCashierController extends Controller
         abort_if($order->order_source !== 'pos_waiter', 422, 'This order was not created from the staff POS.');
         abort_if(in_array($order->status, ['settled', 'charged']), 422, 'Paid orders cannot be cancelled.');
 
+        // Enforce POS type isolation
+        $this->enforcePosType($staffUser, $order);
+
         DB::transaction(function () use ($order, $staffId) {
             if ($order->stock_deducted_at && ! $order->stock_reversed_at) {
                 app(BarOrderStockService::class)->reverseForCancelledOrder($order, $staffId);
@@ -153,5 +161,25 @@ class PosCashierController extends Controller
         return redirect()
             ->route('pos.cashier.index')
             ->with('success', "Order {$order->order_number} cancelled.");
+    }
+
+    /**
+     * Ensure pos_bar can only access bar orders, pos_kitchen can only access kitchen orders.
+     */
+    private function enforcePosType($staffUser, Order $order): void
+    {
+        if (! $staffUser) {
+            return;
+        }
+
+        $isBarOrder = $order->location?->code === 'bar';
+
+        if ($staffUser->isPosBar() && ! $isBarOrder) {
+            abort(403, 'You can only access bar orders.');
+        }
+
+        if ($staffUser->isPosKitchen() && $isBarOrder) {
+            abort(403, 'You can only access kitchen/restaurant orders.');
+        }
     }
 }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('auth.login.staff_portal') }} - Hotel Management System</title>
+    <title>Management Login - Hotel Management System</title>
     <link rel="icon" type="image/png" href="{{ asset('images/header.png') }}">
     <meta name="description" content="Staff login portal for the hotel management system.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -48,7 +48,7 @@
                 <div class="max-w-md">
                     <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white text-sm font-semibold rounded-full mb-6 border border-white/20">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path></svg>
-                        {{ __('auth.login.staff_portal') }}
+                        Management Portal
                     </span>
                     <h1 class="text-4xl font-extrabold text-white mb-6 leading-tight">
                         {{ __('auth.login.hotel_management_system') }}
@@ -115,7 +115,7 @@
                     <span class="inline-block px-4 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4 border border-primary/20">
                         {{ __('auth.login.welcome_back') }}
                     </span>
-                    <h2 class="text-3xl font-extrabold text-secondary mb-2">{{ __('auth.login.staff_sign_in') }}</h2>
+                    <h2 class="text-3xl font-extrabold text-secondary mb-2">Management Sign In</h2>
                     <p class="text-gray-600">{{ __('auth.login.enter_credentials') }}</p>
                 </div>
 
@@ -184,6 +184,13 @@
                         {{ __('auth.login.sign_in') }}
                     </button>
                 </form>
+
+                <!-- Staff Login Link -->
+                <div class="mt-6 text-center">
+                    <a href="{{ route('staff.login') }}" class="text-sm font-semibold text-primary hover:text-blue-700 transition-colors">
+                        &larr; Staff? Login with PIN
+                    </a>
+                </div>
 
                 <!-- Guest Booking Notice -->
                 <div class="mt-8 p-5 bg-white rounded-2xl border border-gray-200 shadow-lg">

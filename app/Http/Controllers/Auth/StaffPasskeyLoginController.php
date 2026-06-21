@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuthMethodResolver;
 use App\Services\PasskeyAuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class StaffPasskeyLoginController extends Controller
 {
@@ -15,27 +17,32 @@ class StaffPasskeyLoginController extends Controller
 
     public function showLoginForm()
     {
-        $staff = User::where('passkey_enabled', true)
-            ->where('is_active', true)
-            ->whereHas('role', fn ($q) => $q->whereIn('name', ['waiter', 'cashier', 'bar_tender']))
-            ->with('role')
-            ->orderBy('name')
-            ->get();
-
-        return view('pos.login', compact('staff'));
+        return view('pos.login');
     }
 
     public function login(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|uuid|exists:users,id',
+            'email' => 'required|email',
             'passkey' => 'required|string|digits:4|numeric',
         ]);
 
-        $user = User::find($request->user_id);
+        $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! $user->is_active) {
-            return back()->withErrors(['user_id' => 'This account is not active.']);
+        if (! $user) {
+            return back()->withErrors(['email' => 'No account found with that email.'])->withInput();
+        }
+
+        if (! $user->is_active) {
+            return back()->withErrors(['email' => 'This account has been deactivated.'])->withInput();
+        }
+
+        if (! $user->passkey_enabled) {
+            return back()->withErrors(['email' => 'Passkey login is not enabled for this account.'])->withInput();
+        }
+
+        if (! AuthMethodResolver::canUseStaffLogin($user)) {
+            return back()->withErrors(['email' => 'Admin and managers must use the management login.'])->withInput();
         }
 
         $result = $this->authService->verifyPasskey($user, $request->passkey);
@@ -54,15 +61,26 @@ class StaffPasskeyLoginController extends Controller
 
         $session = $result['session'];
 
-        $request->session()->put('staff_token', $session->session_token);
-        $request->session()->put('staff_user_id', $user->id);
+        // For POS roles, use staff session.
+        // For other roles (supervisor, front_desk, etc.), use standard Auth login.
+        if ($user->hasAnyRole(['waiter', 'bar_tender', 'pos_bar', 'pos_kitchen'])) {
+            $request->session()->put('staff_token', $session->session_token);
+            $request->session()->put('staff_user_id', $user->id);
 
-        // Cashiers land on the settlement screen; waiters/bartenders land on order entry.
-        if ($user->isCashier()) {
-            return redirect()->route('pos.cashier.index');
+            // Settlement roles go to cashier screen
+            if ($user->isPosBar() || $user->isPosKitchen()) {
+                return redirect()->route('pos.cashier.index');
+            }
+
+            // Order entry roles go to order screen
+            return redirect()->route('pos.orders.create');
         }
 
-        return redirect()->route('pos.orders.create');
+        // Non-POS roles: use standard auth so they access management routes
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route($user->dashboardRouteName());
     }
 
     public function logout(Request $request)

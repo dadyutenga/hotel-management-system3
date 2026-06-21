@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuthMethodResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -44,9 +45,9 @@ class LoginController extends Controller
             ]);
         }
 
-        if (! in_array($user->login_type ?? 'full', ['full', 'both'])) {
+        if (! AuthMethodResolver::canUseAdminLogin($user)) {
             throw ValidationException::withMessages([
-                'email' => __('This account is not authorized for management login. Use the staff login instead.'),
+                'email' => __('This account is for staff PIN login only. Use the staff login instead.'),
             ]);
         }
 

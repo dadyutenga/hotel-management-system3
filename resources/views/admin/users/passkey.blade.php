@@ -39,8 +39,8 @@
 
         <div class="grid grid-cols-2 gap-4 text-sm">
             <div class="bg-gray-50 rounded-lg p-3">
-                <div class="text-xs text-gray-500">Login Type</div>
-                <div class="font-medium mt-1">{{ ucfirst($user->login_type ?? 'full') }}</div>
+                <div class="text-xs text-gray-500">Role</div>
+                <div class="font-medium mt-1">{{ $user->displayRoleName() }}</div>
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
                 <div class="text-xs text-gray-500">Last Passkey Login</div>
