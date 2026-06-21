@@ -4,6 +4,7 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasSoftDelete, HasUuid, Notifiable;
+    use HasFactory, HasSoftDelete, HasUuid, Notifiable, BuildingScoped;
 
     protected $fillable = ['name', 'email', 'password', 'phone'];
 
@@ -60,6 +61,14 @@ class User extends Authenticatable
     public function hasBuilding(): bool
     {
         return ! is_null($this->building_id);
+    }
+
+    /**
+     * Get the property code from the user's assigned building.
+     */
+    public function propertyCode(): ?string
+    {
+        return $this->building?->code;
     }
 
     /**

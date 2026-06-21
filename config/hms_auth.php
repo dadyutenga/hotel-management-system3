@@ -9,6 +9,4 @@ return [
     'staff_session' => [
         'hours' => (int) env('STAFF_SESSION_HOURS', 8),
     ],
-
-    'property_code_required' => (bool) env('PROPERTY_CODE_REQUIRED', true),
 ];

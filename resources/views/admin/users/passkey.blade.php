@@ -52,7 +52,7 @@
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
                 <div class="text-xs text-gray-500">Property Code</div>
-                <div class="font-medium mt-1">{{ $user->property_code ?? '—' }}</div>
+                <div class="font-medium mt-1">{{ $user->building?->code ?? '—' }}</div>
             </div>
         </div>
     </div>

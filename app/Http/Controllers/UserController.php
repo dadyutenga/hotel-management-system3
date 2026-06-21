@@ -54,9 +54,8 @@ class UserController extends Controller
                 Rule::exists('roles', 'id')->whereNotIn('name', [Role::ADMIN]),
             ],
             'login_type' => 'required|in:full,staff,both',
-            'property_code' => 'nullable|string|max:50',
             'passkey' => 'nullable|string|digits:4|numeric|confirmed',
-            'building_id' => 'nullable|uuid|exists:buildings,id',
+            'building_id' => 'required|uuid|exists:buildings,id',
             'is_active' => 'boolean',
         ]);
 
@@ -85,8 +84,7 @@ class UserController extends Controller
         $user->role_id = $validated['role_id'];  // Explicitly set (not mass-assignable)
         $user->is_active = $validated['is_active'] ?? true;  // Explicitly set
         $user->login_type = $validated['login_type'];
-        $user->property_code = $validated['property_code'] ?? null;
-        $user->building_id = $validated['building_id'] ?? null;
+        $user->building_id = $validated['building_id'];
         $user->save();
 
         Log::info('Admin created user with phone number.', [
@@ -127,9 +125,8 @@ class UserController extends Controller
                 Rule::exists('roles', 'id')->whereNotIn('name', [Role::ADMIN]),
             ],
             'login_type' => 'required|in:full,staff,both',
-            'property_code' => 'nullable|string|max:50',
             'passkey' => 'nullable|string|digits:4|numeric|confirmed',
-            'building_id' => 'nullable|uuid|exists:buildings,id',
+            'building_id' => 'required|uuid|exists:buildings,id',
             'is_active' => 'boolean',
         ]);
 
@@ -163,15 +160,13 @@ class UserController extends Controller
         $roleId = $validated['role_id'];
         $isActive = $validated['is_active'] ?? $user->is_active;
         $loginType = $validated['login_type'];
-        $propertyCode = $validated['property_code'] ?? null;
-        $buildingId = $validated['building_id'] ?? null;
-        unset($validated['role_id'], $validated['is_active'], $validated['login_type'], $validated['property_code'], $validated['building_id']);
+        $buildingId = $validated['building_id'];
+        unset($validated['role_id'], $validated['is_active'], $validated['login_type'], $validated['building_id']);
 
         $user->fill($validated);
         $user->role_id = $roleId;  // Explicitly set
         $user->is_active = $isActive;  // Explicitly set
         $user->login_type = $loginType;
-        $user->property_code = $propertyCode;
         $user->building_id = $buildingId;
         $user->save();
 

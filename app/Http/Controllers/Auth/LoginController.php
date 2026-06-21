@@ -22,7 +22,6 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
-            'property_code' => ['nullable', 'string', 'max:50'],
         ]);
 
         $user = User::where('email', $credentials['email'])->first();
@@ -39,12 +38,10 @@ class LoginController extends Controller
             ]);
         }
 
-        if (config('hms_auth.property_code_required', true) && ! empty($user->property_code)) {
-            if (empty($credentials['property_code']) || $user->property_code !== $credentials['property_code']) {
-                throw ValidationException::withMessages([
-                    'property_code' => __('The property code does not match.'),
-                ]);
-            }
+        if (! $user->isAdmin() && ! $user->building_id) {
+            throw ValidationException::withMessages([
+                'email' => __('Your account is not assigned to a property. Please contact an administrator.'),
+            ]);
         }
 
         if (! in_array($user->login_type ?? 'full', ['full', 'both'])) {
