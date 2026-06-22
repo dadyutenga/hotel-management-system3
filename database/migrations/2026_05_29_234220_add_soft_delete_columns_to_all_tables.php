@@ -104,10 +104,10 @@ return new class extends Migration
         foreach ($this->tables as $tableName) {
             if (Schema::hasTable($tableName)) {
                 Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                    if (!Schema::hasColumn($tableName, 'is_deleted')) {
+                    if (! Schema::hasColumn($tableName, 'is_deleted')) {
                         $table->boolean('is_deleted')->default(false);
                     }
-                    if (!Schema::hasColumn($tableName, 'deleted_at')) {
+                    if (! Schema::hasColumn($tableName, 'deleted_at')) {
                         $table->softDeletes();
                     }
                 });
@@ -130,7 +130,7 @@ return new class extends Migration
                     if (Schema::hasColumn($tableName, 'deleted_at')) {
                         $columnsToDrop[] = 'deleted_at';
                     }
-                    if (!empty($columnsToDrop)) {
+                    if (! empty($columnsToDrop)) {
                         $table->dropColumn($columnsToDrop);
                     }
                 });

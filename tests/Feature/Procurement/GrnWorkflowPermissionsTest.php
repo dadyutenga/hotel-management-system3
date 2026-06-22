@@ -183,4 +183,3 @@ class GrnWorkflowPermissionsTest extends TestCase
         ]);
     }
 }
-

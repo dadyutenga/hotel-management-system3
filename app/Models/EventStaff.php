@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\HasSoftDelete;
 
 class EventStaff extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'event_id',
@@ -63,8 +63,13 @@ class EventStaff extends Model
 
     public function hasPermission(string $permission): bool
     {
-        if (!$this->permissions) return false;
-        if (isset($this->permissions['can_manage_everything']) && $this->permissions['can_manage_everything']) return true;
+        if (! $this->permissions) {
+            return false;
+        }
+        if (isset($this->permissions['can_manage_everything']) && $this->permissions['can_manage_everything']) {
+            return true;
+        }
+
         return isset($this->permissions[$permission]) && $this->permissions[$permission];
     }
 }

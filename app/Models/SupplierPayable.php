@@ -11,7 +11,7 @@ use LogicException;
 
 class SupplierPayable extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'supplier_id',

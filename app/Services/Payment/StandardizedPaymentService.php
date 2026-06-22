@@ -4,13 +4,12 @@ namespace App\Services\Payment;
 
 use App\Helpers\CurrencyHelper;
 use App\Models\Booking;
-use App\Models\Guest;
-use App\Models\Payment;
 use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
+use App\Models\Guest;
+use App\Models\Payment;
 use App\Models\SystemSetting;
 use App\Models\WalkinTransaction;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -32,7 +31,7 @@ class StandardizedPaymentService
 
     public function __construct(?AzamPesaProvider $provider = null)
     {
-        $this->provider = $provider ?? new AzamPesaProvider();
+        $this->provider = $provider ?? new AzamPesaProvider;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -42,19 +41,19 @@ class StandardizedPaymentService
     /**
      * Get customer identity from Guest model or booking relation.
      *
-     * @param Guest|null $guest The guest model
-     * @param array $fallback Fallback data if guest is null
+     * @param  Guest|null  $guest  The guest model
+     * @param  array  $fallback  Fallback data if guest is null
      * @return array{name: string, first_name: string, last_name: string, phone: string|null, email: string|null}
      */
     public function getCustomerIdentity(?Guest $guest, array $fallback = []): array
     {
         if ($guest) {
             return [
-                'name'       => $guest->full_name,
+                'name' => $guest->full_name,
                 'first_name' => $guest->first_name,
-                'last_name'  => $guest->last_name,
-                'phone'      => $guest->phone_number,
-                'email'      => $guest->email,
+                'last_name' => $guest->last_name,
+                'phone' => $guest->phone_number,
+                'email' => $guest->email,
             ];
         }
 
@@ -63,18 +62,17 @@ class StandardizedPaymentService
         $nameParts = explode(' ', $name, 2);
 
         return [
-            'name'       => $name,
+            'name' => $name,
             'first_name' => $nameParts[0] ?? 'Guest',
-            'last_name'  => $nameParts[1] ?? '',
-            'phone'      => $fallback['customer_phone'] ?? $fallback['phone'] ?? null,
-            'email'      => $fallback['customer_email'] ?? $fallback['email'] ?? null,
+            'last_name' => $nameParts[1] ?? '',
+            'phone' => $fallback['customer_phone'] ?? $fallback['phone'] ?? null,
+            'email' => $fallback['customer_email'] ?? $fallback['email'] ?? null,
         ];
     }
 
     /**
      * Get customer identity from a booking.
      *
-     * @param Booking $booking
      * @return array{name: string, first_name: string, last_name: string, phone: string|null, email: string|null}
      */
     public function getCustomerIdentityFromBooking(Booking $booking): array
@@ -86,7 +84,7 @@ class StandardizedPaymentService
 
         // Fallback to booking fields
         return $this->getCustomerIdentity(null, [
-            'customer_name'  => $booking->guest_name ?? 'Guest',
+            'customer_name' => $booking->guest_name ?? 'Guest',
             'customer_phone' => $booking->guest_phone ?? null,
             'customer_email' => $booking->guest_display_email ?? null,
         ]);
@@ -105,21 +103,19 @@ class StandardizedPaymentService
         $businessEmail = SystemSetting::getValue('business_email', 'info@grandhotel.com');
 
         return [
-            'name'       => $businessName,
+            'name' => $businessName,
             'first_name' => $businessName,
-            'last_name'  => 'Organization',
-            'phone'      => $businessPhone,
-            'email'      => $businessEmail,
+            'last_name' => 'Organization',
+            'phone' => $businessPhone,
+            'email' => $businessEmail,
         ];
     }
 
     /**
      * Determine which identity to use based on context.
      *
-     * @param Guest|null $guest
-     * @param array $customerData Walk-in customer data
-     * @param bool $useOrgFallback If true, use org data when no customer
-     * @return array
+     * @param  array  $customerData  Walk-in customer data
+     * @param  bool  $useOrgFallback  If true, use org data when no customer
      */
     public function resolveIdentity(?Guest $guest, array $customerData = [], bool $useOrgFallback = false): array
     {
@@ -128,7 +124,7 @@ class StandardizedPaymentService
             return $this->getCustomerIdentity($guest);
         }
 
-        if (!empty($customerData['customer_name']) || !empty($customerData['name'])) {
+        if (! empty($customerData['customer_name']) || ! empty($customerData['name'])) {
             return $this->getCustomerIdentity(null, $customerData);
         }
 
@@ -147,7 +143,6 @@ class StandardizedPaymentService
     /**
      * Validate and format phone number for AzamPesa.
      *
-     * @param string|null $phone
      * @return array{valid: bool, phone: string|null, error: string|null}
      */
     public function validatePhone(?string $phone): array
@@ -174,9 +169,9 @@ class StandardizedPaymentService
 
         // Normalize to Tanzania format (255XXXXXXXXX)
         if (str_starts_with($cleaned, '0')) {
-            $cleaned = '255' . substr($cleaned, 1);
-        } elseif (!str_starts_with($cleaned, '255')) {
-            $cleaned = '255' . $cleaned;
+            $cleaned = '255'.substr($cleaned, 1);
+        } elseif (! str_starts_with($cleaned, '255')) {
+            $cleaned = '255'.$cleaned;
         }
 
         // Validate final length (should be 12 digits for Tanzania)
@@ -202,41 +197,39 @@ class StandardizedPaymentService
     /**
      * Initiate a mobile money payment via AzamPesa MNO checkout.
      *
-     * @param float $amount
-     * @param string $currency
-     * @param array $identity Customer identity from resolveIdentity()
-     * @param array $metadata Additional metadata (booking_id, order_id, etc.)
-     * @return array
+     * @param  array  $identity  Customer identity from resolveIdentity()
+     * @param  array  $metadata  Additional metadata (booking_id, order_id, etc.)
      */
     public function initiateUssdPayment(float $amount, string $currency, array $identity, array $metadata = []): array
     {
         // Validate phone number
         $phoneValidation = $this->validatePhone($identity['phone'] ?? null);
-        if (!$phoneValidation['valid']) {
+        if (! $phoneValidation['valid']) {
             Log::warning('Mobile payment failed: invalid phone', [
                 'phone' => $identity['phone'] ?? null,
                 'error' => $phoneValidation['error'],
             ]);
+
             return [
                 'success' => false,
-                'error'   => $phoneValidation['error'],
-                'status'  => 'failed',
+                'error' => $phoneValidation['error'],
+                'status' => 'failed',
             ];
         }
 
         $payload = array_merge([
             'guest_first_name' => $identity['first_name'],
-            'guest_last_name'  => $identity['last_name'],
-            'guest_email'      => $identity['email'] ?? 'customer@example.com',
-            'phone_number'     => $phoneValidation['phone'],
-            'idempotency_key'  => $metadata['idempotency_key'] ?? Str::uuid()->toString(),
+            'guest_last_name' => $identity['last_name'],
+            'guest_email' => $identity['email'] ?? 'customer@example.com',
+            'phone_number' => $phoneValidation['phone'],
+            'idempotency_key' => $metadata['idempotency_key'] ?? Str::uuid()->toString(),
         ], $metadata);
 
         Log::info('Initiating mobile payment', [
-            'amount'   => $amount,
+            'amount' => $amount,
             'currency' => $currency,
             'customer' => $identity['name'],
-            'phone'    => $phoneValidation['phone'],
+            'phone' => $phoneValidation['phone'],
         ]);
 
         return $this->provider->initiatePayment($amount, $currency, 'mobile', $payload);
@@ -245,24 +238,21 @@ class StandardizedPaymentService
     /**
      * Initiate a card/bank payment via AzamPesa bank checkout.
      *
-     * @param float $amount
-     * @param string $currency
-     * @param array $identity Customer identity from resolveIdentity()
-     * @param array $metadata Additional metadata including redirect URLs
-     * @return array
+     * @param  array  $identity  Customer identity from resolveIdentity()
+     * @param  array  $metadata  Additional metadata including redirect URLs
      */
     public function initiateCardPayment(float $amount, string $currency, array $identity, array $metadata = []): array
     {
         $payload = array_merge([
             'guest_first_name' => $identity['first_name'],
-            'guest_last_name'  => $identity['last_name'],
-            'guest_email'      => $identity['email'] ?? 'customer@example.com',
-            'phone_number'     => $identity['phone'], // Optional for card
-            'idempotency_key'  => $metadata['idempotency_key'] ?? Str::uuid()->toString(),
+            'guest_last_name' => $identity['last_name'],
+            'guest_email' => $identity['email'] ?? 'customer@example.com',
+            'phone_number' => $identity['phone'], // Optional for card
+            'idempotency_key' => $metadata['idempotency_key'] ?? Str::uuid()->toString(),
         ], $metadata);
 
         Log::info('Initiating card payment', [
-            'amount'   => $amount,
+            'amount' => $amount,
             'currency' => $currency,
             'customer' => $identity['name'],
         ]);
@@ -273,12 +263,8 @@ class StandardizedPaymentService
     /**
      * Unified payment initiation - routes to correct method based on payment method.
      *
-     * @param float $amount
-     * @param string $currency
-     * @param string $method 'mobile' or 'card'
-     * @param array $identity Customer identity
-     * @param array $metadata
-     * @return array
+     * @param  string  $method  'mobile' or 'card'
+     * @param  array  $identity  Customer identity
      */
     public function initiatePayment(
         float $amount,
@@ -289,11 +275,11 @@ class StandardizedPaymentService
     ): array {
         return match ($method) {
             'mobile' => $this->initiateUssdPayment($amount, $currency, $identity, $metadata),
-            'card'   => $this->initiateCardPayment($amount, $currency, $identity, $metadata),
-            default  => [
+            'card' => $this->initiateCardPayment($amount, $currency, $identity, $metadata),
+            default => [
                 'success' => false,
-                'error'   => "Unsupported payment method: {$method}",
-                'status'  => 'failed',
+                'error' => "Unsupported payment method: {$method}",
+                'status' => 'failed',
             ],
         };
     }
@@ -305,8 +291,7 @@ class StandardizedPaymentService
     /**
      * Verify payment status with provider.
      *
-     * @param string $reference Provider reference
-     * @return array
+     * @param  string  $reference  Provider reference
      */
     public function verifyPayment(string $reference): array
     {
@@ -320,9 +305,9 @@ class StandardizedPaymentService
     /**
      * Process a full refund for a payment.
      *
-     * @param Payment $payment The payment to refund
-     * @param string|null $reason Reason for refund
-     * @param string|null $actorId User who initiated refund
+     * @param  Payment  $payment  The payment to refund
+     * @param  string|null  $reason  Reason for refund
+     * @param  string|null  $actorId  User who initiated refund
      * @return array{success: bool, message: string, refund_reference?: string}
      */
     public function processFullRefund(Payment $payment, ?string $reason = null, ?string $actorId = null): array
@@ -333,10 +318,10 @@ class StandardizedPaymentService
     /**
      * Process a partial refund for a payment.
      *
-     * @param Payment $payment The payment to refund
-     * @param float $amount Amount to refund
-     * @param string|null $reason Reason for refund
-     * @param string|null $actorId User who initiated refund
+     * @param  Payment  $payment  The payment to refund
+     * @param  float  $amount  Amount to refund
+     * @param  string|null  $reason  Reason for refund
+     * @param  string|null  $actorId  User who initiated refund
      * @return array{success: bool, message: string, refund_reference?: string}
      */
     public function processPartialRefund(Payment $payment, float $amount, ?string $reason = null, ?string $actorId = null): array
@@ -347,17 +332,13 @@ class StandardizedPaymentService
     /**
      * Core refund processing logic with validation.
      *
-     * @param Payment $payment
-     * @param float|null $amount Null for full refund
-     * @param string|null $reason
-     * @param string|null $actorId
-     * @return array
+     * @param  float|null  $amount  Null for full refund
      */
     public function processRefund(Payment $payment, ?float $amount = null, ?string $reason = null, ?string $actorId = null): array
     {
         // Validation: Check if payment can be refunded
         $validation = $this->validateRefund($payment, $amount);
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             return [
                 'success' => false,
                 'message' => $validation['error'],
@@ -371,10 +352,10 @@ class StandardizedPaymentService
             // Call AzamPesa refund API
             $result = $this->provider->refundPayment($payment->provider_reference, $isFullRefund ? null : $refundAmount);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 Log::error('Refund API failed', [
                     'payment_id' => $payment->id,
-                    'error'      => $result['error'] ?? 'Unknown error',
+                    'error' => $result['error'] ?? 'Unknown error',
                 ]);
 
                 return [
@@ -389,17 +370,17 @@ class StandardizedPaymentService
             $isFullyRefunded = $newTotalRefunded >= (float) $payment->amount;
 
             $payment->update([
-                'status'          => $isFullyRefunded ? Payment::STATUS_REFUNDED : Payment::STATUS_PARTIALLY_REFUNDED,
-                'refunded_at'     => $isFullyRefunded ? now() : $payment->refunded_at,
+                'status' => $isFullyRefunded ? Payment::STATUS_REFUNDED : Payment::STATUS_PARTIALLY_REFUNDED,
+                'refunded_at' => $isFullyRefunded ? now() : $payment->refunded_at,
                 'refund_metadata' => [
-                    'total_refunded'     => $newTotalRefunded,
+                    'total_refunded' => $newTotalRefunded,
                     'last_refund_amount' => $refundAmount,
-                    'last_refund_ref'    => $result['refund_reference'] ?? null,
-                    'last_refund_at'     => now()->toISOString(),
-                    'refund_reason'      => $reason,
-                    'refunded_by'        => $actorId,
-                    'is_partial'         => !$isFullyRefunded,
-                    'raw'                => $result['raw'] ?? [],
+                    'last_refund_ref' => $result['refund_reference'] ?? null,
+                    'last_refund_at' => now()->toISOString(),
+                    'refund_reason' => $reason,
+                    'refunded_by' => $actorId,
+                    'is_partial' => ! $isFullyRefunded,
+                    'raw' => $result['raw'] ?? [],
                 ],
             ]);
 
@@ -412,30 +393,30 @@ class StandardizedPaymentService
             $this->recordRefundTransaction($payment, $refundAmount, $reason, $actorId);
 
             Log::info('Refund processed successfully', [
-                'payment_id'      => $payment->id,
-                'refund_amount'   => $refundAmount,
-                'total_refunded'  => $newTotalRefunded,
-                'status'          => $isFullyRefunded ? 'refunded' : 'partially_refunded',
+                'payment_id' => $payment->id,
+                'refund_amount' => $refundAmount,
+                'total_refunded' => $newTotalRefunded,
+                'status' => $isFullyRefunded ? 'refunded' : 'partially_refunded',
             ]);
 
             return [
-                'success'          => true,
-                'message'          => $isFullyRefunded ? 'Full refund processed successfully' : 'Partial refund processed successfully',
+                'success' => true,
+                'message' => $isFullyRefunded ? 'Full refund processed successfully' : 'Partial refund processed successfully',
                 'refund_reference' => $result['refund_reference'] ?? null,
-                'refund_amount'    => $refundAmount,
-                'total_refunded'   => $newTotalRefunded,
-                'status'           => $isFullyRefunded ? 'refunded' : 'partially_refunded',
+                'refund_amount' => $refundAmount,
+                'total_refunded' => $newTotalRefunded,
+                'status' => $isFullyRefunded ? 'refunded' : 'partially_refunded',
             ];
 
         } catch (\Exception $e) {
             Log::error('Refund exception', [
                 'payment_id' => $payment->id,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'An error occurred while processing the refund: ' . $e->getMessage(),
+                'message' => 'An error occurred while processing the refund: '.$e->getMessage(),
             ];
         }
     }
@@ -443,8 +424,6 @@ class StandardizedPaymentService
     /**
      * Validate if a refund can be processed.
      *
-     * @param Payment $payment
-     * @param float|null $amount
      * @return array{valid: bool, error?: string}
      */
     public function validateRefund(Payment $payment, ?float $amount = null): array
@@ -458,10 +437,10 @@ class StandardizedPaymentService
         }
 
         // Must be successful or partially refunded to allow further refund
-        if (!$payment->isSuccessful() && !$payment->isPartiallyRefunded()) {
+        if (! $payment->isSuccessful() && ! $payment->isPartiallyRefunded()) {
             return [
                 'valid' => false,
-                'error' => 'Only successful or partially refunded payments can be refunded. Current status: ' . $payment->status,
+                'error' => 'Only successful or partially refunded payments can be refunded. Current status: '.$payment->status,
             ];
         }
 
@@ -498,11 +477,6 @@ class StandardizedPaymentService
 
     /**
      * Record a refund in the financial transaction ledger.
-     *
-     * @param Payment $payment
-     * @param float $amount
-     * @param string|null $reason
-     * @param string|null $actorId
      */
     protected function recordRefundTransaction(Payment $payment, float $amount, ?string $reason = null, ?string $actorId = null): void
     {
@@ -513,16 +487,16 @@ class StandardizedPaymentService
         $amountUsd = $currency === 'USD' ? $amount : round($amount / $exchangeRate, 2);
 
         FinancialTransaction::record([
-            'type'           => 'refund',
-            'source_module'  => 'payment',
-            'payment_id'     => null, // No FinancePayment for refunds
-            'booking_id'     => $payment->booking_id,
-            'currency'       => $currency,
-            'amount'         => -$amount, // Negative for refund
-            'amount_usd'     => -$amountUsd,
-            'exchange_rate'  => $exchangeRate,
+            'type' => 'refund',
+            'source_module' => 'payment',
+            'payment_id' => null, // No FinancePayment for refunds
+            'booking_id' => $payment->booking_id,
+            'currency' => $currency,
+            'amount' => -$amount, // Negative for refund
+            'amount_usd' => -$amountUsd,
+            'exchange_rate' => $exchangeRate,
             'payment_method' => $payment->payment_method ?? 'unknown',
-            'description'    => "Refund for {$payment->payment_number}" . ($reason ? " — {$reason}" : ''),
+            'description' => "Refund for {$payment->payment_number}".($reason ? " — {$reason}" : ''),
         ], $actorId ?? auth()->id() ?? 'system');
     }
 
@@ -533,16 +507,12 @@ class StandardizedPaymentService
     /**
      * Process refund for a walk-in transaction.
      *
-     * @param WalkinTransaction $transaction
-     * @param float|null $amount Null for full refund
-     * @param string|null $reason
-     * @param string|null $actorId
-     * @return array
+     * @param  float|null  $amount  Null for full refund
      */
     public function processWalkinRefund(WalkinTransaction $transaction, ?float $amount = null, ?string $reason = null, ?string $actorId = null): array
     {
         // Validate
-        if (!$transaction->isCompleted()) {
+        if (! $transaction->isCompleted()) {
             return [
                 'success' => false,
                 'message' => 'Only completed transactions can be refunded',
@@ -580,7 +550,7 @@ class StandardizedPaymentService
             // Call AzamPesa
             $result = $this->provider->refundPayment($transaction->provider_reference, $isFullRefund ? null : $refundAmount);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return [
                     'success' => false,
                     'message' => $result['error'] ?? 'Refund failed at provider',
@@ -590,14 +560,14 @@ class StandardizedPaymentService
             // Update transaction
             $newTotalRefunded = $existingRefund + $refundAmount;
             $transaction->update([
-                'status'   => $isFullRefund ? 'refunded' : $transaction->status,
+                'status' => $isFullRefund ? 'refunded' : $transaction->status,
                 'metadata' => array_merge($transaction->metadata ?? [], [
-                    'total_refunded'     => $newTotalRefunded,
+                    'total_refunded' => $newTotalRefunded,
                     'last_refund_amount' => $refundAmount,
-                    'last_refund_ref'    => $result['refund_reference'] ?? null,
-                    'last_refund_at'     => now()->toISOString(),
-                    'refund_reason'      => $reason,
-                    'refunded_by'        => $actorId,
+                    'last_refund_ref' => $result['refund_reference'] ?? null,
+                    'last_refund_at' => now()->toISOString(),
+                    'refund_reason' => $reason,
+                    'refunded_by' => $actorId,
                 ]),
             ]);
 
@@ -605,16 +575,16 @@ class StandardizedPaymentService
             $this->recordWalkinRefundTransaction($transaction, $refundAmount, $reason, $actorId);
 
             return [
-                'success'        => true,
-                'message'        => $isFullRefund ? 'Full refund processed' : 'Partial refund processed',
-                'refund_amount'  => $refundAmount,
+                'success' => true,
+                'message' => $isFullRefund ? 'Full refund processed' : 'Partial refund processed',
+                'refund_amount' => $refundAmount,
                 'total_refunded' => $newTotalRefunded,
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Refund error: ' . $e->getMessage(),
+                'message' => 'Refund error: '.$e->getMessage(),
             ];
         }
     }
@@ -629,17 +599,17 @@ class StandardizedPaymentService
         $amountUsd = $currency === 'USD' ? $amount : round($amount / $exchangeRate, 2);
 
         FinancialTransaction::record([
-            'type'           => 'refund',
-            'source_module'  => $transaction->module ?? 'walkin',
-            'payment_id'     => null,
-            'booking_id'     => null,
-            'order_id'       => $transaction->order_id,
-            'currency'       => $currency,
-            'amount'         => -$amount,
-            'amount_usd'     => -$amountUsd,
-            'exchange_rate'  => $exchangeRate,
+            'type' => 'refund',
+            'source_module' => $transaction->module ?? 'walkin',
+            'payment_id' => null,
+            'booking_id' => null,
+            'order_id' => $transaction->order_id,
+            'currency' => $currency,
+            'amount' => -$amount,
+            'amount_usd' => -$amountUsd,
+            'exchange_rate' => $exchangeRate,
             'payment_method' => $transaction->payment_method ?? 'unknown',
-            'description'    => "Refund for {$transaction->transaction_number}" . ($reason ? " — {$reason}" : ''),
+            'description' => "Refund for {$transaction->transaction_number}".($reason ? " — {$reason}" : ''),
         ], $actorId ?? auth()->id() ?? 'system');
     }
 
@@ -649,8 +619,6 @@ class StandardizedPaymentService
 
     /**
      * Get the underlying AzamPesa provider instance.
-     *
-     * @return AzamPesaProvider
      */
     public function getProvider(): AzamPesaProvider
     {

@@ -1,12 +1,16 @@
 <?php
+
 // app/Http/Controllers/ReservationController.php
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendBookingConfirmationJob;
+use App\Jobs\SendReservationConfirmationJob;
 use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Services\BuildingContext;
 use Illuminate\Http\Request;
 
 /**
@@ -20,6 +24,7 @@ class ReservationController extends Controller
     public function index()
     {
         $reservations = Reservation::with(['room.roomType', 'creator', 'guest'])
+            ->forUserBuilding()
             ->orderBy('created_at', 'desc')
             ->paginate(min(request()->input('per_page', 20), 100));
 
@@ -31,17 +36,18 @@ class ReservationController extends Controller
         // Get all available rooms
         $availableRooms = Room::where('status', 'available')
             ->where('is_active', true)
+            ->forUserBuilding()
             ->with(['roomType', 'floor.building'])
             ->orderBy('room_number')
             ->get();
 
         // Get all guests for selection
-        $guests = Guest::orderBy('first_name')->get();
+        $guests = Guest::forUserBuilding()->orderBy('first_name')->get();
 
         // Pre-select guest if provided
         $selectedGuest = null;
         if ($request->has('guest_id')) {
-            $selectedGuest = Guest::find($request->guest_id);
+            $selectedGuest = Guest::forUserBuilding()->find($request->guest_id);
         }
 
         return view('reservations.create', compact('availableRooms', 'guests', 'selectedGuest'));
@@ -53,7 +59,7 @@ class ReservationController extends Controller
         $guestId = $request->input('guest_id');
         $createNewGuest = $request->input('create_new_guest') === '1';
 
-        if ($createNewGuest || !$guestId) {
+        if ($createNewGuest || ! $guestId) {
             // Validate new guest data
             $guestData = $request->validate([
                 'guest_first_name' => 'required|string|max:255',
@@ -77,6 +83,7 @@ class ReservationController extends Controller
                 'id_type' => $guestData['guest_id_type'],
                 'nationality' => $guestData['guest_nationality'],
                 'address' => $guestData['guest_address'],
+                'building_id' => BuildingContext::isAdmin() ? null : BuildingContext::buildingId(),
             ]);
 
             // Handle ID photo upload using Spatie Media Library
@@ -98,8 +105,14 @@ class ReservationController extends Controller
             'status' => 'required|in:pending,confirmed',
         ]);
 
+        $room = Room::findOrFail($validated['room_id']);
+        BuildingContext::enforce($room->building_id);
+
         // Get guest for legacy field population
         $guest = Guest::find($guestId);
+        if ($guest) {
+            BuildingContext::enforce($guest->building_id);
+        }
 
         // Create reservation
         $reservation = Reservation::create([
@@ -108,6 +121,7 @@ class ReservationController extends Controller
             'guest_phone' => $guest->phone_number,
             'guest_email' => $guest->email,
             'room_id' => $validated['room_id'],
+            'building_id' => $room->building_id,
             'check_in_date' => $validated['check_in_date'],
             'check_out_date' => $validated['check_out_date'],
             'number_of_guests' => $validated['number_of_guests'],
@@ -120,17 +134,17 @@ class ReservationController extends Controller
         $reservation->load('room.roomType');
 
         // Dispatch reservation confirmation notification (email + SMS)
-        \App\Jobs\SendReservationConfirmationJob::dispatch([
-            'reference'       => $reservation->reservation_number,
-            'guest_name'      => $guest->full_name,
-            'email'           => $guest->email,
-            'phone'           => $guest->phone_number,
-            'room_number'     => $reservation->room?->room_number ?? '',
-            'room_type'       => $reservation->room?->roomType?->name ?? '',
-            'check_in'        => $reservation->check_in_date->format('Y-m-d'),
-            'check_out'       => $reservation->check_out_date->format('Y-m-d'),
-            'nights'          => $reservation->nights,
-            'guests'          => $reservation->number_of_guests,
+        SendReservationConfirmationJob::dispatch([
+            'reference' => $reservation->reservation_number,
+            'guest_name' => $guest->full_name,
+            'email' => $guest->email,
+            'phone' => $guest->phone_number,
+            'room_number' => $reservation->room?->room_number ?? '',
+            'room_type' => $reservation->room?->roomType?->name ?? '',
+            'check_in' => $reservation->check_in_date->format('Y-m-d'),
+            'check_out' => $reservation->check_out_date->format('Y-m-d'),
+            'nights' => $reservation->nights,
+            'guests' => $reservation->number_of_guests,
             'estimated_total' => $reservation->estimated_amount,
         ])->onQueue('notifications');
 
@@ -140,14 +154,17 @@ class ReservationController extends Controller
 
     public function edit(Reservation $reservation)
     {
-        if (!$reservation->canBeEdited()) {
+        BuildingContext::enforce($reservation->building_id);
+
+        if (! $reservation->canBeEdited()) {
             return back()->with('error', 'This reservation cannot be edited (already converted or cancelled).');
         }
 
         // Get available rooms plus the currently assigned room
-        $availableRooms = Room::where(function($query) use ($reservation) {
+        $availableRooms = Room::forUserBuilding()
+            ->where(function ($query) use ($reservation) {
                 $query->where('status', 'available')
-                      ->where('is_active', true);
+                    ->where('is_active', true);
 
                 // Include the currently assigned room even if it's not available
                 if ($reservation->room_id) {
@@ -159,7 +176,7 @@ class ReservationController extends Controller
             ->get();
 
         // Get all guests
-        $guests = Guest::orderBy('first_name')->get();
+        $guests = Guest::forUserBuilding()->orderBy('first_name')->get();
 
         // Load guest relationship
         $reservation->load('guest');
@@ -169,7 +186,9 @@ class ReservationController extends Controller
 
     public function update(Request $request, Reservation $reservation)
     {
-        if (!$reservation->canBeEdited()) {
+        BuildingContext::enforce($reservation->building_id);
+
+        if (! $reservation->canBeEdited()) {
             return back()->with('error', 'This reservation cannot be edited.');
         }
 
@@ -201,6 +220,7 @@ class ReservationController extends Controller
                 'id_type' => $guestData['guest_id_type'],
                 'nationality' => $guestData['guest_nationality'],
                 'address' => $guestData['guest_address'],
+                'building_id' => BuildingContext::isAdmin() ? null : BuildingContext::buildingId(),
             ]);
 
             // Handle ID photo upload using Spatie Media Library
@@ -222,13 +242,20 @@ class ReservationController extends Controller
             'status' => 'required|in:pending,confirmed,cancelled,no_show',
         ]);
 
+        $room = Room::findOrFail($validated['room_id']);
+        BuildingContext::enforce($room->building_id);
+
         // Get guest for legacy field population
         $guest = $guestId ? Guest::find($guestId) : null;
+        if ($guest) {
+            BuildingContext::enforce($guest->building_id);
+        }
 
         // Update reservation
         $updateData = [
             'guest_id' => $guestId,
             'room_id' => $validated['room_id'],
+            'building_id' => $room->building_id,
             'check_in_date' => $validated['check_in_date'],
             'check_out_date' => $validated['check_out_date'],
             'number_of_guests' => $validated['number_of_guests'],
@@ -251,6 +278,7 @@ class ReservationController extends Controller
 
     public function destroy(Reservation $reservation)
     {
+        BuildingContext::enforce($reservation->building_id);
         $this->softDelete($reservation);
 
         return redirect()->route('reservations.index')
@@ -259,13 +287,20 @@ class ReservationController extends Controller
 
     public function archived()
     {
-        $records = Reservation::onlyDeleted()->with(['guest', 'room'])->latest('deleted_at')->paginate(20);
+        $records = Reservation::onlyDeleted()
+            ->forUserBuilding()
+            ->with(['guest', 'room'])
+            ->latest('deleted_at')
+            ->paginate(20);
+
         return view('reservations.archived', compact('records'));
     }
 
     public function restore(Reservation $reservation)
     {
+        BuildingContext::enforce($reservation->building_id);
         $this->restoreModel($reservation);
+
         return redirect()->route('reservations.index')->with('success', 'Reservation restored successfully.');
     }
 
@@ -274,7 +309,9 @@ class ReservationController extends Controller
      */
     public function confirm(Reservation $reservation)
     {
-        if (!$reservation->canBeConfirmed()) {
+        BuildingContext::enforce($reservation->building_id);
+
+        if (! $reservation->canBeConfirmed()) {
             return back()->with('error', 'Only pending reservations can be confirmed.');
         }
 
@@ -284,17 +321,17 @@ class ReservationController extends Controller
         $reservation->load(['guest', 'room.roomType']);
 
         // Dispatch confirmation notification (email + SMS)
-        \App\Jobs\SendReservationConfirmationJob::dispatch([
-            'reference'       => $reservation->reservation_number,
-            'guest_name'      => $reservation->guest_display_name,
-            'email'           => $reservation->guest_display_email,
-            'phone'           => $reservation->guest_display_phone,
-            'room_number'     => $reservation->room?->room_number ?? '',
-            'room_type'       => $reservation->room?->roomType?->name ?? '',
-            'check_in'        => $reservation->check_in_date->format('Y-m-d'),
-            'check_out'       => $reservation->check_out_date->format('Y-m-d'),
-            'nights'          => $reservation->nights,
-            'guests'          => $reservation->number_of_guests,
+        SendReservationConfirmationJob::dispatch([
+            'reference' => $reservation->reservation_number,
+            'guest_name' => $reservation->guest_display_name,
+            'email' => $reservation->guest_display_email,
+            'phone' => $reservation->guest_display_phone,
+            'room_number' => $reservation->room?->room_number ?? '',
+            'room_type' => $reservation->room?->roomType?->name ?? '',
+            'check_in' => $reservation->check_in_date->format('Y-m-d'),
+            'check_out' => $reservation->check_out_date->format('Y-m-d'),
+            'nights' => $reservation->nights,
+            'guests' => $reservation->number_of_guests,
             'estimated_total' => $reservation->estimated_amount,
         ])->onQueue('notifications');
 
@@ -307,33 +344,36 @@ class ReservationController extends Controller
      */
     public function checkIn(Reservation $reservation)
     {
-        if (!$reservation->canBeCheckedIn()) {
+        BuildingContext::enforce($reservation->building_id);
+
+        if (! $reservation->canBeCheckedIn()) {
             return back()->with('error', 'Only confirmed reservations with a room assigned can be checked in.');
         }
 
         // Create Booking from this reservation (handles status + room via observer)
         $booking = Booking::createFromReservation($reservation, auth()->id());
+        $booking->update(['building_id' => $reservation->building_id]);
 
         // Load relationships for notification
         $booking->load(['guest', 'room.roomType']);
 
         // Dispatch booking confirmation notification (email + SMS)
-        \App\Jobs\SendBookingConfirmationJob::dispatch([
-            'reference'   => $booking->booking_number,
-            'guest_name'  => $booking->guest_display_name,
-            'email'       => $booking->guest_display_email,
-            'phone'       => $booking->guest_display_phone,
+        SendBookingConfirmationJob::dispatch([
+            'reference' => $booking->booking_number,
+            'guest_name' => $booking->guest_display_name,
+            'email' => $booking->guest_display_email,
+            'phone' => $booking->guest_display_phone,
             'room_number' => $booking->room?->room_number ?? '',
-            'room_type'   => $booking->room?->roomType?->name ?? '',
-            'check_in'    => $booking->check_in_date->format('Y-m-d'),
-            'check_out'   => $booking->check_out_date->format('Y-m-d'),
-            'nights'      => $booking->nights,
-            'rate'        => $booking->room?->roomType?->base_rate ?? 0,
-            'total'       => $booking->total_amount ?? 0,
+            'room_type' => $booking->room?->roomType?->name ?? '',
+            'check_in' => $booking->check_in_date->format('Y-m-d'),
+            'check_out' => $booking->check_out_date->format('Y-m-d'),
+            'nights' => $booking->nights,
+            'rate' => $booking->room?->roomType?->base_rate ?? 0,
+            'total' => $booking->total_amount ?? 0,
         ])->onQueue('notifications');
 
         return redirect()->route('bookings.show', $booking)
-            ->with('success', 'Guest checked in successfully. Booking #' . $booking->booking_number . ' created.');
+            ->with('success', 'Guest checked in successfully. Booking #'.$booking->booking_number.' created.');
     }
 
     /**
@@ -341,7 +381,9 @@ class ReservationController extends Controller
      */
     public function cancel(Reservation $reservation)
     {
-        if (!$reservation->canBeCancelled()) {
+        BuildingContext::enforce($reservation->building_id);
+
+        if (! $reservation->canBeCancelled()) {
             return back()->with('error', 'Only pending or confirmed reservations can be cancelled.');
         }
 
@@ -355,7 +397,9 @@ class ReservationController extends Controller
      */
     public function noShow(Reservation $reservation)
     {
-        if (!in_array($reservation->status, ['pending', 'confirmed'])) {
+        BuildingContext::enforce($reservation->building_id);
+
+        if (! in_array($reservation->status, ['pending', 'confirmed'])) {
             return back()->with('error', 'Only pending or confirmed reservations can be marked as no-show.');
         }
 

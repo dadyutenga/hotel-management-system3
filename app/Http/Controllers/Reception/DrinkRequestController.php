@@ -51,10 +51,10 @@ class DrinkRequestController extends Controller
     {
         $data = $request->validate([
             'booking_id' => 'required|uuid|exists:bookings,id',
-            'items'      => 'required|array|min:1',
+            'items' => 'required|array|min:1',
             'items.*.product_name' => 'required|string|max:150',
-            'items.*.quantity'     => 'required|integer|min:1|max:99',
-            'notes'      => 'nullable|string|max:500',
+            'items.*.quantity' => 'required|integer|min:1|max:99',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $bar = StockLocation::bar();
@@ -68,17 +68,17 @@ class DrinkRequestController extends Controller
 
         DB::transaction(function () use ($data, $bar, $booking, $defaultCategory) {
             $order = Order::create([
-                'location_id'    => $bar->id,
-                'order_type'     => 'guest',
-                'order_source'   => 'reception_drink',
-                'booking_id'     => $booking->id,
-                'customer_name'  => $booking->guest_name,
+                'location_id' => $bar->id,
+                'order_type' => 'guest',
+                'order_source' => 'reception_drink',
+                'booking_id' => $booking->id,
+                'customer_name' => $booking->guest_name,
                 'customer_phone' => $booking->guest_phone,
                 'bartender_status' => 'pending',
                 'bartender_status_updated_at' => now(),
-                'status'         => 'open',
-                'notes'          => $data['notes'] ?? null,
-                'created_by'     => (string) Auth::id(),
+                'status' => 'open',
+                'notes' => $data['notes'] ?? null,
+                'created_by' => (string) Auth::id(),
             ]);
 
             $subtotal = 0;
@@ -89,34 +89,34 @@ class DrinkRequestController extends Controller
                     ->where('is_active', true)
                     ->first();
 
-                if (!$product) {
+                if (! $product) {
                     continue;
                 }
 
                 $menuItem = $product->menuItem;
-                if (!$menuItem && $defaultCategory) {
+                if (! $menuItem && $defaultCategory) {
                     $menuItem = MenuItem::create([
-                        'category_id'   => $defaultCategory->id,
-                        'name'          => $product->name,
-                        'description'   => $product->description,
+                        'category_id' => $defaultCategory->id,
+                        'name' => $product->name,
+                        'description' => $product->description,
                         'selling_price' => $product->selling_price,
-                        'is_available'  => true,
-                        'is_active'     => true,
-                        'varieties'     => $product->varieties,
-                        'created_by'    => (string) Auth::id(),
+                        'is_available' => true,
+                        'is_active' => true,
+                        'varieties' => $product->varieties,
+                        'created_by' => (string) Auth::id(),
                     ]);
                 }
 
                 $unitPrice = (float) $product->selling_price;
 
                 OrderItem::create([
-                    'order_id'           => $order->id,
-                    'menu_item_id'       => $menuItem?->id,
+                    'order_id' => $order->id,
+                    'menu_item_id' => $menuItem?->id,
                     'item_name_snapshot' => $product->name,
-                    'quantity'           => (int) $line['quantity'],
-                    'unit_price'         => $unitPrice,
-                    'subtotal'           => $unitPrice * (int) $line['quantity'],
-                    'status'             => 'pending',
+                    'quantity' => (int) $line['quantity'],
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $unitPrice * (int) $line['quantity'],
+                    'status' => 'pending',
                 ]);
 
                 $subtotal += $unitPrice * (int) $line['quantity'];
@@ -124,7 +124,7 @@ class DrinkRequestController extends Controller
 
             $order->update([
                 'subtotal' => $subtotal,
-                'total'    => $subtotal,
+                'total' => $subtotal,
             ]);
         });
 

@@ -13,14 +13,17 @@ use App\Models\Product;
 use App\Models\StockLevel;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
-use App\Services\Billing\ModuleBillingService;
 use App\Services\Bartender\BarOrderStockService;
+use App\Services\Billing\ModuleBillingService;
+use App\Services\BuildingContext;
+use App\Services\BuildingModuleGate;
 use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class BartenderController extends Controller
@@ -28,21 +31,25 @@ class BartenderController extends Controller
     public function __construct(
         protected BarOrderStockService $barOrderStockService,
         protected ModuleBillingService $moduleBillingService
-    ) {
-    }
+    ) {}
 
     public function dashboard(): View
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
 
         $stats = [
-            'pending_orders' => Order::where('location_id', $bar->id)
+            'pending_orders' => Order::forBuilding($buildingId)
+                ->where('location_id', $bar->id)
                 ->whereIn('bartender_status', ['pending', 'accepted', 'prepared'])
                 ->count(),
-            'damage_reports_today' => BarDamageReport::where('location_id', $bar->id)
+            'damage_reports_today' => BarDamageReport::forBuilding($buildingId)
+                ->where('location_id', $bar->id)
                 ->whereDate('reported_at', today())
                 ->count(),
-            'available_items' => StockLevel::where('location_id', $bar->id)
+            'available_items' => StockLevel::forBuilding($buildingId)
+                ->where('location_id', $bar->id)
                 ->where('quantity', '>', 0)
                 ->count(),
         ];
@@ -52,13 +59,16 @@ class BartenderController extends Controller
 
     public function stock(Request $request): View
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
 
         $levels = StockLevel::with('product')
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->when($request->search, fn ($q) => $q->whereHas('product', function ($pq) use ($request) {
-                $pq->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('sku', 'like', '%' . $request->search . '%');
+                $pq->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('sku', 'like', '%'.$request->search.'%');
             }))
             ->orderByDesc('updated_at')
             ->paginate(25);
@@ -68,7 +78,11 @@ class BartenderController extends Controller
 
     public function inbox(Request $request): View
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+
         $orders = Order::with(['items.menuItem', 'booking', 'location'])
+            ->forBuilding($buildingId)
             ->where('order_source', 'walkin')
             ->whereNotNull('bartender_status')
             ->when($request->status, fn ($q) => $q->where('bartender_status', $request->status))
@@ -80,7 +94,11 @@ class BartenderController extends Controller
 
     public function drinkInbox(Request $request): View
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+
         $orders = Order::with(['items.menuItem', 'booking.room'])
+            ->forBuilding($buildingId)
             ->where('order_source', 'reception_drink')
             ->when($request->status, fn ($q) => $q->where('bartender_status', $request->status))
             ->latest()
@@ -91,6 +109,10 @@ class BartenderController extends Controller
 
     public function showOrder(Order $order): View
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        BuildingContext::enforce($order->building_id);
+
         $order->load(['items.menuItem.ingredients.product', 'booking']);
         $availability = $this->barOrderStockService->checkAvailability($order);
 
@@ -99,18 +121,22 @@ class BartenderController extends Controller
 
     public function pos(): View
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
 
         // Ensure all bar Products have corresponding MenuItems
-        $this->syncBarProductsToMenu($bar);
+        $this->syncBarProductsToMenu($bar, $buildingId);
 
         $categories = MenuCategory::with(['menuItems' => fn ($q) => $q->where('is_active', true)->where('is_available', true)])
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->where('is_active', true)
             ->get();
 
         // Build stock lookup keyed by product name (lowercase) → available quantity
         $stockLevels = StockLevel::with('product')
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->where('quantity', '>', 0)
             ->get();
@@ -124,7 +150,8 @@ class BartenderController extends Controller
         }
 
         // Build product image lookup keyed by product name (lowercase) → thumb URL
-        $barProducts = Product::where('product_type', 'bar')
+        $barProducts = Product::forBuilding($buildingId)
+            ->where('product_type', 'bar')
             ->where('is_active', true)
             ->get();
 
@@ -139,9 +166,10 @@ class BartenderController extends Controller
         return view('bartender.pos', compact('categories', 'stockMap', 'imageMap'));
     }
 
-    protected function syncBarProductsToMenu(StockLocation $bar): void
+    protected function syncBarProductsToMenu(StockLocation $bar, ?string $buildingId = null): void
     {
         $barProducts = Product::query()
+            ->forBuilding($buildingId)
             ->where('product_type', 'bar')
             ->where('is_active', true)
             ->get();
@@ -151,17 +179,19 @@ class BartenderController extends Controller
         }
 
         $defaultCategory = MenuCategory::query()
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->first();
 
-        if (!$defaultCategory) {
+        if (! $defaultCategory) {
             return;
         }
 
         foreach ($barProducts as $product) {
-            $existing = MenuItem::where('name', $product->name)
+            $existing = MenuItem::forBuilding($buildingId)
+                ->where('name', $product->name)
                 ->where('category_id', $defaultCategory->id)
                 ->exists();
 
@@ -170,31 +200,41 @@ class BartenderController extends Controller
             }
 
             MenuItem::create([
-                'category_id'   => $defaultCategory->id,
-                'name'          => $product->name,
-                'description'   => $product->description,
+                'building_id' => $buildingId,
+                'category_id' => $defaultCategory->id,
+                'name' => $product->name,
+                'description' => $product->description,
                 'selling_price' => $product->selling_price,
-                'is_available'  => true,
-                'is_active'     => true,
-                'varieties'     => $product->varieties,
-                'created_by'    => $product->created_by ?? auth()->id(),
+                'is_available' => true,
+                'is_active' => true,
+                'varieties' => $product->varieties,
+                'created_by' => $product->created_by ?? auth()->id(),
             ]);
         }
     }
 
     public function storePos(Request $request): RedirectResponse
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        $bookingRule = Rule::exists('bookings', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+            $bookingRule->where('building_id', $buildingId);
+        }
 
         $data = $request->validate([
-            'customer_name'  => 'nullable|string|max:150',
+            'customer_name' => 'nullable|string|max:150',
             'customer_phone' => 'nullable|string|max:30',
             'payment_method' => 'required|in:cash,mobile,card,charge_to_booking',
-            'booking_id'     => 'required_if:payment_method,charge_to_booking|uuid|exists:bookings,id',
-            'notes'          => 'nullable|string|max:500',
-            'items'          => 'required|array|min:1',
-            'items.*.menu_item_id' => 'required|uuid|exists:menu_items,id',
-            'items.*.quantity'     => 'required|integer|min:1',
+            'booking_id' => ['required_if:payment_method,charge_to_booking', 'uuid', $bookingRule],
+            'notes' => 'nullable|string|max:500',
+            'items' => 'required|array|min:1',
+            'items.*.menu_item_id' => ['required', 'uuid', $menuItemRule],
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
         // Validate the booking is in checked_in status if charging to folio
@@ -205,35 +245,36 @@ class BartenderController extends Controller
             abort_if($booking->status !== 'checked_in', 422, 'Can only charge to a checked-in booking.');
         }
 
-        $order = DB::transaction(function () use ($data, $bar, $isChargeToBooking) {
+        $order = DB::transaction(function () use ($data, $bar, $isChargeToBooking, $buildingId) {
             $customerName = $data['customer_name'] ?: ($isChargeToBooking ? 'Guest' : 'Walk-in Guest');
             $customerPhone = $data['customer_phone'] ?? null;
 
             $order = Order::create([
-                'location_id'    => $bar->id,
-                'order_type'     => $isChargeToBooking ? 'guest' : 'walkin',
-                'order_source'   => 'walkin',
-                'booking_id'     => $isChargeToBooking ? $data['booking_id'] : null,
-                'customer_name'  => $customerName,
+                'building_id' => $buildingId,
+                'location_id' => $bar->id,
+                'order_type' => $isChargeToBooking ? 'guest' : 'walkin',
+                'order_source' => 'walkin',
+                'booking_id' => $isChargeToBooking ? $data['booking_id'] : null,
+                'customer_name' => $customerName,
                 'customer_phone' => $customerPhone,
                 'bartender_status' => 'prepared',
                 'bartender_status_updated_at' => now(),
-                'status'         => 'open',
+                'status' => 'open',
                 'payment_method' => $data['payment_method'],
-                'notes'          => $data['notes'] ?? null,
-                'created_by'     => $this->actorId(),
+                'notes' => $data['notes'] ?? null,
+                'created_by' => $this->actorId(),
             ]);
 
             foreach ($data['items'] as $line) {
                 $menuItem = MenuItem::findOrFail($line['menu_item_id']);
                 OrderItem::create([
-                    'order_id'    => $order->id,
+                    'order_id' => $order->id,
                     'menu_item_id' => $menuItem->id,
-                    'quantity'    => $line['quantity'],
-                    'unit_price'  => $menuItem->selling_price,
-                    'subtotal'    => $menuItem->selling_price * $line['quantity'],
-                    'notes'       => null,
-                    'status'      => 'pending',
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $menuItem->selling_price,
+                    'subtotal' => $menuItem->selling_price * $line['quantity'],
+                    'notes' => null,
+                    'status' => 'pending',
                 ]);
             }
 
@@ -246,7 +287,7 @@ class BartenderController extends Controller
                 $order->update([
                     'bartender_status' => 'served',
                     'bartender_status_updated_at' => now(),
-                    'status'           => 'charged',
+                    'status' => 'charged',
                     'billed_to_folio_at' => now(),
                 ]);
 
@@ -256,9 +297,9 @@ class BartenderController extends Controller
                 $order->update([
                     'bartender_status' => 'served',
                     'bartender_status_updated_at' => now(),
-                    'status'           => 'settled',
-                    'settled_by'       => $this->actorId(),
-                    'settled_at'       => now(),
+                    'status' => 'settled',
+                    'settled_by' => $this->actorId(),
+                    'settled_at' => now(),
                 ]);
             }
 
@@ -278,9 +319,12 @@ class BartenderController extends Controller
 
     public function walkinSalesReport(Request $request): View
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
 
         $orders = Order::with(['items.menuItem', 'settler'])
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->where('order_source', 'walkin')
             ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
@@ -292,6 +336,7 @@ class BartenderController extends Controller
             ->withQueryString();
 
         $baseSummary = Order::query()
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->where('order_source', 'walkin')
             ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
@@ -320,7 +365,10 @@ class BartenderController extends Controller
 
     public function serveOrder(Order $order): RedirectResponse
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+        BuildingContext::enforce($order->building_id);
         abort_if($order->location_id !== $bar->id, 404);
         abort_if($order->order_source === 'walkin', 422, 'Walk-in orders are marked served during payment settlement.');
         abort_if(in_array($order->status, ['cancelled', 'settled'], true), 422, 'This order cannot be served.');
@@ -328,7 +376,7 @@ class BartenderController extends Controller
         abort_if($order->bartender_status !== 'prepared', 422, 'Order must be prepared before serving.');
 
         $availability = $this->barOrderStockService->checkAvailability($order);
-        abort_if(!$availability['ok'], 422, $availability['errors'][0]['message'] ?? 'Insufficient stock for this order.');
+        abort_if(! $availability['ok'], 422, $availability['errors'][0]['message'] ?? 'Insufficient stock for this order.');
 
         try {
             DB::transaction(function () use ($order) {
@@ -372,12 +420,15 @@ class BartenderController extends Controller
 
     public function cancelOrder(Order $order): RedirectResponse
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+        BuildingContext::enforce($order->building_id);
         abort_if($order->location_id !== $bar->id, 404);
         abort_if($order->status === 'settled', 422, 'Paid orders cannot be cancelled from bartender desk.');
         abort_if($order->charge?->isPaid(), 422, 'Orders with paid charges cannot be cancelled from bartender desk.');
 
-        if ($order->stock_deducted_at && !$order->stock_reversed_at) {
+        if ($order->stock_deducted_at && ! $order->stock_reversed_at) {
             $this->barOrderStockService->reverseForCancelledOrder($order, $this->actorId());
         }
 
@@ -395,8 +446,11 @@ class BartenderController extends Controller
 
     public function damageForm(): View
     {
-        $bar = StockLocation::bar();
-        $products = Product::where('is_active', true)
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+        $products = Product::forBuilding($buildingId)
+            ->where('is_active', true)
             ->whereHas('stockLevels', fn ($q) => $q->where('location_id', $bar->id))
             ->orderBy('name')
             ->get();
@@ -406,26 +460,34 @@ class BartenderController extends Controller
 
     public function reportDamage(Request $request): RedirectResponse
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+
+        $productRule = Rule::exists('products', 'id');
+        if ($buildingId) {
+            $productRule->where('building_id', $buildingId);
+        }
 
         $data = $request->validate([
-            'product_id' => 'required|uuid|exists:products,id',
+            'product_id' => ['required', 'uuid', $productRule],
             'quantity' => 'required|numeric|min:0.001',
             'reason' => 'required|in:spillage,breakage,expired,other',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        DB::transaction(function () use ($data, $bar) {
+        DB::transaction(function () use ($data, $bar, $buildingId) {
             $movement = StockMovement::record([
                 'product_id' => $data['product_id'],
                 'location_id' => $bar->id,
                 'type' => 'damage',
                 'quantity' => $data['quantity'],
                 'reference_type' => 'bar_damage_report',
-                'notes' => strtoupper($data['reason']) . ($data['notes'] ? ' | ' . $data['notes'] : ''),
+                'notes' => strtoupper($data['reason']).($data['notes'] ? ' | '.$data['notes'] : ''),
             ], $this->actorId());
 
             BarDamageReport::create([
+                'building_id' => $buildingId,
                 'product_id' => $data['product_id'],
                 'location_id' => $bar->id,
                 'quantity' => $data['quantity'],
@@ -443,9 +505,12 @@ class BartenderController extends Controller
 
     public function damageIndex(): View
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
 
         $reports = BarDamageReport::with(['product', 'reporter'])
+            ->forBuilding($buildingId)
             ->where('location_id', $bar->id)
             ->latest('reported_at')
             ->paginate(25);
@@ -455,13 +520,16 @@ class BartenderController extends Controller
 
     protected function transitionWithAvailabilityCheck(Order $order, string $target, array $allowed): RedirectResponse
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+        BuildingContext::enforce($order->building_id);
         abort_if($order->location_id !== $bar->id, 404);
         abort_if(in_array($order->status, ['cancelled', 'settled'], true), 422, 'This order is no longer actionable.');
-        abort_if(!in_array($order->bartender_status, $allowed, true), 422, 'Invalid order status transition.');
+        abort_if(! in_array($order->bartender_status, $allowed, true), 422, 'Invalid order status transition.');
 
         $availability = $this->barOrderStockService->checkAvailability($order);
-        abort_if(!$availability['ok'], 422, $availability['errors'][0]['message'] ?? 'Insufficient stock for this order.');
+        abort_if(! $availability['ok'], 422, $availability['errors'][0]['message'] ?? 'Insufficient stock for this order.');
 
         $order->update([
             'bartender_status' => $target,
@@ -474,10 +542,13 @@ class BartenderController extends Controller
 
     protected function transitionStatus(Order $order, string $target, array $allowed): RedirectResponse
     {
-        $bar = StockLocation::bar();
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureBar($buildingId);
+        $bar = StockLocation::bar($buildingId);
+        BuildingContext::enforce($order->building_id);
         abort_if($order->location_id !== $bar->id, 404);
         abort_if(in_array($order->status, ['cancelled', 'settled'], true), 422, 'This order is no longer actionable.');
-        abort_if(!in_array($order->bartender_status, $allowed, true), 422, 'Invalid order status transition.');
+        abort_if(! in_array($order->bartender_status, $allowed, true), 422, 'Invalid order status transition.');
 
         $order->update([
             'bartender_status' => $target,

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
 
 class PettyCash extends Model
 {
-    use HasUuids, HasSoftDelete;
+    use HasSoftDelete, HasUuids;
 
     protected $table = 'petty_cash_expenses';
 
@@ -19,19 +19,26 @@ class PettyCash extends Model
     ];
 
     protected $casts = [
-        'amount'      => 'decimal:2',
+        'amount' => 'decimal:2',
         'approved_at' => 'datetime',
-        'deleted_at'  => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (PettyCash $pc) {
             $count = self::whereDate('created_at', today())->count() + 1;
-            $pc->reference_no = 'PC-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $pc->reference_no = 'PC-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
         });
     }
 
-    public function requester() { return $this->belongsTo(User::class, 'requested_by'); }
-    public function approver()  { return $this->belongsTo(User::class, 'approved_by'); }
+    public function requester()
+    {
+        return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }

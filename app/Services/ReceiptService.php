@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * ReceiptService — handles receipt generation, retrieval, and printing.
- * 
+ *
  * Ensures idempotent receipt generation (one receipt per source record).
  */
 class ReceiptService
 {
     /**
      * Get or create a receipt for a given receiptable model.
-     * 
+     *
      * This ensures idempotent receipt number generation - calling this
      * method multiple times for the same source record returns the same receipt.
      */
@@ -45,27 +45,27 @@ class ReceiptService
         $receiptNumber = $data['receipt_number'] ?? $data['receipt_no'] ?? null;
 
         return Receipt::create([
-            'receipt_number'        => $receiptNumber,
-            'module'                => $data['module'] ?? $model->getReceiptModule(),
-            'receiptable_type'      => get_class($model),
-            'receiptable_id'        => $model->getKey(),
-            'customer_name'         => $data['customer_name'] ?? null,
-            'customer_phone'        => $data['customer_phone'] ?? null,
-            'items_snapshot'        => $data['items'] ?? [],
-            'subtotal'              => $data['subtotal'] ?? 0,
-            'discount'              => $data['discount'] ?? 0,
-            'tax'                   => $data['tax'] ?? 0,
-            'total'                 => $data['total'] ?? 0,
-            'amount_paid'           => $data['amount_paid'] ?? 0,
-            'balance'               => $data['balance'] ?? 0,
-            'currency'              => $data['currency'] ?? 'TZS',
-            'payment_method'        => $data['payment_method'] ?? null,
-            'payment_status'        => $data['payment_status'] ?? 'unpaid',
+            'receipt_number' => $receiptNumber,
+            'module' => $data['module'] ?? $model->getReceiptModule(),
+            'receiptable_type' => get_class($model),
+            'receiptable_id' => $model->getKey(),
+            'customer_name' => $data['customer_name'] ?? null,
+            'customer_phone' => $data['customer_phone'] ?? null,
+            'items_snapshot' => $data['items'] ?? [],
+            'subtotal' => $data['subtotal'] ?? 0,
+            'discount' => $data['discount'] ?? 0,
+            'tax' => $data['tax'] ?? 0,
+            'total' => $data['total'] ?? 0,
+            'amount_paid' => $data['amount_paid'] ?? 0,
+            'balance' => $data['balance'] ?? 0,
+            'currency' => $data['currency'] ?? 'TZS',
+            'payment_method' => $data['payment_method'] ?? null,
+            'payment_status' => $data['payment_status'] ?? 'unpaid',
             'transaction_reference' => $data['transaction_reference'] ?? null,
-            'cashier_id'            => $user?->id,
-            'cashier_name'          => $data['cashier'] ?? $user?->name,
-            'notes'                 => $data['notes'] ?? null,
-            'issued_at'             => $data['issued_at'] ?? now(),
+            'cashier_id' => $user?->id,
+            'cashier_name' => $data['cashier'] ?? $user?->name,
+            'notes' => $data['notes'] ?? null,
+            'issued_at' => $data['issued_at'] ?? now(),
         ]);
     }
 
@@ -77,28 +77,28 @@ class ReceiptService
         $user = Auth::user();
 
         return Receipt::create([
-            'module'                => $originalReceipt->module,
-            'receiptable_type'      => $originalReceipt->receiptable_type,
-            'receiptable_id'        => $originalReceipt->receiptable_id,
-            'customer_name'         => $originalReceipt->customer_name,
-            'customer_phone'        => $originalReceipt->customer_phone,
-            'items_snapshot'        => $originalReceipt->items_snapshot,
-            'subtotal'              => -$refundAmount,
-            'discount'              => 0,
-            'tax'                   => 0,
-            'total'                 => -$refundAmount,
-            'amount_paid'           => -$refundAmount,
-            'balance'               => 0,
-            'currency'              => $originalReceipt->currency,
-            'payment_method'        => $originalReceipt->payment_method,
-            'payment_status'        => 'refunded',
+            'module' => $originalReceipt->module,
+            'receiptable_type' => $originalReceipt->receiptable_type,
+            'receiptable_id' => $originalReceipt->receiptable_id,
+            'customer_name' => $originalReceipt->customer_name,
+            'customer_phone' => $originalReceipt->customer_phone,
+            'items_snapshot' => $originalReceipt->items_snapshot,
+            'subtotal' => -$refundAmount,
+            'discount' => 0,
+            'tax' => 0,
+            'total' => -$refundAmount,
+            'amount_paid' => -$refundAmount,
+            'balance' => 0,
+            'currency' => $originalReceipt->currency,
+            'payment_method' => $originalReceipt->payment_method,
+            'payment_status' => 'refunded',
             'transaction_reference' => null,
-            'cashier_id'            => $user?->id,
-            'cashier_name'          => $user?->name,
-            'notes'                 => $notes ?? "Refund for receipt #{$originalReceipt->receipt_number}",
-            'is_refund'             => true,
-            'refund_receipt_id'     => $originalReceipt->id,
-            'issued_at'             => now(),
+            'cashier_id' => $user?->id,
+            'cashier_name' => $user?->name,
+            'notes' => $notes ?? "Refund for receipt #{$originalReceipt->receipt_number}",
+            'is_refund' => true,
+            'refund_receipt_id' => $originalReceipt->id,
+            'issued_at' => now(),
         ]);
     }
 
@@ -134,40 +134,41 @@ class ReceiptService
     public function markPrinted(Receipt $receipt): Receipt
     {
         $receipt->markPrinted();
+
         return $receipt->fresh();
     }
 
     /**
      * Update receipt data from its source model.
-     * 
+     *
      * Useful when the source model has been updated (e.g., payment received).
      */
     public function refreshReceipt(Receipt $receipt): Receipt
     {
         $model = $receipt->receiptable;
 
-        if (!$model || !($model instanceof ReceiptPrintable)) {
+        if (! $model || ! ($model instanceof ReceiptPrintable)) {
             return $receipt;
         }
 
         $data = $model->toReceiptData();
 
         $receipt->update([
-            'customer_name'         => $data['customer_name'] ?? $receipt->customer_name,
-            'customer_phone'        => $data['customer_phone'] ?? $receipt->customer_phone,
-            'items_snapshot'        => $data['items'] ?? $receipt->items_snapshot,
-            'subtotal'              => $data['subtotal'] ?? $receipt->subtotal,
-            'discount'              => $data['discount'] ?? $receipt->discount,
-            'tax'                   => $data['tax'] ?? $receipt->tax,
-            'total'                 => $data['total'] ?? $receipt->total,
-            'amount_paid'           => $data['amount_paid'] ?? $receipt->amount_paid,
-            'balance'               => $data['balance'] ?? $receipt->balance,
-            'currency'              => $data['currency'] ?? $receipt->currency,
-            'payment_method'        => $data['payment_method'] ?? $receipt->payment_method,
-            'payment_status'        => $data['payment_status'] ?? $receipt->payment_status,
+            'customer_name' => $data['customer_name'] ?? $receipt->customer_name,
+            'customer_phone' => $data['customer_phone'] ?? $receipt->customer_phone,
+            'items_snapshot' => $data['items'] ?? $receipt->items_snapshot,
+            'subtotal' => $data['subtotal'] ?? $receipt->subtotal,
+            'discount' => $data['discount'] ?? $receipt->discount,
+            'tax' => $data['tax'] ?? $receipt->tax,
+            'total' => $data['total'] ?? $receipt->total,
+            'amount_paid' => $data['amount_paid'] ?? $receipt->amount_paid,
+            'balance' => $data['balance'] ?? $receipt->balance,
+            'currency' => $data['currency'] ?? $receipt->currency,
+            'payment_method' => $data['payment_method'] ?? $receipt->payment_method,
+            'payment_status' => $data['payment_status'] ?? $receipt->payment_status,
             'transaction_reference' => $data['transaction_reference'] ?? $receipt->transaction_reference,
-            'cashier_name'          => $data['cashier'] ?? $receipt->cashier_name,
-            'notes'                 => $data['notes'] ?? $receipt->notes,
+            'cashier_name' => $data['cashier'] ?? $receipt->cashier_name,
+            'notes' => $data['notes'] ?? $receipt->notes,
         ]);
 
         return $receipt->fresh();
@@ -191,8 +192,8 @@ class ReceiptService
     {
         $builder = Receipt::where(function ($q) use ($query) {
             $q->where('receipt_number', 'like', "%{$query}%")
-              ->orWhere('customer_name', 'like', "%{$query}%")
-              ->orWhere('customer_phone', 'like', "%{$query}%");
+                ->orWhere('customer_name', 'like', "%{$query}%")
+                ->orWhere('customer_phone', 'like', "%{$query}%");
         });
 
         if ($module) {

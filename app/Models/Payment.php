@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\HasSoftDelete;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 /**
  * Payment — immutable record of every payment attempt.
@@ -16,15 +17,20 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class Payment extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     // ─── Status constants ──────────────────────────────────────────
-    const STATUS_PENDING            = 'pending';
-    const STATUS_SUCCESSFUL         = 'successful';
-    const STATUS_FAILED             = 'failed';
-    const STATUS_REFUNDED           = 'refunded';
+    const STATUS_PENDING = 'pending';
+
+    const STATUS_SUCCESSFUL = 'successful';
+
+    const STATUS_FAILED = 'failed';
+
+    const STATUS_REFUNDED = 'refunded';
+
     const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
-    const STATUS_EXPIRED            = 'expired';
+
+    const STATUS_EXPIRED = 'expired';
 
     // ─── Provider constants ────────────────────────────────────────
     const PROVIDER_AZAMPESA = 'azampesa';
@@ -52,12 +58,12 @@ class Payment extends Model
     ];
 
     protected $casts = [
-        'amount'          => 'decimal:2',
-        'metadata'        => 'array',
+        'amount' => 'decimal:2',
+        'metadata' => 'array',
         'refund_metadata' => 'array',
-        'payment_date'    => 'datetime',
-        'refunded_at'     => 'datetime',
-        'deleted_at'      => 'datetime',
+        'payment_date' => 'datetime',
+        'refunded_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // ─── Boot ──────────────────────────────────────────────────────
@@ -68,7 +74,7 @@ class Payment extends Model
 
         static::creating(function ($payment) {
             if (empty($payment->payment_number)) {
-                $payment->payment_number = 'PAY-' . strtoupper(Str::random(10));
+                $payment->payment_number = 'PAY-'.strtoupper(Str::random(10));
             }
         });
     }
@@ -119,12 +125,35 @@ class Payment extends Model
 
     // ─── Status Helpers ────────────────────────────────────────────
 
-    public function isPending(): bool    { return $this->status === self::STATUS_PENDING; }
-    public function isSuccessful(): bool { return $this->status === self::STATUS_SUCCESSFUL; }
-    public function isFailed(): bool     { return $this->status === self::STATUS_FAILED; }
-    public function isRefunded(): bool   { return $this->status === self::STATUS_REFUNDED; }
-    public function isPartiallyRefunded(): bool { return $this->status === self::STATUS_PARTIALLY_REFUNDED; }
-    public function isExpired(): bool    { return $this->status === self::STATUS_EXPIRED; }
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isSuccessful(): bool
+    {
+        return $this->status === self::STATUS_SUCCESSFUL;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->status === self::STATUS_REFUNDED;
+    }
+
+    public function isPartiallyRefunded(): bool
+    {
+        return $this->status === self::STATUS_PARTIALLY_REFUNDED;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->status === self::STATUS_EXPIRED;
+    }
 
     public function canBeRefunded(): bool
     {
@@ -136,16 +165,16 @@ class Payment extends Model
     public function markSuccessful(array $providerData = []): bool
     {
         return $this->update([
-            'status'       => self::STATUS_SUCCESSFUL,
+            'status' => self::STATUS_SUCCESSFUL,
             'payment_date' => now(),
-            'metadata'     => array_merge($this->metadata ?? [], $providerData),
+            'metadata' => array_merge($this->metadata ?? [], $providerData),
         ]);
     }
 
     public function markFailed(array $providerData = []): bool
     {
         return $this->update([
-            'status'   => self::STATUS_FAILED,
+            'status' => self::STATUS_FAILED,
             'metadata' => array_merge($this->metadata ?? [], $providerData),
         ]);
     }
@@ -153,8 +182,8 @@ class Payment extends Model
     public function markRefunded(array $refundData = []): bool
     {
         return $this->update([
-            'status'          => self::STATUS_REFUNDED,
-            'refunded_at'     => now(),
+            'status' => self::STATUS_REFUNDED,
+            'refunded_at' => now(),
             'refund_metadata' => $refundData,
         ]);
     }
@@ -169,26 +198,26 @@ class Payment extends Model
     public function getChargeTypeLabelAttribute(): string
     {
         return match ($this->charge_type) {
-            'booking'    => 'Room Booking',
-            'laundry'    => 'Laundry Service',
+            'booking' => 'Room Booking',
+            'laundry' => 'Laundry Service',
             'conference' => 'Conference',
-            'service'    => 'Room Service',
-            'damage'     => 'Damage',
-            'minibar'    => 'Mini Bar',
-            default      => ucfirst(str_replace('_', ' ', $this->charge_type)),
+            'service' => 'Room Service',
+            'damage' => 'Damage',
+            'minibar' => 'Mini Bar',
+            default => ucfirst(str_replace('_', ' ', $this->charge_type)),
         };
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
         return match ($this->status) {
-            'pending'            => 'bg-yellow-100 text-yellow-800',
-            'successful'         => 'bg-green-100 text-green-800',
-            'failed'             => 'bg-red-100 text-red-800',
-            'refunded'           => 'bg-purple-100 text-purple-800',
+            'pending' => 'bg-yellow-100 text-yellow-800',
+            'successful' => 'bg-green-100 text-green-800',
+            'failed' => 'bg-red-100 text-red-800',
+            'refunded' => 'bg-purple-100 text-purple-800',
             'partially_refunded' => 'bg-orange-100 text-orange-800',
-            'expired'            => 'bg-gray-100 text-gray-800',
-            default              => 'bg-gray-100 text-gray-800',
+            'expired' => 'bg-gray-100 text-gray-800',
+            default => 'bg-gray-100 text-gray-800',
         };
     }
 
@@ -196,7 +225,7 @@ class Payment extends Model
     {
         return match ($this->provider_name) {
             'azampesa' => 'AzamPesa',
-            default    => ucfirst($this->provider_name),
+            default => ucfirst($this->provider_name),
         };
     }
 }

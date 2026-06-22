@@ -202,7 +202,7 @@ class SupplierPayablesService
                 }
 
                 $journalEntry = app(AccountingService::class)->postSupplierPayment(
-                    reference: $payment->reference ?: ('SUPPAY-' . $payment->id),
+                    reference: $payment->reference ?: ('SUPPAY-'.$payment->id),
                     sourceId: $payment->id,
                     supplierId: $payment->supplier_id,
                     amount: (float) $payment->amount,
@@ -225,7 +225,7 @@ class SupplierPayablesService
                     'amount_usd' => $amountUsd,
                     'exchange_rate' => $payment->currency === 'TZS' ? $exchangeRate : 1,
                     'payment_method' => $this->mapFinancialMethod($payment->method),
-                    'description' => 'Supplier payment posted - ' . ($payment->reference ?: $payment->id),
+                    'description' => 'Supplier payment posted - '.($payment->reference ?: $payment->id),
                 ], $actorId);
 
                 $payment->update([
@@ -288,7 +288,7 @@ class SupplierPayablesService
                     $payable->recalculateStatus();
                 }
 
-                $reversalReference = ($payment->reference ?: ('SUPPAY-' . $payment->id)) . '-REV';
+                $reversalReference = ($payment->reference ?: ('SUPPAY-'.$payment->id)).'-REV';
                 $journalEntry = app(AccountingService::class)->reverseSupplierPayment(
                     reference: $reversalReference,
                     sourceId: $payment->id,
@@ -315,7 +315,7 @@ class SupplierPayablesService
                 'error' => collect($e->errors())->flatten()->first(),
             ]);
             throw $e;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Supplier payment cancellation failed', [
                 'supplier_payment_id' => $payment->id,
                 'actor_id' => $actorId,

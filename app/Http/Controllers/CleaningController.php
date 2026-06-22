@@ -25,7 +25,7 @@ class CleaningController extends Controller
 
         $roomsAssigned = $roomsNeedingAttention->whereNotNull('cleaning_assigned_to');
 
-        $houseHelpers = User::whereHas('role', fn($q) => $q->where('name', 'house_help'))
+        $houseHelpers = User::whereHas('role', fn ($q) => $q->where('name', 'house_help'))
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -63,7 +63,7 @@ class CleaningController extends Controller
     public function confirm(Room $room): RedirectResponse
     {
         abort_unless(in_array($room->status, self::ATTENTION_STATUSES), 422, 'Only rooms needing attention can be confirmed.');
-        abort_if(!$room->cleaning_completed_at, 422, 'House help must mark the task as done before confirmation.');
+        abort_if(! $room->cleaning_completed_at, 422, 'House help must mark the task as done before confirmation.');
 
         // Occupied rooms stay occupied — guest is still in the room
         $newStatus = $room->status === 'occupied' ? 'occupied' : 'available';
@@ -75,6 +75,7 @@ class CleaningController extends Controller
         ]);
 
         $statusText = $newStatus === 'available' ? 'returned to available' : 'confirmed (guest still in room)';
+
         return redirect()->route('cleaning.index')
             ->with('success', "Room {$room->room_number} {$statusText}.");
     }
@@ -127,7 +128,7 @@ class CleaningController extends Controller
      */
     public function markOutOfOrder(Request $request, Room $room): RedirectResponse
     {
-        abort_if(!in_array($room->status, ['available', 'dirty']), 422, 'Only available or dirty rooms can be marked out of order.');
+        abort_if(! in_array($room->status, ['available', 'dirty']), 422, 'Only available or dirty rooms can be marked out of order.');
 
         $data = $request->validate([
             'reason' => 'required|string|max:500',

@@ -1,11 +1,14 @@
 <?php
+
 namespace Database\Seeders;
 
 use App\Models\Building;
 use Illuminate\Database\Seeder;
 
-class BuildingSeeder extends Seeder {
-    public function run(): void {
+class BuildingSeeder extends Seeder
+{
+    public function run(): void
+    {
         Building::updateOrCreate(['code' => 'MAIN'], [
             'name' => 'Main Building',
             'address' => '123 Hotel Street, City Center',

@@ -26,17 +26,17 @@ class AzamPesaPaymentController extends Controller
         $headers = $request->headers->all();
 
         // Flatten header arrays (Laravel returns headers as arrays)
-        $flatHeaders = array_map(fn($h) => is_array($h) ? ($h[0] ?? '') : $h, $headers);
+        $flatHeaders = array_map(fn ($h) => is_array($h) ? ($h[0] ?? '') : $h, $headers);
 
         Log::info('AzamPesa callback received', [
             'transactionstatus' => $payload['transactionstatus'] ?? 'unknown',
-            'utilityref'        => $payload['utilityref'] ?? null,
+            'utilityref' => $payload['utilityref'] ?? null,
             'externalreference' => $payload['externalreference'] ?? null,
-            'operator'          => $payload['operator'] ?? null,
+            'operator' => $payload['operator'] ?? null,
         ]);
 
         try {
-            $engine = new PaymentEngine();
+            $engine = new PaymentEngine;
             $payment = $engine->handleWebhook($payload, $flatHeaders);
 
             if ($payment) {
@@ -49,6 +49,7 @@ class AzamPesaPaymentController extends Controller
 
         } catch (\Exception $e) {
             Log::error('AzamPesa callback processing error', ['message' => $e->getMessage()]);
+
             return response()->json(['status' => 'error'], 500);
         }
     }

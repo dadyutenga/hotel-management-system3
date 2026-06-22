@@ -12,12 +12,12 @@
             <h2 class="text-2xl font-extrabold text-secondary">Deleted Laundry Items</h2>
             <p class="text-sm text-gray-500 mt-1">View and restore soft-deleted laundry items.</p>
         </div>
-        <a href="{{ route('laundry-items.index') }}"
+        <a href="{{ route('dashboard') }}"
            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-secondary text-sm font-semibold rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            Back to Laundry Items
+            Back to Dashboard
         </a>
     </div>
 

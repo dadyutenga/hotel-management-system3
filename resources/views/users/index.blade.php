@@ -92,13 +92,15 @@
     </div>
 
     <!-- Users Table -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-100">
             <thead class="bg-gradient-to-r from-blue-50 to-white">
                 <tr>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.user') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.email') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.role') }}</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Auth</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">Building</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.status') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.created') }}</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-primary uppercase tracking-wider">{{ __('users.table.actions') }}</th>
@@ -131,6 +133,32 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
+                        @php $auth = \App\Services\AuthMethodResolver::forRole($user->roleName() ?? '') @endphp
+                        @if($auth === 'admin')
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                Password
+                            </span>
+                        @else
+                            @if($user->passkey_enabled && $user->passkey)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    PIN
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                    No PIN
+                                </span>
+                            @endif
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-600">
+                            {{ $user->building?->name ?? '—' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $user->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                             {{ $user->is_active ? __('users.active') : __('users.inactive') }}
                         </span>
@@ -143,6 +171,9 @@
                         <div class="flex items-center gap-3">
                             <a href="{{ route('users.edit', $user) }}" class="text-primary hover:text-blue-700 font-semibold">
                                 {{ __('users.actions.edit') }}
+                            </a>
+                            <a href="{{ route('users.passkey.edit', $user) }}" class="text-emerald-600 hover:text-emerald-700 font-semibold">
+                                Passkey
                             </a>
                             @if($user->id !== auth()->id())
                                 <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline">
@@ -158,7 +189,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-16 text-center">
+                    <td colspan="7" class="px-6 py-16 text-center">
                         <div class="w-16 h-16 bg-gradient-to-br from-primary/10 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>

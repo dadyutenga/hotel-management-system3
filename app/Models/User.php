@@ -1,25 +1,24 @@
 <?php
+
 // app/Models/User.php
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasUuid, Notifiable, HasSoftDelete;
+    use HasFactory, HasSoftDelete, HasUuid, Notifiable, BuildingScoped;
 
     protected $fillable = ['name', 'email', 'password', 'phone'];
 
-    /**
-     * Guard sensitive attributes from mass assignment.
-     */
     protected $guarded = [
         'role_id',
         'is_active',
@@ -29,7 +28,8 @@ class User extends Authenticatable
         'password_reset_phone',
         'email_verified_at',
     ];
-    protected $hidden = ['password', 'remember_token'];
+
+    protected $hidden = ['password', 'remember_token', 'passkey'];
 
     protected function casts(): array
     {
@@ -38,6 +38,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
+            'passkey_enabled' => 'boolean',
+            'failed_passkey_attempts' => 'integer',
+            'passkey_locked_until' => 'datetime',
+            'last_passkey_login' => 'datetime',
             'password_reset_requested_at' => 'datetime',
             'password_reset_completed_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -47,6 +51,24 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
+    }
+
+    public function hasBuilding(): bool
+    {
+        return ! is_null($this->building_id);
+    }
+
+    /**
+     * Get the property code from the user's assigned building.
+     */
+    public function propertyCode(): ?string
+    {
+        return $this->building?->code;
     }
 
     /**
@@ -164,6 +186,8 @@ class User extends Authenticatable
             Role::normalizeName(Role::BAR_TENDER) => 'shared.sidebar.bar-tender',
             Role::normalizeName(Role::WAITER) => 'shared.sidebar.waiter',
             Role::normalizeName(Role::ACCOUNTANT) => 'shared.sidebar.accountant',
+            Role::normalizeName(Role::POS_BAR) => 'shared.sidebar.front-desk',
+            Role::normalizeName(Role::POS_KITCHEN) => 'shared.sidebar.front-desk',
             default => 'shared.sidebar.front-desk',
         };
     }
@@ -189,8 +213,8 @@ class User extends Authenticatable
     public function latestNotifications()
     {
         return $this->hasMany(StoreNotification::class)
-                    ->latest('created_at')
-                    ->limit(10);
+            ->latest('created_at')
+            ->limit(10);
     }
 
     /**
@@ -201,5 +225,45 @@ class User extends Authenticatable
         return StoreNotification::where('user_id', $this->id)
             ->where('is_read', false)
             ->count();
+    }
+
+    public function passkeySessions(): HasMany
+    {
+        return $this->hasMany(PasskeySession::class);
+    }
+
+    public function activePasskeySession(): ?PasskeySession
+    {
+        return $this->passkeySessions()->active()->latest('logged_in_at')->first();
+    }
+
+    public function isPasskeyLocked(): bool
+    {
+        return $this->passkey_locked_until !== null && $this->passkey_locked_until->isFuture();
+    }
+
+    public function passkeyAttemptsRemaining(): int
+    {
+        return max(0, config('hms_auth.passkey.max_attempts', 5) - $this->failed_passkey_attempts);
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->hasRole('cashier');
+    }
+
+    public function isPosBar(): bool
+    {
+        return $this->hasRole(Role::POS_BAR);
+    }
+
+    public function isPosKitchen(): bool
+    {
+        return $this->hasRole(Role::POS_KITCHEN);
+    }
+
+    public function isStockController(): bool
+    {
+        return $this->hasRole('stock_controller');
     }
 }

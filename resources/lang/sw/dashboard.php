@@ -7,7 +7,7 @@ return [
     'welcome' => 'Karibu',
     'help' => 'Msaada',
     'help_support' => 'Msaada na Huduma',
-    
+
     // Role-specific titles
     'titles' => [
         'admin' => 'Dashibodi ya Msimamizi',
@@ -20,7 +20,7 @@ return [
         'restaurant_manager' => 'Dashibodi ya Meneja wa Mkahawa',
         'bar_tender' => 'Dashibodi ya Mhudumu wa Baa',
     ],
-    
+
     'admin_title' => 'Usimamizi wa Mfumo',
     'manager_title' => 'Dashibodi ya Meneja',
     'front_desk_title' => 'Dashibodi ya Mapokezi',
@@ -30,7 +30,7 @@ return [
     'store_keeper_title' => 'Dashibodi ya Mhifadhi wa Ghala',
     'restaurant_manager_title' => 'Dashibodi ya Meneja wa Mkahawa',
     'bar_tender_title' => 'Dashibodi ya Mhudumu wa Baa',
-    
+
     // Welcome messages
     'welcome' => [
         'greeting' => 'Karibu, :name!',
@@ -44,7 +44,7 @@ return [
         'restaurant_manager_message' => 'Muhtasari wa hesabu ya Baa na Jiko kwa leo.',
         'bar_tender_message' => 'Muhtasari wako wa baa kwa leo.',
     ],
-    
+
     'admin_welcome' => 'Usimamizi wa mfumo na muhtasari wa miundombinu.',
     'manager_welcome' => 'Hapa kuna muhtasari wa shughuli za biashara kwa leo.',
     'front_desk_welcome' => 'Hapa kuna muhtasari wa mapokezi kwa leo.',
@@ -54,7 +54,7 @@ return [
     'store_keeper_welcome' => 'Hapa kuna muhtasari wa ghala na hesabu kwa leo.',
     'restaurant_manager_welcome' => 'Muhtasari wa hesabu ya Baa na Jiko kwa leo.',
     'bar_tender_welcome' => 'Muhtasari wako wa baa kwa leo.',
-    
+
     // Stats
     'stats' => [
         'total_rooms' => 'Jumla ya Vyumba',
@@ -133,7 +133,7 @@ return [
         'pending_transfers' => 'Uhamisho Unaosubiri',
         'today_movements' => 'Mienendo ya Leo',
     ],
-    
+
     // Revenue
     'revenue' => [
         'title' => 'Muhtasari wa Mapato',
@@ -146,7 +146,7 @@ return [
         'revenue' => 'Mapato',
         'revenue_today' => 'Mapato ya Leo',
     ],
-    
+
     // Sections
     'sections' => [
         'room_status' => 'Hali ya Vyumba',
@@ -191,7 +191,7 @@ return [
         'notifications' => 'Arifa',
         'bar_stock_levels' => 'Viwango vya Hesabu ya Baa',
     ],
-    
+
     // Actions
     'actions' => [
         'new_booking' => 'Uhifadhi Mpya',
@@ -235,7 +235,7 @@ return [
         'check_inventory_desc' => 'Angalia hesabu ya baa na jiko',
         'report_damage_desc' => 'Rekodi vitu vilivyoharibika vya baa au jiko',
     ],
-    
+
     // Laundry statuses
     'laundry' => [
         'pending' => 'Inasubiri',
@@ -245,7 +245,7 @@ return [
         'today' => 'Leo',
         'today_tasks' => 'Kazi za Leo',
     ],
-    
+
     // Room status labels
     'room_status' => [
         'available' => 'Inapatikana',
@@ -258,7 +258,6 @@ return [
         'out_of_order' => 'Haifanyi Kazi',
     ],
 
-    
     // Table headers
     'table' => [
         'reservation_number' => 'Nambari ya Uhifadhi',
@@ -294,7 +293,7 @@ return [
         'payment' => 'Malipo',
         'action' => 'Kitendo',
     ],
-    
+
     // Procurement specific
     'procurement' => [
         'this_month_spending' => 'Matumizi ya Mwezi Huu',
@@ -317,7 +316,7 @@ return [
         'no_supplier_activity' => 'Hakuna shughuli za muuzaji mwezi huu.',
         'no_grns' => 'Hakuna stakabadhi za bidhaa bado.',
     ],
-    
+
     // Messages
     'messages' => [
         'no_arrivals' => 'Hakuna wageni wanaotarajiwa leo',
@@ -347,7 +346,7 @@ return [
         'no_pending_internal_requests' => 'Hakuna maombi ya matumizi ya ndani yanayosubiri.',
         'no_recent_store_transfers' => 'Hakuna uhamisho wa ghala wa hivi karibuni.',
     ],
-    
+
     // Sections
     'sections' => [
         'room_status' => 'Hali ya Vyumba',
@@ -393,7 +392,7 @@ return [
         'notifications' => 'Arifa',
         'bar_stock_levels' => 'Viwango vya Hesabu ya Baa',
     ],
-    
+
     // Actions
     'actions' => [
         'new_booking' => 'Uhifadhi Mpya',
@@ -438,7 +437,7 @@ return [
         'check_inventory_desc' => 'Angalia hesabu ya baa na jiko',
         'report_damage_desc' => 'Rekodi vitu vilivyoharibika vya baa au jiko',
     ],
-    
+
     // Laundry statuses
     'laundry' => [
         'pending' => 'Inasubiri',
@@ -451,7 +450,7 @@ return [
         'total_orders' => 'Jumla ya Maagizo',
         'pending_orders' => 'Maagizo Yanayosubiri',
     ],
-    
+
     // Procurement
     'procurement' => [
         'active_suppliers' => 'Wauzaji Wanaofanya Kazi',

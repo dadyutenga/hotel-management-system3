@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Procurement/DashboardController.php
 
 namespace App\Http\Controllers\Procurement;
@@ -6,8 +7,8 @@ namespace App\Http\Controllers\Procurement;
 use App\Http\Controllers\Controller;
 use App\Models\GoodsReceivedNote;
 use App\Models\LocalPurchaseOrder;
-use App\Models\Supplier;
 use App\Models\Role;
+use App\Models\Supplier;
 use Illuminate\View\View;
 
 class DashboardController extends Controller

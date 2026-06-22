@@ -4,16 +4,16 @@ namespace App\Exports;
 
 use App\Models\StockMovement;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class StockMovementsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithTitle, ShouldAutoSize
+class StockMovementsExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected array $filters;
 
@@ -30,6 +30,7 @@ class StockMovementsExport implements FromQuery, WithHeadings, WithMapping, With
             ->when($this->filters['end_date'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date))
             ->when($this->filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when($this->filters['location_id'] ?? null, fn ($q, $id) => $q->where('location_id', $id))
+            ->when($this->filters['building_id'] ?? null, fn ($q, $id) => $q->where('building_id', $id))
             ->latest('created_at');
     }
 
@@ -37,7 +38,7 @@ class StockMovementsExport implements FromQuery, WithHeadings, WithMapping, With
     {
         return [
             ['HMS - STOCK MOVEMENT REPORT'],
-            ['Generated: ' . now()->format('d/m/Y H:i')],
+            ['Generated: '.now()->format('d/m/Y H:i')],
             [],
             ['DATE/TIME', 'PRODUCT', 'LOCATION', 'TYPE', 'QTY', 'BEFORE', 'AFTER', 'REFERENCE', 'BY'],
         ];
@@ -47,7 +48,7 @@ class StockMovementsExport implements FromQuery, WithHeadings, WithMapping, With
     {
         $reference = '—';
         if ($movement->reference_type && $movement->reference_id) {
-            $reference = class_basename($movement->reference_type) . ' #' . $movement->reference_id;
+            $reference = class_basename($movement->reference_type).' #'.$movement->reference_id;
         }
 
         return [

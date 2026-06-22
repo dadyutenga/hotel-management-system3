@@ -10,7 +10,6 @@ use App\Models\LaundryOrder;
 use App\Models\Order;
 use App\Services\AccountingService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ModuleBillingService
@@ -32,7 +31,7 @@ class ModuleBillingService
 
     public function syncOrderCharge(Order $order, ?string $actorId = null): ?BookingCharge
     {
-        if (!$order->booking_id || $order->status === 'cancelled') {
+        if (! $order->booking_id || $order->status === 'cancelled') {
             return null;
         }
 
@@ -85,7 +84,7 @@ class ModuleBillingService
 
     public function syncLaundryCharge(LaundryOrder $order, ?string $actorId = null): ?BookingCharge
     {
-        if (!$order->booking_id || $order->status === 'cancelled') {
+        if (! $order->booking_id || $order->status === 'cancelled') {
             return null;
         }
 
@@ -194,7 +193,7 @@ class ModuleBillingService
             }
 
             // Finalize BuffetSale charges (charge_type='restaurant', reference_id = BuffetSale id)
-            if ($charge->charge_type === 'restaurant' && !$charge->order_id && $charge->reference_id) {
+            if ($charge->charge_type === 'restaurant' && ! $charge->order_id && $charge->reference_id) {
                 $buffetSale = BuffetSale::find($charge->reference_id);
                 if ($buffetSale && $buffetSale->status === 'charged') {
                     $buffetSale->update([

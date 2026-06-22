@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Procurement/SupplierController.php
 
 namespace App\Http\Controllers\Procurement;

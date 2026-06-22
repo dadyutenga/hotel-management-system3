@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/LaundryTask.php
 
 namespace App\Models;
@@ -7,10 +8,11 @@ use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class LaundryTask extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'task_number',
@@ -41,9 +43,9 @@ class LaundryTask extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($task) {
-            $task->task_number = 'LND-' . strtoupper(Str::random(10));
+            $task->task_number = 'LND-'.strtoupper(Str::random(10));
         });
     }
 
@@ -144,7 +146,7 @@ class LaundryTask extends Model
     // Accessors
     public function getStatusBadgeColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'yellow',
             'in_progress' => 'blue',
             'completed' => 'purple',

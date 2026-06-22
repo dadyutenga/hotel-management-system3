@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Accounting;
 
+use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\Role;
 use App\Models\User;
@@ -103,7 +104,7 @@ class JournalEntryWorkflowTest extends TestCase
         $entry->refresh();
         $this->assertSame('reversed', $entry->status);
 
-        $reversal = JournalEntry::where('reference', 'REV-' . $entry->entry_no)->first();
+        $reversal = JournalEntry::where('reference', 'REV-'.$entry->entry_no)->first();
         $this->assertNotNull($reversal);
         $this->assertSame('posted', $reversal->status);
         $this->assertEquals((float) $entry->total_debit, (float) $reversal->total_credit);
@@ -167,7 +168,6 @@ class JournalEntryWorkflowTest extends TestCase
 
     private function accountId(string $code): string
     {
-        return \App\Models\Account::where('code', $code)->value('id');
+        return Account::where('code', $code)->value('id');
     }
 }
-

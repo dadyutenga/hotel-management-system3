@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2026_02_18_000002_create_conference_bookings_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -21,7 +22,7 @@ return new class extends Migration
             $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
             $table->foreignUuid('created_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
-            
+
             $table->index(['booking_date', 'conference_hall_id']);
         });
     }

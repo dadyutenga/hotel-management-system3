@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Finance;
 
 use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
-use App\Models\FinancialTransaction;
 use App\Models\FinancePayment;
+use App\Models\FinancialTransaction;
 use App\Models\Order;
 use App\Models\PaymentItem;
 use App\Services\Bartender\BarOrderStockService;
@@ -24,20 +24,20 @@ class FinancePaymentController extends Controller
     public function index(Request $request): View
     {
         $payments = FinancePayment::with(['order', 'createdBy', 'transaction'])
-            ->when($request->type,      fn($q) => $q->where('payment_type', $request->type))
-            ->when($request->method,    fn($q) => $q->where('method', $request->method))
-            ->when($request->currency,  fn($q) => $q->where('currency', $request->currency))
-            ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
-            ->when($request->date_to,   fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($request->type, fn ($q) => $q->where('payment_type', $request->type))
+            ->when($request->method, fn ($q) => $q->where('method', $request->method))
+            ->when($request->currency, fn ($q) => $q->where('currency', $request->currency))
+            ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
             ->latest('created_at')
             ->paginate(30);
 
         $summary = [
             'total_usd' => FinancePayment::where('status', 'completed')
                 ->whereDate('created_at', today())->sum('amount_usd'),
-            'cash_usd'  => FinancePayment::where('status', 'completed')->where('method', 'cash')
+            'cash_usd' => FinancePayment::where('status', 'completed')->where('method', 'cash')
                 ->whereDate('created_at', today())->sum('amount_usd'),
-            'card_usd'  => FinancePayment::where('status', 'completed')->where('method', 'card')
+            'card_usd' => FinancePayment::where('status', 'completed')->where('method', 'card')
                 ->whereDate('created_at', today())->sum('amount_usd'),
         ];
 
@@ -51,12 +51,12 @@ class FinancePaymentController extends Controller
     public function storeWalkin(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'order_id'  => 'required|uuid|exists:orders,id',
-            'currency'  => 'required|in:USD,TZS',
-            'amount'    => 'required|numeric|min:0.01',
-            'method'    => 'required|in:cash,card,mobile_money,bank_transfer',
+            'order_id' => 'required|uuid|exists:orders,id',
+            'currency' => 'required|in:USD,TZS',
+            'amount' => 'required|numeric|min:0.01',
+            'method' => 'required|in:cash,card,mobile_money,bank_transfer',
             'reference' => 'nullable|string|max:100',
-            'notes'     => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $exchangeRate = CurrencyHelper::getExchangeRate();
@@ -74,30 +74,30 @@ class FinancePaymentController extends Controller
             abort_if(in_array($order->status, ['cancelled', 'settled', 'charged'], true), 422, 'This order cannot be settled through walk-in payment.');
 
             $payment = FinancePayment::create([
-                'payment_type'  => 'walkin',
-                'order_id'      => $order->id,
-                'currency'      => $data['currency'],
-                'amount'        => $data['amount'],
-                'amount_usd'    => $amountUsd,
+                'payment_type' => 'walkin',
+                'order_id' => $order->id,
+                'currency' => $data['currency'],
+                'amount' => $data['amount'],
+                'amount_usd' => $amountUsd,
                 'exchange_rate' => $exchangeRate,
-                'method'        => $data['method'],
-                'status'        => 'completed',
-                'reference'     => $data['reference'] ?? null,
-                'notes'         => $data['notes'] ?? null,
-                'created_by'    => (string) Auth::id(),
-                'paid_at'       => now(),
+                'method' => $data['method'],
+                'status' => 'completed',
+                'reference' => $data['reference'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'created_by' => (string) Auth::id(),
+                'paid_at' => now(),
             ]);
 
             // Create payment items from order items
             foreach ($order->items()->where('status', '!=', 'cancelled')->get() as $item) {
                 PaymentItem::create([
-                    'payment_id'    => $payment->id,
+                    'payment_id' => $payment->id,
                     'order_item_id' => $item->id,
-                    'description'   => $item->menuItem->name,
-                    'quantity'      => $item->quantity,
-                    'unit_price'    => $item->unit_price,
-                    'subtotal'      => $item->subtotal,
-                    'currency'      => 'USD',
+                    'description' => $item->menuItem->name,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'subtotal' => $item->subtotal,
+                    'currency' => 'USD',
                 ]);
             }
 
@@ -112,16 +112,16 @@ class FinancePaymentController extends Controller
 
             // Write to financial ledger
             FinancialTransaction::record([
-                'type'           => 'walkin_sale',
-                'source_module'  => $sourceModule,
-                'payment_id'     => $payment->id,
-                'order_id'       => $order->id,
-                'currency'       => $data['currency'],
-                'amount'         => $data['amount'],
-                'amount_usd'     => $amountUsd,
-                'exchange_rate'  => $exchangeRate,
+                'type' => 'walkin_sale',
+                'source_module' => $sourceModule,
+                'payment_id' => $payment->id,
+                'order_id' => $order->id,
+                'currency' => $data['currency'],
+                'amount' => $data['amount'],
+                'amount_usd' => $amountUsd,
+                'exchange_rate' => $exchangeRate,
                 'payment_method' => $data['method'],
-                'description'    => "Walk-in sale — Order {$order->order_number}",
+                'description' => "Walk-in sale — Order {$order->order_number}",
             ], (string) Auth::id());
 
             app(BarOrderStockService::class)->deductForOrder($order, (string) Auth::id());

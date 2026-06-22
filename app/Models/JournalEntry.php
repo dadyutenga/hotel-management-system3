@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
-use App\Models\JournalLine;
 
 class JournalEntry extends Model
 {
-    use HasUuids, HasSoftDelete;
+    use HasSoftDelete, HasUuids;
 
     protected $fillable = [
         'entry_no', 'entry_date', 'reference', 'source', 'source_id', 'supplier_id',
@@ -18,25 +17,40 @@ class JournalEntry extends Model
     ];
 
     protected $casts = [
-        'entry_date'  => 'date',
-        'posted_at'   => 'datetime',
+        'entry_date' => 'date',
+        'posted_at' => 'datetime',
         'total_debit' => 'decimal:2',
-        'total_credit'=> 'decimal:2',
-        'deleted_at'  => 'datetime',
+        'total_credit' => 'decimal:2',
+        'deleted_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (JournalEntry $je) {
             $count = self::whereDate('created_at', today())->count() + 1;
-            $je->entry_no = 'JE-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $je->entry_no = 'JE-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
         });
     }
 
-    public function lines()   { return $this->hasMany(JournalLine::class); }
-    public function supplier(){ return $this->belongsTo(Supplier::class); }
-    public function creator() { return $this->belongsTo(User::class, 'created_by'); }
-    public function poster()  { return $this->belongsTo(User::class, 'posted_by'); }
+    public function lines()
+    {
+        return $this->hasMany(JournalLine::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function poster()
+    {
+        return $this->belongsTo(User::class, 'posted_by');
+    }
 
     // Validate that debits equal credits before saving
     public function isBalanced(): bool

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class LaundryService extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = ['name', 'description', 'turnaround_hours', 'is_active'];
 

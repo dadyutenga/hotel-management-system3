@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2026_02_27_000005_create_goods_received_note_items_table.php
 
 use Illuminate\Database\Migrations\Migration;

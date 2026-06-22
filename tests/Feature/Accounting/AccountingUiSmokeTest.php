@@ -74,7 +74,7 @@ class AccountingUiSmokeTest extends TestCase
             );
 
             if (! empty($routeAssertion['query'])) {
-                $url .= '?' . http_build_query($routeAssertion['query']);
+                $url .= '?'.http_build_query($routeAssertion['query']);
             }
 
             $this->actingAs($accountant)
@@ -97,8 +97,8 @@ class AccountingUiSmokeTest extends TestCase
             ]));
 
         $response->assertOk();
-        $response->assertSee('accounting/reports/profit-loss?date_from=' . $dateFrom . '&amp;date_to=' . $dateTo, false);
-        $response->assertSee('accounting/reports/ap-aging?as_of=' . $dateTo, false);
+        $response->assertSee('accounting/reports/profit-loss?date_from='.$dateFrom.'&amp;date_to='.$dateTo, false);
+        $response->assertSee('accounting/reports/ap-aging?as_of='.$dateTo, false);
     }
 
     public function test_reports_center_summary_cards_use_selected_period_metrics(): void

@@ -9,12 +9,12 @@ return [
     'user_details' => 'User Details',
     'user_management' => 'User Management',
     'create_user' => 'Create User',
-    
+
     // Subtitles
     'manage_subtitle' => 'Manage system users and permissions',
     'create_subtitle' => 'Add a new system user',
     'edit_subtitle' => 'Update user information',
-    
+
     // Sections
     'sections' => [
         'user_profile' => 'User Profile',
@@ -25,7 +25,7 @@ return [
         'account_info' => 'Account Information',
         'role_permissions' => 'Role Permissions:',
     ],
-    
+
     // Stats
     'stats' => [
         'total_users' => 'Total Users',
@@ -33,7 +33,7 @@ return [
         'administrators' => 'Administrators',
         'inactive' => 'Inactive',
     ],
-    
+
     // Table headers
     'table' => [
         'user' => 'User',
@@ -43,7 +43,7 @@ return [
         'created' => 'Created',
         'actions' => 'Actions',
     ],
-    
+
     // Fields
     'name' => 'Name',
     'email' => 'Email Address',
@@ -56,7 +56,7 @@ return [
     'last_login' => 'Last Login',
     'created_at' => 'Created At',
     'phone' => 'Phone Number',
-    
+
     // Form fields
     'fields' => [
         'full_name' => 'Full Name',
@@ -68,7 +68,7 @@ return [
         'user_role' => 'User Role',
         'active_account' => 'Active Account',
     ],
-    
+
     // Placeholders
     'placeholders' => [
         'enter_full_name' => 'Enter full name',
@@ -77,7 +77,7 @@ return [
         'password' => '••••••••',
         'select_role' => 'Select a role',
     ],
-    
+
     // Roles
     'roles' => [
         'admin' => 'Administrator',
@@ -92,12 +92,12 @@ return [
         'laundry_manager' => 'Laundry Manager',
         'accountant' => 'Accountant',
     ],
-    
+
     // Status
     'active' => 'Active',
     'inactive' => 'Inactive',
     'suspended' => 'Suspended',
-    
+
     // Labels
     'labels' => [
         'you' => 'You',
@@ -106,7 +106,7 @@ return [
         'last_updated' => 'Last Updated:',
         'status' => 'Status:',
     ],
-    
+
     // Actions
     'actions' => [
         'add_user' => 'Add User',
@@ -124,7 +124,7 @@ return [
     'activate' => 'Activate',
     'deactivate' => 'Deactivate',
     'suspend' => 'Suspend',
-    
+
     // Messages
     'messages' => [
         'no_users' => 'No users yet',
@@ -140,7 +140,7 @@ return [
     'password_reset' => 'Password reset successfully!',
     'no_users' => 'No users found.',
     'cannot_delete_self' => 'You cannot delete your own account.',
-    
+
     // Info box - role descriptions
     'info' => [
         'administrator' => 'Administrator:',
@@ -150,7 +150,7 @@ return [
         'front_desk' => 'Front Desk:',
         'front_desk_desc' => 'Reservations and guest check-in/out',
     ],
-    
+
     // Profile
     'my_profile' => 'My Profile',
     'edit_profile' => 'Edit Profile',

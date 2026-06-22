@@ -18,9 +18,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('journal_entry_id')
-                  ->references('id')->on('journal_entries')->cascadeOnDelete();
+                ->references('id')->on('journal_entries')->cascadeOnDelete();
             $table->foreign('account_id')
-                  ->references('id')->on('accounts');
+                ->references('id')->on('accounts');
         });
     }
 

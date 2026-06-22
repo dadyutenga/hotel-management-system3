@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use App\Traits\HasUuid;
-use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AttendanceMetrics extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'event_id',
@@ -48,7 +49,7 @@ class AttendanceMetrics extends Model
 
         $checkInTimes = $attendances->whereNotNull('first_check_in_at')
             ->pluck('first_check_in_at')
-            ->map(fn($t) => \Carbon\Carbon::parse($t)->hour);
+            ->map(fn ($t) => Carbon::parse($t)->hour);
 
         $peakHour = $checkInTimes->isNotEmpty()
             ? $checkInTimes->countBy()->sortDesc()->keys()->first()
@@ -57,7 +58,7 @@ class AttendanceMetrics extends Model
         // Calculate average check-in time in minutes from midnight
         $checkInMinutes = $attendances->whereNotNull('first_check_in_at')
             ->pluck('first_check_in_at')
-            ->map(fn($t) => $c = \Carbon\Carbon::parse($t); return $c->hour * 60 + $c->minute);
+            ->map(fn ($t) => with(Carbon::parse($t), fn ($c) => $c->hour * 60 + $c->minute));
 
         $avgCheckInMinutes = $checkInMinutes->isNotEmpty()
             ? (int) $checkInMinutes->avg()

@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use App\Traits\HasUuid;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -11,21 +12,21 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Product extends Model implements HasMedia
 {
-    use HasUuid, HasSoftDelete, InteractsWithMedia;
+    use BuildingScoped, HasSoftDelete, HasUuid, InteractsWithMedia;
 
     protected $fillable = [
         'name', 'barcode', 'sku', 'description', 'category', 'product_type', 'unit',
-        'cost_price', 'selling_price', 'reorder_level', 'varieties', 'image_url', 'is_active', 'created_by',
+        'cost_price', 'selling_price', 'reorder_level', 'varieties', 'image_url', 'is_active', 'created_by', 'building_id',
     ];
 
     protected $casts = [
-        'cost_price'    => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
-        'is_active'     => 'boolean',
+        'is_active' => 'boolean',
         'reorder_level' => 'integer',
-        'varieties'     => 'array',
-        'product_type'  => 'string',
-        'deleted_at'    => 'datetime',
+        'varieties' => 'array',
+        'product_type' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     public function registerMediaCollections(): void
@@ -82,9 +83,14 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+
     public function getImageUrlAttribute(): ?string
     {
-        if (!empty($this->attributes['image_url'])) {
+        if (! empty($this->attributes['image_url'])) {
             return $this->attributes['image_url'];
         }
 
@@ -93,7 +99,7 @@ class Product extends Model implements HasMedia
 
     public function getImageThumbUrlAttribute(): ?string
     {
-        if (!empty($this->attributes['image_url'])) {
+        if (! empty($this->attributes['image_url'])) {
             return $this->attributes['image_url'];
         }
 
@@ -102,7 +108,7 @@ class Product extends Model implements HasMedia
 
     public function getImageMediumUrlAttribute(): ?string
     {
-        if (!empty($this->attributes['image_url'])) {
+        if (! empty($this->attributes['image_url'])) {
             return $this->attributes['image_url'];
         }
 
@@ -111,7 +117,7 @@ class Product extends Model implements HasMedia
 
     public function hasImage(): bool
     {
-        if (!empty($this->attributes['image_url'])) {
+        if (! empty($this->attributes['image_url'])) {
             return true;
         }
 
@@ -125,7 +131,7 @@ class Product extends Model implements HasMedia
 
     public function getIsCdnImageAttribute(): bool
     {
-        return !empty($this->attributes['image_url']);
+        return ! empty($this->attributes['image_url']);
     }
 
     public function getImageWithFallbackAttribute(): string

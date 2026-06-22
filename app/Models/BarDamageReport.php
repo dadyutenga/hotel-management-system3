@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BarDamageReport extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
+        'building_id',
         'product_id',
         'location_id',
         'quantity',
@@ -31,6 +33,11 @@ class BarDamageReport extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function location(): BelongsTo

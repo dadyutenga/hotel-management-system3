@@ -32,7 +32,7 @@ class CheckInController extends Controller
             ->limit(20)
             ->get();
 
-        $scheduleCheckIns = $event->schedules->map(function ($schedule) use ($event) {
+        $scheduleCheckIns = $event->schedules->map(function ($schedule) {
             return [
                 'schedule' => $schedule,
                 'count' => CheckIn::where('event_schedule_id', $schedule->id)->count(),
@@ -45,6 +45,7 @@ class CheckInController extends Controller
     public function scanner(Organization $organization, Event $event)
     {
         $schedules = $event->schedules()->orderBy('start_datetime')->get();
+
         return view('check-ins.scanner', compact('organization', 'event', 'schedules'));
     }
 
@@ -59,7 +60,7 @@ class CheckInController extends Controller
             ->where('event_id', $event->id)
             ->first();
 
-        if (!$attendance) {
+        if (! $attendance) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid QR code.',
@@ -80,7 +81,7 @@ class CheckInController extends Controller
             ->where('event_id', $event->id)
             ->first();
 
-        if (!$attendance) {
+        if (! $attendance) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid manual code.',
@@ -127,7 +128,7 @@ class CheckInController extends Controller
 
     private function performCheckIn(Attendance $attendance, Event $event, ?string $scheduleId, string $method)
     {
-        if (!$event->isActive()) {
+        if (! $event->isActive()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Event is not active.',
@@ -137,7 +138,7 @@ class CheckInController extends Controller
         if ($attendance->registration_status !== 'confirmed') {
             return response()->json([
                 'success' => false,
-                'message' => 'Attendee registration is not confirmed. Status: ' . $attendance->registration_status,
+                'message' => 'Attendee registration is not confirmed. Status: '.$attendance->registration_status,
             ], 400);
         }
 
@@ -169,7 +170,7 @@ class CheckInController extends Controller
             ->where('event_id', $validated['event_id'])
             ->first();
 
-        if (!$attendance) {
+        if (! $attendance) {
             return response()->json(['success' => false, 'message' => 'Invalid QR code.'], 404);
         }
 
@@ -189,7 +190,7 @@ class CheckInController extends Controller
             ->where('event_id', $validated['event_id'])
             ->first();
 
-        if (!$attendance) {
+        if (! $attendance) {
             return response()->json(['success' => false, 'message' => 'Invalid manual code.'], 404);
         }
 

@@ -1,14 +1,14 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Schedule;
 use App\Jobs\SendCheckoutReminderJob;
 use App\Models\Booking;
 use App\Models\GoodsReceivedNote;
 use App\Models\LocalPurchaseOrderItem;
 use App\Services\ProcurementIntegrationService;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -22,7 +22,7 @@ Artisan::command('translations:verify', function () {
         $keys = [];
 
         foreach ($data as $key => $value) {
-            $fullKey = $prefix === '' ? (string) $key : $prefix . '.' . $key;
+            $fullKey = $prefix === '' ? (string) $key : $prefix.'.'.$key;
 
             if (is_array($value)) {
                 $keys = array_merge($keys, $flatten($value, $fullKey));
@@ -44,7 +44,7 @@ Artisan::command('translations:verify', function () {
             $group = $file->getFilenameWithoutExtension();
             $data = require $file->getRealPath();
 
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 continue;
             }
 
@@ -66,20 +66,21 @@ Artisan::command('translations:verify', function () {
 
     if (empty($missingInSw) && empty($missingInEn)) {
         $this->info('Translation key parity verified for en/sw.');
+
         return 0;
     }
 
-    if (!empty($missingInSw)) {
+    if (! empty($missingInSw)) {
         $this->error('Missing Swahili keys:');
         foreach ($missingInSw as $key) {
-            $this->line(' - ' . $key);
+            $this->line(' - '.$key);
         }
     }
 
-    if (!empty($missingInEn)) {
+    if (! empty($missingInEn)) {
         $this->error('Missing English keys:');
         foreach ($missingInEn as $key) {
-            $this->line(' - ' . $key);
+            $this->line(' - '.$key);
         }
     }
 
@@ -107,10 +108,10 @@ Artisan::command('procurement:audit-links {--fix-statuses}', function () {
         });
 
     $this->info('Procurement integration audit complete.');
-    $this->line('Confirmed GRNs: ' . $confirmedGrns->count());
-    $this->line('Missing accounting links: ' . $missingAccounting->count());
-    $this->line('Missing stock links: ' . $missingStockLinks->count());
-    $this->line('Mismatched received quantities: ' . $mismatchedReceivedQty->count());
+    $this->line('Confirmed GRNs: '.$confirmedGrns->count());
+    $this->line('Missing accounting links: '.$missingAccounting->count());
+    $this->line('Missing stock links: '.$missingStockLinks->count());
+    $this->line('Mismatched received quantities: '.$mismatchedReceivedQty->count());
 
     if ($this->option('fix-statuses')) {
         $service = app(ProcurementIntegrationService::class);
@@ -145,14 +146,14 @@ Schedule::call(function () {
         ->get()
         ->each(function ($booking) {
             $data = [
-                'guest_name'  => $booking->guest?->full_name ?? $booking->guest_name,
-                'email'       => $booking->guest?->email ?? $booking->guest_email,
-                'phone'       => $booking->guest?->phone_number ?? $booking->guest_phone,
+                'guest_name' => $booking->guest?->full_name ?? $booking->guest_name,
+                'email' => $booking->guest?->email ?? $booking->guest_email,
+                'phone' => $booking->guest?->phone_number ?? $booking->guest_phone,
                 'room_number' => $booking->room?->room_number ?? '',
-                'check_in'    => $booking->check_in_date,
-                'check_out'   => $booking->check_out_date,
-                'balance'     => $booking->total_amount ?? 0,
-                'reference'   => $booking->booking_number,
+                'check_in' => $booking->check_in_date,
+                'check_out' => $booking->check_out_date,
+                'balance' => $booking->total_amount ?? 0,
+                'reference' => $booking->booking_number,
             ];
 
             SendCheckoutReminderJob::dispatch($data)->onQueue('notifications');

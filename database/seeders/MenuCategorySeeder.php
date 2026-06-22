@@ -10,11 +10,12 @@ class MenuCategorySeeder extends Seeder
 {
     public function run(): void
     {
-        $bar     = StockLocation::where('code', 'bar')->first();
+        $bar = StockLocation::where('code', 'bar')->first();
         $kitchen = StockLocation::where('code', 'kitchen')->first();
 
-        if (!$bar || !$kitchen) {
+        if (! $bar || ! $kitchen) {
             $this->command->warn('Run StockLocationSeeder first.');
+
             return;
         }
 

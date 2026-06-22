@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class MenuOptionGroup extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
+        'building_id',
         'name',
         'selection_type',
         'is_required',
@@ -25,6 +27,11 @@ class MenuOptionGroup extends Model
         'deleted_at' => 'datetime',
     ];
 
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+
     public function values()
     {
         return $this->hasMany(MenuOptionValue::class)->orderBy('sort_order')->orderBy('label');
@@ -38,4 +45,3 @@ class MenuOptionGroup extends Model
             ->orderByPivot('sort_order');
     }
 }
-

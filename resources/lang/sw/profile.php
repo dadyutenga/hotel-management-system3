@@ -4,7 +4,7 @@ return [
     // Page titles
     'title' => 'Wasifu',
     'page_title' => 'Mipangilio ya Wasifu',
-    
+
     // Section headers
     'sections' => [
         'profile_information' => 'Taarifa za Wasifu',
@@ -12,7 +12,7 @@ return [
         'update_password' => 'Sasisha Nenosiri',
         'delete_account' => 'Futa Akaunti',
     ],
-    
+
     // Subtitles/descriptions
     'subtitles' => [
         'profile_info' => 'Sasisha taarifa za wasifu wako na anwani ya barua pepe.',
@@ -22,7 +22,7 @@ return [
         'delete_warning' => 'Akaunti yako ikifutwa, rasilimali zake zote na data zitafutwa kabisa. Kabla ya kufuta akaunti yako, tafadhali pakua data au taarifa yoyote unayotaka kuhifadhi.',
         'delete_confirm_warning' => 'Akaunti yako ikifutwa, rasilimali zake zote na data zitafutwa kabisa. Tafadhali ingiza nenosiri lako kuthibitisha kuwa ungependa kufuta akaunti yako kabisa.',
     ],
-    
+
     // Form fields
     'fields' => [
         'name' => 'Jina',
@@ -34,7 +34,7 @@ return [
         'confirm_new_password' => 'Thibitisha Nenosiri Jipya',
         'password' => 'Nenosiri',
     ],
-    
+
     // Actions
     'actions' => [
         'save' => 'Hifadhi',
@@ -43,7 +43,7 @@ return [
         'delete_account' => 'Futa Akaunti',
         'cancel' => 'Ghairi',
     ],
-    
+
     // Messages
     'messages' => [
         'saved' => 'Imehifadhiwa.',

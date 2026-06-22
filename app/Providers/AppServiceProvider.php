@@ -2,18 +2,27 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Events\PasskeyLockout;
+use App\Events\StaffLoggedIn;
+use App\Events\StaffLoggedOut;
+use App\Events\StockReceived;
+use App\Helpers\CurrencyHelper;
+use App\Listeners\LogStaffLogin;
+use App\Listeners\LogStaffLogout;
+use App\Listeners\NotifyAdminOfLockout;
+use App\Listeners\UpdateLowStockAlerts;
+use App\Models\Booking;
+use App\Models\Reservation;
+use App\Observers\BookingObserver;
+use App\Observers\ReservationObserver;
+use App\Policies\BookingPolicy;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Blade;
-use App\Models\Reservation;
-use App\Models\Booking;
-use App\Policies\BookingPolicy;
-use App\Observers\ReservationObserver;
-use App\Observers\BookingObserver;
-use App\Helpers\CurrencyHelper;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
         Booking::observe(BookingObserver::class);
         Gate::policy(Booking::class, BookingPolicy::class);
 
+        Event::listen(StockReceived::class, UpdateLowStockAlerts::class);
+        Event::listen(StaffLoggedIn::class, LogStaffLogin::class);
+        Event::listen(StaffLoggedOut::class, LogStaffLogout::class);
+        Event::listen(PasskeyLockout::class, NotifyAdminOfLockout::class);
+
         // Register Blade directives for currency formatting
         Blade::directive('currency', function ($expression) {
             return "<?php echo \App\Helpers\CurrencyHelper::formatCurrency($expression); ?>";
@@ -42,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::directive('currencySymbol', function ($expression) {
             $expression = $expression ?: 'null';
+
             return "<?php echo \App\Helpers\CurrencyHelper::getCurrencySymbol($expression); ?>";
         });
 

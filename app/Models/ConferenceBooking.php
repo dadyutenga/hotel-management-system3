@@ -1,18 +1,19 @@
 <?php
+
 // app/Models/ConferenceBooking.php
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
-use App\Traits\HasSoftDelete;
 
 class ConferenceBooking extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'booking_number',
@@ -40,9 +41,9 @@ class ConferenceBooking extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($booking) {
-            $booking->booking_number = 'CNF-' . strtoupper(Str::random(10));
+            $booking->booking_number = 'CNF-'.strtoupper(Str::random(10));
         });
     }
 
@@ -85,6 +86,7 @@ class ConferenceBooking extends Model
     {
         $start = Carbon::parse($this->start_time);
         $end = Carbon::parse($this->end_time);
+
         return $start->diffInHours($end, true);
     }
 }

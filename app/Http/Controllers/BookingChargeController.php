@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BookingCharge;
 use App\Models\Booking;
+use App\Models\BookingCharge;
 use Illuminate\Http\Request;
 
 /**
  * BookingChargeController
- * 
+ *
  * UNIFIED CHECKOUT FLOW:
  * - Charges should ONLY be marked as paid through the Finance Checkout process
  * - Direct marking of charges as paid is DISABLED to enforce checkout flow
@@ -33,7 +33,7 @@ class BookingChargeController extends Controller
 
     /**
      * Redirect to Finance Checkout instead of direct payment
-     * 
+     *
      * DISABLED: Direct marking of charges as paid bypasses the unified checkout flow.
      * All payments must go through Finance Checkout.
      */
@@ -47,7 +47,7 @@ class BookingChargeController extends Controller
 
     /**
      * Redirect to Finance Checkout instead of bulk payment
-     * 
+     *
      * DISABLED: Direct marking of all charges as paid bypasses the unified checkout flow.
      * All payments must go through Finance Checkout.
      */

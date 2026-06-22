@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\BookingCharge;
 use App\Models\Checkout;
 use App\Models\FinancialTransaction;
-use App\Models\FinancePayment;
 use App\Models\LaundryOrder;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -21,7 +20,7 @@ class FinancialDashboardController extends Controller
     public function index(Request $request): View
     {
         $dateFrom = $request->date_from ?? today()->startOfMonth()->toDateString();
-        $dateTo   = $request->date_to   ?? today()->toDateString();
+        $dateTo = $request->date_to ?? today()->toDateString();
 
         // Revenue by source module
         $revenueByModule = FinancialTransaction::where('type', '!=', 'refund')
@@ -52,15 +51,15 @@ class FinancialDashboardController extends Controller
 
         // Today's summary
         $todaySummary = [
-            'total_revenue'    => FinancialTransaction::whereDate('created_at', today())
+            'total_revenue' => FinancialTransaction::whereDate('created_at', today())
                 ->where('type', '!=', 'refund')->sum('amount_usd'),
             'checkout_revenue' => FinancialTransaction::whereDate('created_at', today())
                 ->where('type', 'checkout_payment')->sum('amount_usd'),
-            'walkin_revenue'   => FinancialTransaction::whereDate('created_at', today())
+            'walkin_revenue' => FinancialTransaction::whereDate('created_at', today())
                 ->where('type', 'walkin_sale')->sum('amount_usd'),
-            'cash_total'       => FinancialTransaction::whereDate('created_at', today())
+            'cash_total' => FinancialTransaction::whereDate('created_at', today())
                 ->where('payment_method', 'cash')->sum('amount_usd'),
-            'card_total'       => FinancialTransaction::whereDate('created_at', today())
+            'card_total' => FinancialTransaction::whereDate('created_at', today())
                 ->where('payment_method', 'card')->sum('amount_usd'),
         ];
 
@@ -89,9 +88,9 @@ class FinancialDashboardController extends Controller
             ->take(30)
             ->get()
             ->filter(function (LaundryOrder $order) {
-                return !$order->booking?->bookingCharges
+                return ! $order->booking?->bookingCharges
                     ? true
-                    : !$order->booking->bookingCharges->contains(fn ($charge) => $charge->source === 'laundry' && $charge->reference_id === $order->id);
+                    : ! $order->booking->bookingCharges->contains(fn ($charge) => $charge->source === 'laundry' && $charge->reference_id === $order->id);
             })
             ->take(10)
             ->values();

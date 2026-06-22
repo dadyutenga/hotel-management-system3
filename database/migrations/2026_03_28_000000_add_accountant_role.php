@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\Schema;
 use App\Models\Role;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {

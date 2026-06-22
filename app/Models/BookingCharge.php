@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSoftDelete;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BookingCharge extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'booking_id',
@@ -27,7 +27,7 @@ class BookingCharge extends Model
     ];
 
     protected $casts = [
-        'amount'     => 'decimal:2',
+        'amount' => 'decimal:2',
         'amount_tzs' => 'decimal:2',
         'deleted_at' => 'datetime',
     ];
@@ -109,15 +109,15 @@ class BookingCharge extends Model
     public function getChargeTypeLabelAttribute(): string
     {
         return match ($this->charge_type) {
-            'laundry'      => 'Laundry Service',
-            'restaurant'   => 'Restaurant / Bar',
+            'laundry' => 'Laundry Service',
+            'restaurant' => 'Restaurant / Bar',
             'room_service' => 'Room Service',
-            'damage'       => 'Damage',
-            'minibar'      => 'Mini Bar',
-            'extra_bed'    => 'Extra Bed',
-            'conference'   => 'Conference',
-            'store'        => 'Store Items',
-            default        => ucfirst(str_replace('_', ' ', $this->charge_type)),
+            'damage' => 'Damage',
+            'minibar' => 'Mini Bar',
+            'extra_bed' => 'Extra Bed',
+            'conference' => 'Conference',
+            'store' => 'Store Items',
+            default => ucfirst(str_replace('_', ' ', $this->charge_type)),
         };
     }
 

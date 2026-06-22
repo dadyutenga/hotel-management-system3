@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
-use App\Models\Organization;
 use App\Models\ConferenceHall;
 use App\Models\ConferenceType;
+use App\Models\Event;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -26,6 +26,7 @@ class EventController extends Controller
     {
         $conferenceTypes = ConferenceType::orderBy('name')->get();
         $conferenceHalls = ConferenceHall::where('status', 'available')->orderBy('name')->get();
+
         return view('events.create', compact('organization', 'conferenceTypes', 'conferenceHalls'));
     }
 
@@ -71,7 +72,7 @@ class EventController extends Controller
         $baseSlug = $validated['slug'];
         $counter = 1;
         while (Event::where('organization_id', $organization->id)->where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $baseSlug . '-' . $counter;
+            $validated['slug'] = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -120,6 +121,7 @@ class EventController extends Controller
     {
         $conferenceTypes = ConferenceType::orderBy('name')->get();
         $event->load('venues.conferenceHall');
+
         return view('events.edit', compact('organization', 'event', 'conferenceTypes'));
     }
 
@@ -158,7 +160,7 @@ class EventController extends Controller
 
     public function destroy(Organization $organization, Event $event)
     {
-        if (!$event->isDraft()) {
+        if (! $event->isDraft()) {
             return back()->with('error', 'Only draft events can be deleted.');
         }
 
@@ -173,6 +175,7 @@ class EventController extends Controller
         if ($event->publish()) {
             return back()->with('success', 'Event published and passes are now active.');
         }
+
         return back()->with('error', 'Event cannot be published from its current state.');
     }
 
@@ -181,6 +184,7 @@ class EventController extends Controller
         if ($event->start()) {
             return back()->with('success', 'Event started. Check-ins are now active.');
         }
+
         return back()->with('error', 'Event cannot be started from its current state.');
     }
 
@@ -191,7 +195,7 @@ class EventController extends Controller
             'discount_reason' => 'nullable|string|max:255',
         ]);
 
-        if (!in_array($event->status, ['scheduled', 'ongoing'])) {
+        if (! in_array($event->status, ['scheduled', 'ongoing'])) {
             return back()->with('error', 'Event cannot be completed from its current state.');
         }
 
@@ -222,13 +226,14 @@ class EventController extends Controller
         if ($event->cancel()) {
             return back()->with('success', 'Event cancelled.');
         }
+
         return back()->with('error', 'Event cannot be cancelled from its current state.');
     }
 
     public function duplicate(Organization $organization, Event $event)
     {
         $newEvent = $event->replicate();
-        $newEvent->title = $event->title . ' (Copy)';
+        $newEvent->title = $event->title.' (Copy)';
         $newEvent->slug = Str::slug($newEvent->title);
         $newEvent->status = 'draft';
         $newEvent->actual_attendance = 0;
@@ -244,6 +249,7 @@ class EventController extends Controller
         $organizations = Organization::orderBy('name')->get();
         $conferenceTypes = ConferenceType::orderBy('name')->get();
         $conferenceHalls = ConferenceHall::where('status', 'available')->orderBy('name')->get();
+
         return view('events.create-standalone', compact('organizations', 'conferenceTypes', 'conferenceHalls'));
     }
 
@@ -289,7 +295,7 @@ class EventController extends Controller
         $baseSlug = $validated['slug'];
         $counter = 1;
         while (Event::where('organization_id', $organization->id)->where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $baseSlug . '-' . $counter;
+            $validated['slug'] = $baseSlug.'-'.$counter;
             $counter++;
         }
 

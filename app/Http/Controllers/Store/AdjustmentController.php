@@ -9,6 +9,7 @@ use App\Models\StockLevel;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\BuildingContext;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ class AdjustmentController extends Controller
     public function index(Request $request): View
     {
         $adjustments = StockAdjustment::with(['product', 'location', 'creator', 'approver'])
+            ->forUserBuilding()
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
@@ -35,8 +37,10 @@ class AdjustmentController extends Controller
     // GET /store/adjustments/create
     public function create(): View
     {
-        $products  = Product::where('is_active', true)->orderBy('name')->get();
-        $locations = StockLocation::where('is_active', true)->get();
+        $products = Product::where('is_active', true)->forUserBuilding()->orderBy('name')->get();
+        $locations = StockLocation::where('is_active', true)
+            ->when(BuildingContext::buildingId(), fn ($q, $id) => $q->where('building_id', $id))
+            ->get();
 
         return view('store.adjustments.create', compact('products', 'locations'));
     }
@@ -45,34 +49,41 @@ class AdjustmentController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'product_id'   => 'required|uuid|exists:products,id',
-            'location_id'  => 'required|uuid|exists:stock_locations,id',
+            'product_id' => 'required|uuid|exists:products,id',
+            'location_id' => 'required|uuid|exists:stock_locations,id',
             'new_quantity' => 'required|numeric|min:0',
-            'reason'       => 'required|string|min:5|max:500',
+            'reason' => 'required|string|min:5|max:500',
         ]);
 
         $threshold = (int) (DB::table('system_settings')
-                              ->where('key', 'adjustment_approval_threshold')
-                              ->value('value') ?? 50);
+            ->where('key', 'adjustment_approval_threshold')
+            ->value('value') ?? 50);
+
+        $product = Product::findOrFail($data['product_id']);
+        BuildingContext::enforce($product->building_id);
+
+        $location = StockLocation::findOrFail($data['location_id']);
+        BuildingContext::enforce($location->building_id);
 
         $currentQty = (float) (StockLevel::where('product_id', $data['product_id'])
-                                        ->where('location_id', $data['location_id'])
-                                        ->value('quantity') ?? 0);
+            ->where('location_id', $data['location_id'])
+            ->value('quantity') ?? 0);
 
-        $difference    = $data['new_quantity'] - $currentQty;
+        $difference = $data['new_quantity'] - $currentQty;
         $needsApproval = abs($difference) >= $threshold
                       && auth()->user()->role->name !== 'store_manager';
 
         $adjustment = StockAdjustment::create([
-            'product_id'        => $data['product_id'],
-            'location_id'       => $data['location_id'],
-            'previous_qty'      => $currentQty,
-            'new_qty'           => $data['new_quantity'],
-            'difference'        => $difference,
-            'reason'            => $data['reason'],
+            'product_id' => $data['product_id'],
+            'location_id' => $data['location_id'],
+            'previous_qty' => $currentQty,
+            'new_qty' => $data['new_quantity'],
+            'difference' => $difference,
+            'reason' => $data['reason'],
             'requires_approval' => $needsApproval,
-            'status'            => $needsApproval ? 'pending' : 'applied',
-            'created_by'        => auth()->id(),
+            'status' => $needsApproval ? 'pending' : 'applied',
+            'created_by' => auth()->id(),
+            'building_id' => BuildingContext::buildingId(),
         ]);
 
         if ($needsApproval) {
@@ -82,12 +93,12 @@ class AdjustmentController extends Controller
                 ->toArray();
 
             $this->notificationService->createForUsers($managerIds, [
-                'type'           => 'pending_adjustment',
-                'title'          => 'Large Adjustment Needs Approval',
-                'body'           => abs($difference) . " unit adjustment pending. Reason: {$data['reason']}",
+                'type' => 'pending_adjustment',
+                'title' => 'Large Adjustment Needs Approval',
+                'body' => abs($difference)." unit adjustment pending. Reason: {$data['reason']}",
                 'reference_type' => 'stock_adjustment',
-                'reference_id'   => $adjustment->id,
-                'action_url'     => route('store.adjustments.index'),
+                'reference_id' => $adjustment->id,
+                'action_url' => route('store.adjustments.index'),
             ]);
 
             return redirect()
@@ -96,12 +107,12 @@ class AdjustmentController extends Controller
         }
 
         StockMovement::record([
-            'product_id'   => $data['product_id'],
-            'location_id'  => $data['location_id'],
-            'type'         => 'adjustment',
+            'product_id' => $data['product_id'],
+            'location_id' => $data['location_id'],
+            'type' => 'adjustment',
             'new_quantity' => $data['new_quantity'],
-            'notes'        => $data['reason'],
-            'approved_by'  => auth()->id(),
+            'notes' => $data['reason'],
+            'approved_by' => auth()->id(),
         ], auth()->id());
 
         return redirect()
@@ -112,15 +123,17 @@ class AdjustmentController extends Controller
     // POST /store/adjustments/{adjustment}/approve
     public function approve(StockAdjustment $adjustment): RedirectResponse
     {
+        BuildingContext::enforce($adjustment->building_id);
+
         abort_if($adjustment->status !== 'pending', 422, 'Only pending adjustments can be approved.');
 
         StockMovement::record([
-            'product_id'   => $adjustment->product_id,
-            'location_id'  => $adjustment->location_id,
-            'type'         => 'adjustment',
+            'product_id' => $adjustment->product_id,
+            'location_id' => $adjustment->location_id,
+            'type' => 'adjustment',
             'new_quantity' => (float) $adjustment->new_qty,
-            'notes'        => $adjustment->reason,
-            'approved_by'  => auth()->id(),
+            'notes' => $adjustment->reason,
+            'approved_by' => auth()->id(),
         ], auth()->id());
 
         $adjustment->update(['status' => 'applied', 'approved_by' => auth()->id()]);
@@ -133,6 +146,8 @@ class AdjustmentController extends Controller
     // POST /store/adjustments/{adjustment}/reject
     public function reject(StockAdjustment $adjustment): RedirectResponse
     {
+        BuildingContext::enforce($adjustment->building_id);
+
         abort_if($adjustment->status !== 'pending', 422, 'Only pending adjustments can be rejected.');
 
         $adjustment->update(['status' => 'rejected', 'approved_by' => auth()->id()]);

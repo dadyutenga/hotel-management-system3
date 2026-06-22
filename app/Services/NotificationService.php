@@ -25,7 +25,7 @@ class NotificationService
     public function getUnreadCount(string|int $userId): int
     {
         return Cache::remember(
-            self::CACHE_PREFIX . $userId,
+            self::CACHE_PREFIX.$userId,
             self::CACHE_TTL,
             fn () => StoreNotification::where('user_id', $userId)
                 ->where('is_read', false)
@@ -38,7 +38,7 @@ class NotificationService
      */
     public function invalidateCache(string|int $userId): void
     {
-        Cache::forget(self::CACHE_PREFIX . $userId);
+        Cache::forget(self::CACHE_PREFIX.$userId);
     }
 
     /**
@@ -46,10 +46,11 @@ class NotificationService
      */
     public function incrementUnreadCount(string|int $userId): int
     {
-        $cacheKey = self::CACHE_PREFIX . $userId;
-        
+        $cacheKey = self::CACHE_PREFIX.$userId;
+
         if (Cache::has($cacheKey)) {
             $newCount = Cache::increment($cacheKey);
+
             return $newCount;
         }
 
@@ -62,15 +63,17 @@ class NotificationService
      */
     public function decrementUnreadCount(string|int $userId, int $amount = 1): int
     {
-        $cacheKey = self::CACHE_PREFIX . $userId;
-        
+        $cacheKey = self::CACHE_PREFIX.$userId;
+
         if (Cache::has($cacheKey)) {
             $newCount = Cache::decrement($cacheKey, $amount);
             // Ensure count doesn't go below 0
             if ($newCount < 0) {
                 Cache::put($cacheKey, 0, self::CACHE_TTL);
+
                 return 0;
             }
+
             return $newCount;
         }
 
@@ -89,7 +92,7 @@ class NotificationService
 
         // Update cached count and broadcast
         $unreadCount = $this->incrementUnreadCount($notification->user_id);
-        
+
         // Broadcast the notification event
         event(new NotificationCreated(
             $notification->user_id,
@@ -105,10 +108,10 @@ class NotificationService
      */
     public function markAsRead(StoreNotification $notification): void
     {
-        if (!$notification->is_read) {
+        if (! $notification->is_read) {
             $notification->update(['is_read' => true]);
             $this->decrementUnreadCount($notification->user_id);
-            
+
             // Broadcast updated count
             event(new NotificationCreated(
                 $notification->user_id,
@@ -128,8 +131,8 @@ class NotificationService
 
         if ($count > 0) {
             // Reset cache to 0
-            Cache::put(self::CACHE_PREFIX . $userId, 0, self::CACHE_TTL);
-            
+            Cache::put(self::CACHE_PREFIX.$userId, 0, self::CACHE_TTL);
+
             // Broadcast updated count
             event(new NotificationCreated($userId, 0));
         }

@@ -36,8 +36,8 @@ return [
     ],
 
     'africastalking' => [
-        'username'  => env('AT_USERNAME'),
-        'api_key'   => env('AT_API_KEY'),
+        'username' => env('AT_USERNAME'),
+        'api_key' => env('AT_API_KEY'),
         'sender_id' => env('AT_SENDER_ID', 'GRANDHOTEL'),
     ],
 

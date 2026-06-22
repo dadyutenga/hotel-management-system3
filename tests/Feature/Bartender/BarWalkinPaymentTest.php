@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Bartender;
 
-use App\Models\FinancePayment;
+use App\Models\Building;
 use App\Models\MenuCategory;
 use App\Models\MenuItem;
 use App\Models\MenuItemIngredient;
@@ -164,16 +164,14 @@ class BarWalkinPaymentTest extends TestCase
 
     protected function createPreparedBarWalkinOrder(User $actor, float $ingredientQtyPerItem, int $itemQty, float $availableQty): Order
     {
-        $bar = StockLocation::create([
-            'name' => 'Bar',
-            'code' => 'bar',
-            'description' => 'Bar location',
-            'is_active' => true,
-        ]);
+        $buildingId = $actor->building_id;
+
+        $bar = StockLocation::bar($buildingId);
 
         $product = Product::create([
+            'building_id' => $buildingId,
             'name' => 'Gin',
-            'sku' => 'GIN-' . Str::upper(Str::random(6)),
+            'sku' => 'GIN-'.Str::upper(Str::random(6)),
             'description' => 'Gin bottle',
             'category' => 'drinks',
             'unit' => 'bottle',
@@ -189,6 +187,7 @@ class BarWalkinPaymentTest extends TestCase
             ->update(['quantity' => $availableQty, 'reserved_qty' => 0]);
 
         $category = MenuCategory::create([
+            'building_id' => $buildingId,
             'name' => 'Cocktails',
             'location_id' => $bar->id,
             'description' => 'Cocktails',
@@ -196,6 +195,7 @@ class BarWalkinPaymentTest extends TestCase
         ]);
 
         $menuItem = MenuItem::create([
+            'building_id' => $buildingId,
             'category_id' => $category->id,
             'name' => 'Gin Tonic',
             'description' => 'Classic',
@@ -213,6 +213,7 @@ class BarWalkinPaymentTest extends TestCase
         ]);
 
         $order = Order::create([
+            'building_id' => $buildingId,
             'location_id' => $bar->id,
             'order_type' => 'walkin',
             'order_source' => 'walkin',
@@ -249,11 +250,14 @@ class BarWalkinPaymentTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $user = new User();
+        $building = Building::factory()->create();
+
+        $user = new User;
         $user->id = (string) Str::uuid();
-        $user->name = Str::title(str_replace('_', ' ', $roleName)) . ' User';
-        $user->email = $roleName . '-' . Str::lower(Str::random(6)) . '@example.test';
+        $user->name = Str::title(str_replace('_', ' ', $roleName)).' User';
+        $user->email = $roleName.'-'.Str::lower(Str::random(6)).'@example.test';
         $user->role_id = $roleId;
+        $user->building_id = $building->id;
         $user->is_active = true;
         $user->password = Hash::make('password');
         $user->save();

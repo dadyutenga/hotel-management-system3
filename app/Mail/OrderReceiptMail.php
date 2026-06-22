@@ -15,7 +15,7 @@ class OrderReceiptMail extends Mailable
     public function build(): self
     {
         return $this
-            ->subject("Order Receipt — Grand Hotel Restaurant")
+            ->subject('Order Receipt — Grand Hotel Restaurant')
             ->view('emails.order-receipt');
     }
 }

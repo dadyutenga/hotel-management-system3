@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/LocalPurchaseOrder.php
 
 namespace App\Models;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class LocalPurchaseOrder extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'lpo_number',
@@ -49,7 +50,7 @@ class LocalPurchaseOrder extends Model implements ReceiptPrintable
         static::creating(function (LocalPurchaseOrder $lpo) {
             if (empty($lpo->lpo_number)) {
                 $count = self::whereDate('created_at', today())->count() + 1;
-                $lpo->lpo_number = 'LPO-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $lpo->lpo_number = 'LPO-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -58,7 +59,7 @@ class LocalPurchaseOrder extends Model implements ReceiptPrintable
     {
         $subtotal = $this->items->sum('subtotal');
         $tax = round($subtotal * 0.18, 2); // 18% VAT
-        
+
         $this->update([
             'subtotal' => $subtotal,
             'tax_amount' => $tax,
@@ -112,33 +113,33 @@ class LocalPurchaseOrder extends Model implements ReceiptPrintable
 
         $items = $this->items->map(function ($item) {
             return [
-                'name'       => $item->product?->name ?? $item->item_name ?? 'Item',
-                'details'    => $item->description ?? '',
-                'quantity'   => $item->quantity ?? 1,
+                'name' => $item->product?->name ?? $item->item_name ?? 'Item',
+                'details' => $item->description ?? '',
+                'quantity' => $item->quantity ?? 1,
                 'unit_price' => (float) ($item->unit_price ?? 0),
-                'amount'     => (float) ($item->subtotal ?? (($item->quantity ?? 1) * ($item->unit_price ?? 0))),
+                'amount' => (float) ($item->subtotal ?? (($item->quantity ?? 1) * ($item->unit_price ?? 0))),
             ];
         })->toArray();
 
         return [
-            'receipt_no'            => $this->lpo_number,
-            'issued_at'             => $this->approved_at ?? $this->created_at,
-            'module'                => 'procurement',
-            'customer_name'         => $this->supplier_name,
-            'customer_phone'        => $this->supplier?->phone ?? null,
-            'items'                 => $items,
-            'subtotal'              => (float) $this->subtotal,
-            'discount'              => 0.0,
-            'tax'                   => (float) $this->tax_amount,
-            'total'                 => (float) $this->grand_total,
-            'amount_paid'           => 0.0,
-            'balance'               => (float) $this->grand_total,
-            'currency'              => 'TZS',
-            'payment_method'        => null,
-            'payment_status'        => $this->isPaid() ? 'paid' : 'unpaid',
+            'receipt_no' => $this->lpo_number,
+            'issued_at' => $this->approved_at ?? $this->created_at,
+            'module' => 'procurement',
+            'customer_name' => $this->supplier_name,
+            'customer_phone' => $this->supplier?->phone ?? null,
+            'items' => $items,
+            'subtotal' => (float) $this->subtotal,
+            'discount' => 0.0,
+            'tax' => (float) $this->tax_amount,
+            'total' => (float) $this->grand_total,
+            'amount_paid' => 0.0,
+            'balance' => (float) $this->grand_total,
+            'currency' => 'TZS',
+            'payment_method' => null,
+            'payment_status' => $this->isPaid() ? 'paid' : 'unpaid',
             'transaction_reference' => $this->lpo_number,
-            'cashier'               => $this->creator?->name,
-            'notes'                 => $this->notes,
+            'cashier' => $this->creator?->name,
+            'notes' => $this->notes,
         ];
     }
 

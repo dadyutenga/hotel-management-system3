@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2026_02_27_000002_create_local_purchase_orders_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -40,7 +41,7 @@ return new class extends Migration
             $table->foreign('supplier_id')->references('id')->on('suppliers')->nullOnDelete();
             $table->foreign('created_by')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('approved_by')->references('id')->on('users')->nullOnDelete();
-            
+
             $table->index('status');
             $table->index('order_date');
         });

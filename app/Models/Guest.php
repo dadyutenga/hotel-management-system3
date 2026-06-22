@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Jobs\SendSmsJob;
+use App\Mail\LoyaltyUpgradeMail;
+use App\Traits\BuildingScoped;
+use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,12 +14,11 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Traits\HasSoftDelete;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Guest extends Model implements HasMedia
 {
-    use HasUuid, InteractsWithMedia, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid, InteractsWithMedia;
 
     protected $fillable = [
         'first_name',
@@ -33,14 +36,15 @@ class Guest extends Model implements HasMedia
         'total_stays',
         'total_spent',
         'organization_id',
+        'building_id',
         'total_events_attended',
         'event_preferences',
         'communication_preferences',
     ];
 
     protected $casts = [
-        'date_of_birth'    => 'date',
-        'total_spent'      => 'decimal:2',
+        'date_of_birth' => 'date',
+        'total_spent' => 'decimal:2',
         'tier_upgraded_at' => 'datetime',
         'event_preferences' => 'array',
         'communication_preferences' => 'array',
@@ -187,7 +191,7 @@ class Guest extends Model implements HasMedia
      */
     protected function buildMediaUrl(?Media $media, string $conversion = ''): ?string
     {
-        if (!$media) {
+        if (! $media) {
             return null;
         }
 
@@ -237,6 +241,11 @@ class Guest extends Model implements HasMedia
         return $this->belongsTo(Organization::class);
     }
 
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
+    }
+
     // ═══ LOYALTY PROGRAM ═══
 
     /**
@@ -262,7 +271,7 @@ class Guest extends Model implements HasMedia
         // Update tier if changed
         if ($newTier !== $oldTier) {
             $this->update([
-                'loyalty_tier'     => $newTier,
+                'loyalty_tier' => $newTier,
                 'tier_upgraded_at' => now(),
             ]);
 
@@ -272,14 +281,14 @@ class Guest extends Model implements HasMedia
 
         // Log the transaction
         LoyaltyTransaction::create([
-            'guest_id'      => $this->id,
-            'type'          => 'earn',
-            'points'        => $points,
+            'guest_id' => $this->id,
+            'type' => 'earn',
+            'points' => $points,
             'balance_after' => $this->loyalty_points,
-            'source'        => $source,
-            'reference_id'  => $referenceId,
-            'created_by'    => $actorId ?? (auth()->check() ? auth()->id() : null),
-            'created_at'    => now(),
+            'source' => $source,
+            'reference_id' => $referenceId,
+            'created_by' => $actorId ?? (auth()->check() ? auth()->id() : null),
+            'created_at' => now(),
         ]);
     }
 
@@ -296,15 +305,15 @@ class Guest extends Model implements HasMedia
         $this->refresh();
 
         LoyaltyTransaction::create([
-            'guest_id'      => $this->id,
-            'type'          => 'redeem',
-            'points'        => -$points,
+            'guest_id' => $this->id,
+            'type' => 'redeem',
+            'points' => -$points,
             'balance_after' => $this->loyalty_points,
-            'source'        => $source,
-            'reference_id'  => $referenceId,
-            'notes'         => $notes,
-            'created_by'    => auth()->check() ? auth()->id() : null,
-            'created_at'    => now(),
+            'source' => $source,
+            'reference_id' => $referenceId,
+            'notes' => $notes,
+            'created_by' => auth()->check() ? auth()->id() : null,
+            'created_at' => now(),
         ]);
 
         return true;
@@ -315,9 +324,16 @@ class Guest extends Model implements HasMedia
      */
     public function calculateTier(int $points): string
     {
-        if ($points >= 5000) return 'Platinum';
-        if ($points >= 2000) return 'Gold';
-        if ($points >= 500)  return 'Silver';
+        if ($points >= 5000) {
+            return 'Platinum';
+        }
+        if ($points >= 2000) {
+            return 'Gold';
+        }
+        if ($points >= 500) {
+            return 'Silver';
+        }
+
         return 'none';
     }
 
@@ -327,10 +343,10 @@ class Guest extends Model implements HasMedia
     public function getLoyaltyDiscountPercent(): float
     {
         return match ($this->loyalty_tier) {
-            'Silver'   => 5.0,
-            'Gold'     => 10.0,
+            'Silver' => 5.0,
+            'Gold' => 10.0,
             'Platinum' => 15.0,
-            default    => 0.0,
+            default => 0.0,
         };
     }
 
@@ -340,20 +356,20 @@ class Guest extends Model implements HasMedia
     private function sendTierUpgradeNotifications(string $tier): void
     {
         $data = [
-            'guest_name'   => $this->full_name,
-            'tier'         => $tier,
-            'points'       => $this->loyalty_points,
+            'guest_name' => $this->full_name,
+            'tier' => $tier,
+            'points' => $this->loyalty_points,
             'member_since' => $this->created_at->format('d M Y'),
         ];
 
         // Email
         if ($this->email) {
-            Mail::to($this->email)->queue(new \App\Mail\LoyaltyUpgradeMail($data));
+            Mail::to($this->email)->queue(new LoyaltyUpgradeMail($data));
         }
 
         // SMS
         if ($this->phone_number) {
-            \App\Jobs\SendSmsJob::dispatch(
+            SendSmsJob::dispatch(
                 $this->phone_number,
                 "Grand Hotel: Congratulations {$this->full_name}! You've reached {$tier} Member status. Thank you for your loyalty!"
             )->onQueue('notifications');

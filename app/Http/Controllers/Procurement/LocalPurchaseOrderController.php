@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Procurement/LocalPurchaseOrderController.php
 
 namespace App\Http\Controllers\Procurement;
@@ -12,6 +13,7 @@ use App\Services\ProcurementIntegrationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class LocalPurchaseOrderController extends Controller
@@ -19,7 +21,7 @@ class LocalPurchaseOrderController extends Controller
     public function index(Request $request): View
     {
         $lpos = LocalPurchaseOrder::with(['supplier', 'creator', 'approver', 'items'])
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(20);
 
@@ -104,7 +106,7 @@ class LocalPurchaseOrderController extends Controller
 
     public function edit(LocalPurchaseOrder $localPurchaseOrder): View
     {
-        if (!in_array($localPurchaseOrder->status, ['draft', 'rejected'])) {
+        if (! in_array($localPurchaseOrder->status, ['draft', 'rejected'])) {
             abort(403, 'Cannot edit LPO in current status.');
         }
 
@@ -117,7 +119,7 @@ class LocalPurchaseOrderController extends Controller
 
     public function update(Request $request, LocalPurchaseOrder $localPurchaseOrder): RedirectResponse
     {
-        if (!in_array($localPurchaseOrder->status, ['draft', 'rejected'])) {
+        if (! in_array($localPurchaseOrder->status, ['draft', 'rejected'])) {
             abort(403, 'Cannot edit LPO in current status.');
         }
 
@@ -153,7 +155,7 @@ class LocalPurchaseOrderController extends Controller
             ]);
 
             // Delete old items and create new ones
-            $localPurchaseOrder->items->each(fn($item) => $this->softDelete($item));
+            $localPurchaseOrder->items->each(fn ($item) => $this->softDelete($item));
 
             foreach ($validated['items'] as $item) {
                 LocalPurchaseOrderItem::create([
@@ -196,7 +198,7 @@ class LocalPurchaseOrderController extends Controller
     {
         try {
             app(ProcurementIntegrationService::class)->approveLpo($localPurchaseOrder, (string) auth()->id());
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         }
 
@@ -236,7 +238,7 @@ class LocalPurchaseOrderController extends Controller
 
     public function destroy(LocalPurchaseOrder $localPurchaseOrder): RedirectResponse
     {
-        if (!in_array($localPurchaseOrder->status, ['draft', 'rejected'])) {
+        if (! in_array($localPurchaseOrder->status, ['draft', 'rejected'])) {
             return back()->with('error', 'Cannot delete LPO in current status.');
         }
 

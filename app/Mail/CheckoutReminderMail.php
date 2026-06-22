@@ -15,7 +15,7 @@ class CheckoutReminderMail extends Mailable
     public function build(): self
     {
         return $this
-            ->subject("Check-out Reminder — Grand Hotel")
+            ->subject('Check-out Reminder — Grand Hotel')
             ->view('emails.checkout-reminder');
     }
 }

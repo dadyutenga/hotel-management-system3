@@ -40,11 +40,11 @@ class SecurityHeaders
 
         // Content Security Policy — restrict resource loading
 
-        // these block the tarwind css 
+        // these block the tarwind css
         // $response->headers->set('Content-Security-Policy', implode('; ', [
         //     "default-src 'self'",
-        //     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  
-        //     "style-src 'self' 'unsafe-inline'", 
+        //     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        //     "style-src 'self' 'unsafe-inline'",
         //     "img-src 'self' data: blob:",
         //     "font-src 'self' data:",
         //     "connect-src 'self'",

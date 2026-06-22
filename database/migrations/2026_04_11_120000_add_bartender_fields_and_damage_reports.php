@@ -9,31 +9,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            if (!Schema::hasColumn('orders', 'order_source')) {
+            if (! Schema::hasColumn('orders', 'order_source')) {
                 $table->string('order_source', 30)->nullable()->after('order_type');
             }
 
-            if (!Schema::hasColumn('orders', 'bartender_status')) {
+            if (! Schema::hasColumn('orders', 'bartender_status')) {
                 $table->string('bartender_status', 30)->nullable()->after('status');
             }
 
-            if (!Schema::hasColumn('orders', 'bartender_status_updated_at')) {
+            if (! Schema::hasColumn('orders', 'bartender_status_updated_at')) {
                 $table->timestamp('bartender_status_updated_at')->nullable()->after('bartender_status');
             }
 
-            if (!Schema::hasColumn('orders', 'stock_deducted_at')) {
+            if (! Schema::hasColumn('orders', 'stock_deducted_at')) {
                 $table->timestamp('stock_deducted_at')->nullable()->after('bartender_status_updated_at');
             }
 
-            if (!Schema::hasColumn('orders', 'stock_reversed_at')) {
+            if (! Schema::hasColumn('orders', 'stock_reversed_at')) {
                 $table->timestamp('stock_reversed_at')->nullable()->after('stock_deducted_at');
             }
 
-            if (!Schema::hasColumn('orders', 'billed_to_folio_at')) {
+            if (! Schema::hasColumn('orders', 'billed_to_folio_at')) {
                 $table->timestamp('billed_to_folio_at')->nullable()->after('stock_reversed_at');
             }
 
-            if (!Schema::hasColumn('orders', 'billing_error')) {
+            if (! Schema::hasColumn('orders', 'billing_error')) {
                 $table->text('billing_error')->nullable()->after('billed_to_folio_at');
             }
         });
@@ -81,7 +81,7 @@ return new class extends Migration
                 }
             }
 
-            if (!empty($drop)) {
+            if (! empty($drop)) {
                 $table->dropColumn($drop);
             }
         });

@@ -2,18 +2,31 @@
 
 namespace App\Models;
 
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class Table extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
-    protected $fillable = ['location_id', 'table_number', 'capacity', 'status', 'is_active'];
+    protected $fillable = ['building_id', 'location_id', 'table_number', 'capacity', 'status', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean', 'deleted_at' => 'datetime'];
 
-    public function location()    { return $this->belongsTo(StockLocation::class, 'location_id'); }
-    public function activeOrder() { return $this->hasOne(Order::class)->whereNotIn('status', ['settled', 'cancelled']); }
+    public function location()
+    {
+        return $this->belongsTo(StockLocation::class, 'location_id');
+    }
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+
+    public function activeOrder()
+    {
+        return $this->hasOne(Order::class)->whereNotIn('status', ['settled', 'cancelled']);
+    }
 }

@@ -12,8 +12,8 @@ class LaundryServiceSeeder extends Seeder
     {
         $services = [
             [
-                'name'             => 'Wash Only',
-                'description'      => 'Machine or hand wash, no ironing',
+                'name' => 'Wash Only',
+                'description' => 'Machine or hand wash, no ironing',
                 'turnaround_hours' => 12,
                 'items' => [
                     ['item_name' => 'Shirt',          'price' => 2000],
@@ -30,8 +30,8 @@ class LaundryServiceSeeder extends Seeder
                 ],
             ],
             [
-                'name'             => 'Wash & Iron',
-                'description'      => 'Full wash and professional ironing',
+                'name' => 'Wash & Iron',
+                'description' => 'Full wash and professional ironing',
                 'turnaround_hours' => 24,
                 'items' => [
                     ['item_name' => 'Shirt',          'price' => 3500],
@@ -47,8 +47,8 @@ class LaundryServiceSeeder extends Seeder
                 ],
             ],
             [
-                'name'             => 'Iron Only',
-                'description'      => 'Ironing of clean items only',
+                'name' => 'Iron Only',
+                'description' => 'Ironing of clean items only',
                 'turnaround_hours' => 6,
                 'items' => [
                     ['item_name' => 'Shirt',          'price' => 1500],
@@ -60,8 +60,8 @@ class LaundryServiceSeeder extends Seeder
                 ],
             ],
             [
-                'name'             => 'Dry Cleaning',
-                'description'      => 'Professional dry cleaning for delicate items',
+                'name' => 'Dry Cleaning',
+                'description' => 'Professional dry cleaning for delicate items',
                 'turnaround_hours' => 48,
                 'items' => [
                     ['item_name' => 'Suit (full)',    'price' => 20000],
@@ -89,7 +89,7 @@ class LaundryServiceSeeder extends Seeder
                 LaundryServiceItem::updateOrCreate(
                     [
                         'laundry_service_id' => $service->id,
-                        'item_name'          => $item['item_name'],
+                        'item_name' => $item['item_name'],
                     ],
                     ['price' => $item['price']]
                 );

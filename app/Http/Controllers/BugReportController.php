@@ -37,7 +37,7 @@ class BugReportController extends Controller
 
     public function index(Request $request)
     {
-        if (!config('bugs.dashboard_enabled')) {
+        if (! config('bugs.dashboard_enabled')) {
             abort(404);
         }
 
@@ -72,7 +72,7 @@ class BugReportController extends Controller
 
     public function update(Request $request, BugReport $bugReport)
     {
-        if (!config('bugs.dashboard_enabled')) {
+        if (! config('bugs.dashboard_enabled')) {
             abort(404);
         }
 
@@ -87,7 +87,7 @@ class BugReportController extends Controller
 
     public function destroy(BugReport $bugReport)
     {
-        if (!config('bugs.dashboard_enabled')) {
+        if (! config('bugs.dashboard_enabled')) {
             abort(404);
         }
 
@@ -99,9 +99,9 @@ class BugReportController extends Controller
     public function fetchRemote(Request $request)
     {
         $bugs = BugReport::on('bugs')
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->severity, fn($q) => $q->where('severity', $request->severity))
-            ->when($request->module, fn($q) => $q->where('module', $request->module))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->severity, fn ($q) => $q->where('severity', $request->severity))
+            ->when($request->module, fn ($q) => $q->where('module', $request->module))
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -113,11 +113,11 @@ class BugReportController extends Controller
 
     protected function exportCsv($query)
     {
-        $filename = 'bug-reports-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'bug-reports-'.now()->format('Ymd-His').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $columns = ['ID', 'Title', 'Module', 'Severity', 'Status', 'Reported By', 'Page URL', 'Created At'];

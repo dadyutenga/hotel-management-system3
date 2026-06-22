@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Observers;
 
 use App\Models\Reservation;
@@ -11,8 +12,10 @@ use App\Models\Reservation;
  *   cancelled / no_show → room available
  *   converted → no room change (BookingObserver handles it)
  */
-class ReservationObserver {
-    public function updating(Reservation $reservation): void {
+class ReservationObserver
+{
+    public function updating(Reservation $reservation): void
+    {
         if ($reservation->isDirty('status')) {
             match ($reservation->status) {
                 'confirmed' => $reservation->room?->update(['status' => 'reserved']),

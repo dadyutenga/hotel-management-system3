@@ -5,7 +5,7 @@ return [
     'booking' => 'Uhifadhi',
     'bookings' => 'Uhifadhi',
     'subtitle' => 'Simamia uhifadhi wa wageni, kuingia na kutoka',
-    
+
     // Actions
     'new_booking' => 'Uhifadhi Mpya',
     'create_booking' => 'Unda Uhifadhi',
@@ -24,7 +24,7 @@ return [
     'cancel' => 'Ghairi',
     'filter' => 'Chuja',
     'reset' => 'Weka Upya',
-    
+
     // Stats
     'stats' => [
         'total' => 'Jumla',
@@ -33,7 +33,7 @@ return [
         'today_checkins' => 'Wanaoingia Leo',
         'today_checkouts' => 'Wanaotoka Leo',
     ],
-    
+
     // Filters
     'filters' => [
         'search_placeholder' => 'Tafuta jina, barua pepe, nambari ya uhifadhi...',
@@ -41,7 +41,7 @@ return [
         'all_sources' => 'Vyanzo Vyote',
         'from_date' => 'Tarehe ya kuanzia',
     ],
-    
+
     // Sources
     'sources' => [
         'online' => 'Mtandaoni',
@@ -49,7 +49,7 @@ return [
         'phone' => 'Simu',
         'walkin' => 'Mgeni wa Moja kwa Moja',
     ],
-    
+
     // Table
     'table' => [
         'booking' => 'Uhifadhi',
@@ -64,7 +64,7 @@ return [
         'not_assigned' => 'Haijawekwa',
         'nights' => 'usiku',
     ],
-    
+
     // Messages
     'messages' => [
         'no_bookings_found' => 'Hakuna uhifadhi uliopatikana',
@@ -79,7 +79,7 @@ return [
         'room_not_available' => 'Chumba hiki hakipatikani kwa tarehe zilizochaguliwa.',
         'loading_rooms' => 'Inatafuta vyumba vinavyopatikana...',
     ],
-    
+
     // Fields
     'fields' => [
         'guest' => 'Mgeni',
@@ -99,7 +99,7 @@ return [
         'source' => 'Chanzo cha Uhifadhi',
         'special_requests' => 'Maombi Maalum',
     ],
-    
+
     // Status
     'status' => [
         'pending' => 'Inasubiri',
@@ -109,7 +109,7 @@ return [
         'cancelled' => 'Imefutwa',
         'no_show' => 'Hakuja',
     ],
-    
+
     // Payment status
     'payment' => [
         'unpaid' => 'Haijalipwa',
@@ -117,7 +117,7 @@ return [
         'paid' => 'Imelipwa',
         'refunded' => 'Imerudishwa',
     ],
-    
+
     // Sections
     'sections' => [
         'guest_info' => 'Taarifa za Mgeni',

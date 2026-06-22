@@ -9,11 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            if (!Schema::hasColumn('orders', 'customer_phone')) {
+            if (! Schema::hasColumn('orders', 'customer_phone')) {
                 $table->string('customer_phone', 30)->nullable()->after('customer_name');
             }
 
-            if (!Schema::hasColumn('orders', 'payment_reference')) {
+            if (! Schema::hasColumn('orders', 'payment_reference')) {
                 $table->string('payment_reference', 100)->nullable()->after('payment_method');
             }
         });
@@ -30,7 +30,7 @@ return new class extends Migration
                 }
             }
 
-            if (!empty($drop)) {
+            if (! empty($drop)) {
                 $table->dropColumn($drop);
             }
         });

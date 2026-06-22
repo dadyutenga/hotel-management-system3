@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LaundryOrderItem extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'laundry_order_id', 'laundry_service_item_id',
@@ -18,8 +18,8 @@ class LaundryOrderItem extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
-        'subtotal'   => 'decimal:2',
-        'quantity'   => 'integer',
+        'subtotal' => 'decimal:2',
+        'quantity' => 'integer',
         'deleted_at' => 'datetime',
     ];
 

@@ -31,16 +31,17 @@ return [
     'providers' => [
 
         'azampesa' => [
-            'auth_url'        => env('AZAMPESA_AUTH_URL', 'https://authenticator-sandbox.azampay.co.tz'),
-            'base_url'        => env('AZAMPESA_BASE_URL', 'https://sandbox.azampay.co.tz'),
-            'app_name'        => env('AZAMPESA_APP_NAME', ''),
-            'client_id'       => env('AZAMPESA_CLIENT_ID', ''),
-            'client_secret'   => env('AZAMPESA_CLIENT_SECRET', ''),
-            'merchant_account'=> env('AZAMPESA_MERCHANT_ACCOUNT', ''),
-            'merchant_phone'  => env('AZAMPESA_MERCHANT_PHONE', ''),
-            'merchant_name'   => env('AZAMPESA_MERCHANT_NAME', null),
-            'webhook_secret'  => env('AZAMPESA_WEBHOOK_SECRET', ''),
-            'timeout'         => env('AZAMPESA_TIMEOUT', 30),
+            'auth_url' => env('AZAMPESA_AUTH_URL', 'https://authenticator-sandbox.azampay.co.tz'),
+            'base_url' => env('AZAMPESA_BASE_URL', 'https://sandbox.azampay.co.tz'),
+            'app_name' => env('AZAMPESA_APP_NAME', ''),
+            'client_id' => env('AZAMPESA_CLIENT_ID', ''),
+            'client_secret' => env('AZAMPESA_CLIENT_SECRET', ''),
+            'sandbox_token' => env('AZAMPESA_SANDBOX_TOKEN', 'e252acd8-ebc4-49e5-bab9-705d0624392a'),
+            'merchant_account' => env('AZAMPESA_MERCHANT_ACCOUNT', ''),
+            'merchant_phone' => env('AZAMPESA_MERCHANT_PHONE', ''),
+            'merchant_name' => env('AZAMPESA_MERCHANT_NAME', null),
+            'webhook_secret' => env('AZAMPESA_WEBHOOK_SECRET', ''),
+            'timeout' => env('AZAMPESA_TIMEOUT', 30),
         ],
 
     ],

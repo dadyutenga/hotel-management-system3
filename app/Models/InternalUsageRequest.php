@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class InternalUsageRequest extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'department', 'product_id', 'quantity', 'status', 'reason',
@@ -19,8 +19,8 @@ class InternalUsageRequest extends Model implements ReceiptPrintable
     ];
 
     protected $casts = [
-        'quantity'     => 'decimal:3',
-        'approved_at'  => 'datetime',
+        'quantity' => 'decimal:3',
+        'approved_at' => 'datetime',
         'fulfilled_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
@@ -55,32 +55,32 @@ class InternalUsageRequest extends Model implements ReceiptPrintable
         $this->loadMissing(['product', 'requester']);
 
         $items = [[
-            'name'       => $this->product?->name ?? 'Product',
-            'details'    => 'Department: ' . ($this->department ?? 'N/A'),
-            'quantity'   => $this->quantity ?? 1,
+            'name' => $this->product?->name ?? 'Product',
+            'details' => 'Department: '.($this->department ?? 'N/A'),
+            'quantity' => $this->quantity ?? 1,
             'unit_price' => 0,
-            'amount'     => 0,
+            'amount' => 0,
         ]];
 
         return [
-            'receipt_no'            => $this->uuid,
-            'issued_at'             => $this->fulfilled_at ?? $this->created_at,
-            'module'                => 'store',
-            'customer_name'         => $this->department ?? 'Internal Department',
-            'customer_phone'        => null,
-            'items'                 => $items,
-            'subtotal'              => 0.0,
-            'discount'              => 0.0,
-            'tax'                   => 0.0,
-            'total'                 => 0.0,
-            'amount_paid'           => 0.0,
-            'balance'               => 0.0,
-            'currency'              => 'TZS',
-            'payment_method'        => null,
-            'payment_status'        => $this->status === 'fulfilled' ? 'paid' : 'unpaid',
+            'receipt_no' => $this->uuid,
+            'issued_at' => $this->fulfilled_at ?? $this->created_at,
+            'module' => 'store',
+            'customer_name' => $this->department ?? 'Internal Department',
+            'customer_phone' => null,
+            'items' => $items,
+            'subtotal' => 0.0,
+            'discount' => 0.0,
+            'tax' => 0.0,
+            'total' => 0.0,
+            'amount_paid' => 0.0,
+            'balance' => 0.0,
+            'currency' => 'TZS',
+            'payment_method' => null,
+            'payment_status' => $this->status === 'fulfilled' ? 'paid' : 'unpaid',
             'transaction_reference' => null,
-            'cashier'               => $this->requester?->name,
-            'notes'                 => $this->reason,
+            'cashier' => $this->requester?->name,
+            'notes' => $this->reason,
         ];
     }
 

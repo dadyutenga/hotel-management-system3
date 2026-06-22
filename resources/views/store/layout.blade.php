@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Store') — Hotel Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,6 +38,12 @@
     <div class="flex gap-4 text-sm">
         <a href="{{ route('store.products.index') }}"
            class="{{ request()->routeIs('store.products.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Products</a>
+        <a href="{{ route('store.beverages.index') }}"
+           class="{{ request()->routeIs('store.beverages.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Beverages</a>
+        <a href="{{ route('store.receivings.index') }}"
+           class="{{ request()->routeIs('store.receivings.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Receivings</a>
+        <a href="{{ route('store.stock-takes.index') }}"
+           class="{{ request()->routeIs('store.stock-takes.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Stock-Takes</a>
         <a href="{{ route('store.stock.levels') }}"
            class="{{ request()->routeIs('store.stock.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Stock</a>
         <a href="{{ route('store.adjustments.index') }}"
@@ -45,7 +52,7 @@
            class="{{ request()->routeIs('store.internal-requests.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Requests</a>
         <a href="{{ route('store.transfers.index') }}"
            class="{{ request()->routeIs('store.transfers.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Transfers</a>
-        @if(auth()->user()->hasAnyRole(['STORE_MANAGER', 'STORE_KEEPER', 'SUPERVISOR']))
+        @if(auth()->user()->hasAnyRole(['store_manager', 'store_keeper', 'supervisor']))
         <a href="{{ route('store.reports.movements') }}"
            class="{{ request()->routeIs('store.reports.*') ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}">Reports</a>
         @endif

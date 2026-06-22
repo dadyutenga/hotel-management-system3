@@ -2,26 +2,40 @@
 
 namespace App\Models;
 
-use App\Traits\HasUuid;
+use App\Traits\BuildingScoped;
 use App\Traits\HasSoftDelete;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class BarTicket extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use BuildingScoped, HasSoftDelete, HasUuid;
 
     protected $fillable = [
+        'building_id',
         'order_id', 'table_id', 'items', 'status', 'notes', 'printed_at',
     ];
 
     protected $casts = [
-        'items'      => 'array',
+        'items' => 'array',
         'printed_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
-    public function order() { return $this->belongsTo(Order::class); }
-    public function table() { return $this->belongsTo(Table::class); }
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function table()
+    {
+        return $this->belongsTo(Table::class);
+    }
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
 
     public function markPreparing(): void
     {

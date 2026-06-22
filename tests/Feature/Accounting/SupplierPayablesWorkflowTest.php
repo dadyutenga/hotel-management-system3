@@ -67,7 +67,7 @@ class SupplierPayablesWorkflowTest extends TestCase
         $this->assertEquals(0.0, (float) $payable->amount_paid);
         $this->assertSame('unpaid', $payable->status);
 
-        app(\App\Services\SupplierPayablesService::class)->ensurePayableFromGrn($grn->fresh(), $manager->id);
+        app(SupplierPayablesService::class)->ensurePayableFromGrn($grn->fresh(), $manager->id);
         $this->assertEquals(1, SupplierPayable::where('source_reference_id', $grn->id)->count());
     }
 
@@ -396,7 +396,7 @@ class SupplierPayablesWorkflowTest extends TestCase
     public function test_store_payment_rejects_mismatched_selected_payable_supplier(): void
     {
         [$accountant, $supplierA, $payableA] = $this->bootstrapSinglePayable(amountTotal: 300);
-        [, $supplierB, ] = $this->bootstrapSinglePayable(amountTotal: 200);
+        [, $supplierB] = $this->bootstrapSinglePayable(amountTotal: 200);
 
         $this->actingAs($accountant)
             ->post(route('accountant.payments.store'), [

@@ -21,13 +21,13 @@ class SendCheckoutReminderJob implements ShouldQueue
 
     public function handle(SmsService $smsService): void
     {
-        if (!empty($this->booking['email'])) {
+        if (! empty($this->booking['email'])) {
             Mail::to($this->booking['email'])->send(new CheckoutReminderMail($this->booking));
         }
 
-        if (!empty($this->booking['phone'])) {
+        if (! empty($this->booking['phone'])) {
             $balance = number_format($this->booking['balance'] ?? 0, 2);
-            $msg = "Grand Hotel: Your check-out is TOMORROW {$this->booking['check_out']}. " .
+            $msg = "Grand Hotel: Your check-out is TOMORROW {$this->booking['check_out']}. ".
                    "Outstanding balance: TZS {$balance}. Front desk: +255xxx.";
             $smsService->send($this->booking['phone'], $msg);
         }

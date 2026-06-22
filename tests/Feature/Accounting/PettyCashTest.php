@@ -2,15 +2,14 @@
 
 namespace Tests\Feature\Accounting;
 
-use App\Models\PettyCash;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\JournalEntry;
 use App\Models\Account;
+use App\Models\JournalEntry;
+use App\Models\PettyCash;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
 use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
 
 class PettyCashTest extends TestCase
 {
@@ -33,11 +32,11 @@ class PettyCashTest extends TestCase
 
         // Create a petty cash expense (draft)
         $pettyCash = PettyCash::create([
-            'category'      => 'transport',
-            'amount'        => 50000,
-            'description'   => 'Taxi to airport',
-            'requested_by'  => $user->id,
-            'status'        => 'draft',
+            'category' => 'transport',
+            'amount' => 50000,
+            'description' => 'Taxi to airport',
+            'requested_by' => $user->id,
+            'status' => 'draft',
         ]);
 
         // Authenticate as the user

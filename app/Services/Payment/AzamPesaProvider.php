@@ -11,22 +11,28 @@ use Illuminate\Support\Str;
 class AzamPesaProvider implements PaymentProvider
 {
     protected string $baseUrl;
+
     protected string $authUrl;
+
     protected string $appName;
+
     protected string $clientId;
+
     protected string $clientSecret;
+
     protected ?string $webhookSecret;
+
     protected int $timeout;
 
     public function __construct()
     {
-        $this->baseUrl       = config('payment.providers.azampesa.base_url', 'https://sandbox.azampay.co.tz');
-        $this->authUrl       = config('payment.providers.azampesa.auth_url', 'https://authenticator-sandbox.azampay.co.tz');
-        $this->appName       = config('payment.providers.azampesa.app_name', '');
-        $this->clientId      = config('payment.providers.azampesa.client_id', '');
-        $this->clientSecret  = config('payment.providers.azampesa.client_secret', '');
+        $this->baseUrl = config('payment.providers.azampesa.base_url', 'https://sandbox.azampay.co.tz');
+        $this->authUrl = config('payment.providers.azampesa.auth_url', 'https://authenticator-sandbox.azampay.co.tz');
+        $this->appName = config('payment.providers.azampesa.app_name', '');
+        $this->clientId = config('payment.providers.azampesa.client_id', '');
+        $this->clientSecret = config('payment.providers.azampesa.client_secret', '');
         $this->webhookSecret = config('payment.providers.azampesa.webhook_secret');
-        $this->timeout       = config('payment.providers.azampesa.timeout', 30);
+        $this->timeout = config('payment.providers.azampesa.timeout', 30);
     }
 
     public function name(): string
@@ -41,17 +47,27 @@ class AzamPesaProvider implements PaymentProvider
 
     /**
      * Get or refresh the access token, cached for reuse.
+     *
+     * Uses sandbox token from .env if provided, otherwise generates dynamically.
      */
     protected function getAccessToken(): ?string
     {
+        $sandboxToken = config('payment.providers.azampesa.sandbox_token');
+
+        if (! empty($sandboxToken)) {
+            Log::info('AzamPesa using sandbox token from .env');
+
+            return $sandboxToken;
+        }
+
         $cacheKey = 'azampesa_access_token';
 
         return Cache::remember($cacheKey, now()->addMinutes(50), function () {
             try {
                 $response = Http::timeout($this->timeout)
                     ->post("{$this->authUrl}/AppRegistration/GenerateToken", [
-                        'appName'      => $this->appName,
-                        'clientId'     => $this->clientId,
+                        'appName' => $this->appName,
+                        'clientId' => $this->clientId,
                         'clientSecret' => $this->clientSecret,
                     ]);
 
@@ -68,16 +84,19 @@ class AzamPesaProvider implements PaymentProvider
                     }
 
                     Log::info('AzamPesa token generated successfully');
+
                     return $token;
                 }
 
                 Log::error('AzamPesa token generation failed', [
                     'status' => $response->status(),
-                    'body'   => $response->json(),
+                    'body' => $response->json(),
                 ]);
+
                 return null;
             } catch (\Exception $e) {
                 Log::error('AzamPesa token generation exception', ['message' => $e->getMessage()]);
+
                 return null;
             }
         });
@@ -87,13 +106,13 @@ class AzamPesaProvider implements PaymentProvider
     {
         return match ($method) {
             'mobile' => $this->mnoCheckout($amount, $currency, $metadata),
-            'card'   => $this->bankCheckout($amount, $currency, $metadata),
-            default  => [
-                'success'   => false,
+            'card' => $this->bankCheckout($amount, $currency, $metadata),
+            default => [
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => "Unsupported payment method: {$method}",
-                'raw'       => [],
+                'status' => 'failed',
+                'error' => "Unsupported payment method: {$method}",
+                'raw' => [],
             ],
         };
     }
@@ -104,24 +123,24 @@ class AzamPesaProvider implements PaymentProvider
     protected function mnoCheckout(float $amount, string $currency, array $metadata): array
     {
         $token = $this->getAccessToken();
-        if (!$token) {
+        if (! $token) {
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => 'Failed to obtain access token from AzamPesa',
-                'raw'       => [],
+                'status' => 'failed',
+                'error' => 'Failed to obtain access token from AzamPesa',
+                'raw' => [],
             ];
         }
 
         $phone = $this->normalizePhone($metadata['phone_number'] ?? $metadata['mobile_phone'] ?? '');
         if (empty($phone)) {
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => 'Phone number is required for mobile payments',
-                'raw'       => [],
+                'status' => 'failed',
+                'error' => 'Phone number is required for mobile payments',
+                'raw' => [],
             ];
         }
 
@@ -129,26 +148,26 @@ class AzamPesaProvider implements PaymentProvider
         $provider = $this->detectMobileProvider($phone);
 
         $payload = [
-            'accountNumber'     => $phone,
-            'amount'            => (string) round($amount),
-            'currency'          => $currency,
-            'externalId'        => $externalId,
-            'provider'          => $provider,
+            'accountNumber' => $phone,
+            'amount' => (string) round($amount),
+            'currency' => $currency,
+            'externalId' => $externalId,
+            'provider' => $provider,
             'additionalProperties' => [
-                'booking_id'  => $metadata['booking_id'] ?? null,
-                'charge_id'   => $metadata['charge_id'] ?? null,
-                'payment_id'  => $metadata['payment_id'] ?? null,
-                'order_id'    => $metadata['order_id'] ?? null,
+                'booking_id' => $metadata['booking_id'] ?? null,
+                'charge_id' => $metadata['charge_id'] ?? null,
+                'payment_id' => $metadata['payment_id'] ?? null,
+                'order_id' => $metadata['order_id'] ?? null,
             ],
         ];
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer '.$token,
+                'Content-Type' => 'application/json',
             ])
-            ->timeout($this->timeout)
-            ->post("{$this->baseUrl}/azampay/mno/checkout", $payload);
+                ->timeout($this->timeout)
+                ->post("{$this->baseUrl}/azampay/mno/checkout", $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -156,42 +175,43 @@ class AzamPesaProvider implements PaymentProvider
 
                 Log::info('AzamPesa MNO checkout initiated', [
                     'reference' => $reference,
-                    'provider'  => $provider,
-                    'amount'    => $amount,
+                    'provider' => $provider,
+                    'amount' => $amount,
                 ]);
 
                 return [
-                    'success'         => true,
-                    'reference'       => (string) $reference,
-                    'status'          => 'pending',
-                    'payment_url'     => null,
+                    'success' => true,
+                    'reference' => (string) $reference,
+                    'status' => 'pending',
+                    'payment_url' => null,
                     'payment_qr_code' => null,
-                    'payment_token'   => null,
-                    'raw'             => $data,
+                    'payment_token' => null,
+                    'raw' => $data,
                 ];
             }
 
             $error = $response->json();
             Log::error('AzamPesa MNO checkout failed', [
                 'status' => $response->status(),
-                'error'  => $error,
+                'error' => $error,
             ]);
 
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => $error['message'] ?? $error['title'] ?? 'MNO checkout failed',
-                'raw'       => $error,
+                'status' => 'failed',
+                'error' => $error['message'] ?? $error['title'] ?? 'MNO checkout failed',
+                'raw' => $error,
             ];
         } catch (\Exception $e) {
             Log::error('AzamPesa MNO checkout exception', ['message' => $e->getMessage()]);
+
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => $e->getMessage(),
-                'raw'       => [],
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'raw' => [],
             ];
         }
     }
@@ -202,26 +222,26 @@ class AzamPesaProvider implements PaymentProvider
     protected function bankCheckout(float $amount, string $currency, array $metadata): array
     {
         $token = $this->getAccessToken();
-        if (!$token) {
+        if (! $token) {
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => 'Failed to obtain access token from AzamPesa',
-                'raw'       => [],
+                'status' => 'failed',
+                'error' => 'Failed to obtain access token from AzamPesa',
+                'raw' => [],
             ];
         }
 
         $externalId = $metadata['idempotency_key'] ?? $metadata['payment_id'] ?? Str::uuid()->toString();
 
         $payload = [
-            'amount'                => (string) round($amount),
-            'currencyCode'          => $currency,
+            'amount' => (string) round($amount),
+            'currencyCode' => $currency,
             'merchantAccountNumber' => config('payment.providers.azampesa.merchant_account', ''),
-            'merchantMobileNumber'  => config('payment.providers.azampesa.merchant_phone', ''),
-            'merchantName'          => config('payment.providers.azampesa.merchant_name', null),
-            'provider'              => $metadata['bank_provider'] ?? 'NMB',
-            'referenceId'           => $externalId,
+            'merchantMobileNumber' => config('payment.providers.azampesa.merchant_phone', ''),
+            'merchantName' => config('payment.providers.azampesa.merchant_name', null),
+            'provider' => $metadata['bank_provider'] ?? 'NMB',
+            'referenceId' => $externalId,
         ];
 
         $otp = $metadata['otp'] ?? null;
@@ -231,11 +251,11 @@ class AzamPesaProvider implements PaymentProvider
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer '.$token,
+                'Content-Type' => 'application/json',
             ])
-            ->timeout($this->timeout)
-            ->post("{$this->baseUrl}/azampay/bank/checkout", $payload);
+                ->timeout($this->timeout)
+                ->post("{$this->baseUrl}/azampay/bank/checkout", $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -243,42 +263,43 @@ class AzamPesaProvider implements PaymentProvider
 
                 Log::info('AzamPesa bank checkout initiated', [
                     'reference' => $reference,
-                    'provider'  => $payload['provider'],
-                    'amount'    => $amount,
+                    'provider' => $payload['provider'],
+                    'amount' => $amount,
                 ]);
 
                 return [
-                    'success'         => true,
-                    'reference'       => (string) $reference,
-                    'status'          => 'pending',
-                    'payment_url'     => $data['paymentUrl'] ?? $data['checkoutUrl'] ?? null,
+                    'success' => true,
+                    'reference' => (string) $reference,
+                    'status' => 'pending',
+                    'payment_url' => $data['paymentUrl'] ?? $data['checkoutUrl'] ?? null,
                     'payment_qr_code' => null,
-                    'payment_token'   => $data['token'] ?? null,
-                    'raw'             => $data,
+                    'payment_token' => $data['token'] ?? null,
+                    'raw' => $data,
                 ];
             }
 
             $error = $response->json();
             Log::error('AzamPesa bank checkout failed', [
                 'status' => $response->status(),
-                'error'  => $error,
+                'error' => $error,
             ]);
 
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => $error['message'] ?? $error['title'] ?? 'Bank checkout failed',
-                'raw'       => $error,
+                'status' => 'failed',
+                'error' => $error['message'] ?? $error['title'] ?? 'Bank checkout failed',
+                'raw' => $error,
             ];
         } catch (\Exception $e) {
             Log::error('AzamPesa bank checkout exception', ['message' => $e->getMessage()]);
+
             return [
-                'success'   => false,
+                'success' => false,
                 'reference' => null,
-                'status'    => 'failed',
-                'error'     => $e->getMessage(),
-                'raw'       => [],
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'raw' => [],
             ];
         }
     }
@@ -289,52 +310,53 @@ class AzamPesaProvider implements PaymentProvider
     public function verifyPayment(string $reference): array
     {
         $token = $this->getAccessToken();
-        if (!$token) {
+        if (! $token) {
             return [
                 'success' => false,
-                'status'  => 'unknown',
-                'error'   => 'Failed to obtain access token',
-                'raw'     => [],
+                'status' => 'unknown',
+                'error' => 'Failed to obtain access token',
+                'raw' => [],
             ];
         }
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])
-            ->timeout($this->timeout)
-            ->get("{$this->baseUrl}/api/v1/azampay/transactionstatus", [
-                'pgReferenceId' => $reference,
-            ]);
+                ->timeout($this->timeout)
+                ->get("{$this->baseUrl}/api/v1/azampay/transactionstatus", [
+                    'pgReferenceId' => $reference,
+                ]);
 
             if ($response->successful()) {
                 $data = $response->json();
 
                 $status = match (strtolower($data['transactionstatus'] ?? $data['status'] ?? '')) {
                     'success', 'successful', 'completed' => 'completed',
-                    'failed', 'cancelled', 'error'       => 'failed',
-                    default                               => 'pending',
+                    'failed', 'cancelled', 'error' => 'failed',
+                    default => 'pending',
                 };
 
                 return [
                     'success' => true,
-                    'status'  => $status,
-                    'raw'     => $data,
+                    'status' => $status,
+                    'raw' => $data,
                 ];
             }
 
             return [
                 'success' => false,
-                'status'  => 'unknown',
-                'raw'     => $response->json(),
+                'status' => 'unknown',
+                'raw' => $response->json(),
             ];
         } catch (\Exception $e) {
             Log::error('AzamPesa verify payment exception', ['message' => $e->getMessage()]);
+
             return [
                 'success' => false,
-                'status'  => 'unknown',
-                'error'   => $e->getMessage(),
-                'raw'     => [],
+                'status' => 'unknown',
+                'error' => $e->getMessage(),
+                'raw' => [],
             ];
         }
     }
@@ -347,13 +369,13 @@ class AzamPesaProvider implements PaymentProvider
     {
         Log::warning('AzamPesa refund requested but not supported via API', [
             'reference' => $reference,
-            'amount'    => $amount,
+            'amount' => $amount,
         ]);
 
         return [
             'success' => false,
-            'error'   => 'AzamPesa does not support automated refunds. Please process manually.',
-            'raw'     => [],
+            'error' => 'AzamPesa does not support automated refunds. Please process manually.',
+            'raw' => [],
         ];
     }
 
@@ -368,34 +390,38 @@ class AzamPesaProvider implements PaymentProvider
         $signature = $payload['signature'] ?? null;
         if (empty($signature)) {
             Log::warning('AzamPesa callback missing signature');
+
             return false;
         }
 
         $publicKeyPem = $this->fetchPublicKey();
-        if (!$publicKeyPem) {
+        if (! $publicKeyPem) {
             Log::critical('AzamPesa public key unavailable — cannot verify callback');
+
             return false;
         }
 
         $signedData = ($payload['utilityref'] ?? '')
-            . ($payload['externalreference'] ?? '')
-            . ($payload['transactionstatus'] ?? '')
-            . ($payload['operator'] ?? '');
+            .($payload['externalreference'] ?? '')
+            .($payload['transactionstatus'] ?? '')
+            .($payload['operator'] ?? '');
 
         $publicKey = openssl_pkey_get_public($publicKeyPem);
-        if (!$publicKey) {
+        if (! $publicKey) {
             Log::error('AzamPesa failed to parse public key');
+
             return false;
         }
 
         $signatureBytes = base64_decode($signature, true);
         if ($signatureBytes === false) {
             Log::warning('AzamPesa callback signature is not valid base64');
+
             return false;
         }
 
         $valid = openssl_verify($signedData, $signatureBytes, $publicKey, OPENSSL_ALGO_SHA256) === 1;
-        if (!$valid) {
+        if (! $valid) {
             Log::warning('AzamPesa callback signature verification failed');
         }
 
@@ -409,24 +435,24 @@ class AzamPesaProvider implements PaymentProvider
     {
         $status = match (strtolower($payload['transactionstatus'] ?? '')) {
             'success', 'successful', 'completed' => 'successful',
-            'failed', 'cancelled', 'error'       => 'failed',
-            default                               => 'pending',
+            'failed', 'cancelled', 'error' => 'failed',
+            default => 'pending',
         };
 
         return [
-            'event'     => 'checkout.callback',
+            'event' => 'checkout.callback',
             'reference' => $payload['utilityref'] ?? $payload['externalreference'] ?? null,
-            'status'    => $status,
-            'amount'    => (float) ($payload['amount'] ?? 0),
-            'currency'  => 'TZS',
-            'metadata'  => [
+            'status' => $status,
+            'amount' => (float) ($payload['amount'] ?? 0),
+            'currency' => 'TZS',
+            'metadata' => [
                 'externalreference' => $payload['externalreference'] ?? null,
-                'transid'           => $payload['transid'] ?? null,
-                'operator'          => $payload['operator'] ?? null,
-                'msisdn'            => $payload['msisdn'] ?? null,
-                'mnoreference'      => $payload['mnoreference'] ?? null,
+                'transid' => $payload['transid'] ?? null,
+                'operator' => $payload['operator'] ?? null,
+                'msisdn' => $payload['msisdn'] ?? null,
+                'mnoreference' => $payload['mnoreference'] ?? null,
             ],
-            'raw'       => $payload,
+            'raw' => $payload,
         ];
     }
 
@@ -439,25 +465,27 @@ class AzamPesaProvider implements PaymentProvider
 
         return Cache::remember($cacheKey, now()->addHours(24), function () {
             $token = $this->getAccessToken();
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 
             try {
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
+                    'Authorization' => 'Bearer '.$token,
                 ])
-                ->timeout($this->timeout)
-                ->get("{$this->baseUrl}/api/v1/Checkout/Callback/public-key");
+                    ->timeout($this->timeout)
+                    ->get("{$this->baseUrl}/api/v1/Checkout/Callback/public-key");
 
                 if ($response->successful()) {
                     return $response->body();
                 }
 
                 Log::error('AzamPesa public key fetch failed', ['status' => $response->status()]);
+
                 return null;
             } catch (\Exception $e) {
                 Log::error('AzamPesa public key fetch exception', ['message' => $e->getMessage()]);
+
                 return null;
             }
         });
@@ -469,16 +497,16 @@ class AzamPesaProvider implements PaymentProvider
     public function getPaymentPartners(): array
     {
         $token = $this->getAccessToken();
-        if (!$token) {
+        if (! $token) {
             return [];
         }
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])
-            ->timeout($this->timeout)
-            ->get("{$this->baseUrl}/api/v1/Partner/GetPaymentPartners");
+                ->timeout($this->timeout)
+                ->get("{$this->baseUrl}/api/v1/Partner/GetPaymentPartners");
 
             if ($response->successful()) {
                 return $response->json();
@@ -487,6 +515,7 @@ class AzamPesaProvider implements PaymentProvider
             return [];
         } catch (\Exception $e) {
             Log::error('AzamPesa get payment partners exception', ['message' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -503,9 +532,9 @@ class AzamPesaProvider implements PaymentProvider
         }
 
         if (str_starts_with($phone, '0')) {
-            $phone = '255' . substr($phone, 1);
-        } elseif (!str_starts_with($phone, '255')) {
-            $phone = '255' . $phone;
+            $phone = '255'.substr($phone, 1);
+        } elseif (! str_starts_with($phone, '255')) {
+            $phone = '255'.$phone;
         }
 
         return $phone;
@@ -522,8 +551,8 @@ class AzamPesaProvider implements PaymentProvider
             '65', '66', '67' => 'Tigo',
             '78', '79', '68', '69' => 'Airtel',
             '74', '75', '76' => 'Vodacom',
-            '61', '62'        => 'Halotel',
-            default           => 'Tigo',
+            '61', '62' => 'Halotel',
+            default => 'Tigo',
         };
     }
 }

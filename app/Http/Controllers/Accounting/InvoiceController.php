@@ -13,12 +13,14 @@ class InvoiceController extends Controller
         $invoices = Invoice::with(['issuer'])
             ->orderBy('invoice_date', 'desc')
             ->paginate(20);
+
         return view('accounting.invoices.index', compact('invoices'));
     }
 
     public function show(Invoice $invoice): View
     {
         $invoice->load(['lines', 'issuer']);
+
         return view('accounting.invoices.show', compact('invoice'));
     }
 }

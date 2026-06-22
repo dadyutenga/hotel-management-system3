@@ -17,26 +17,26 @@ class PettyCashController extends Controller
         abort_if($pettyCash->status !== 'draft', 422, 'Only draft petty cash expenses can be approved.');
 
         // Map category to expense account code
-        $expenseCode = match($pettyCash->category) {
+        $expenseCode = match ($pettyCash->category) {
             'transport' => '6600',
-            'repairs'   => '6400',
-            'office'    => '6500',
-            default     => '6800',
+            'repairs' => '6400',
+            'office' => '6500',
+            default => '6800',
         };
 
         DB::transaction(function () use ($pettyCash, $accounting, $expenseCode) {
             $pettyCash->update([
-                'status'      => 'approved',
+                'status' => 'approved',
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
             ]);
 
             $accounting->postPettyCash(
-                reference:          $pettyCash->reference_no,
-                sourceId:           $pettyCash->id,
-                amount:             (float) $pettyCash->amount,
+                reference: $pettyCash->reference_no,
+                sourceId: $pettyCash->id,
+                amount: (float) $pettyCash->amount,
                 expenseAccountCode: $expenseCode,
-                actorId:            auth()->id()
+                actorId: auth()->id()
             );
         });
 
@@ -53,9 +53,9 @@ class PettyCashController extends Controller
         ]);
 
         $pettyCash->update([
-            'status'           => 'rejected',
+            'status' => 'rejected',
             'rejection_reason' => $validated['rejection_reason'],
-            'approved_by'      => auth()->id(),
+            'approved_by' => auth()->id(),
         ]);
 
         return back()->with('success', 'Petty cash expense rejected.');

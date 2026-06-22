@@ -122,9 +122,7 @@
                 </tr>
                 @endif
                 @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-16 text-center text-sm text-gray-500">No purchase orders matched your filters.</td>
-                </tr>
+                <x-empty-state table colspan="6" title="No purchase orders matched your filters" message="Try a broader filter set to see procurement approvals." />
                 @endforelse
             </tbody>
         </table>

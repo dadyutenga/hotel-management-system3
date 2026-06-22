@@ -26,7 +26,7 @@ class LaundryServiceController extends Controller
     {
         $request->validate([
             'item_name' => 'required|string|max:100',
-            'price'     => 'required|numeric|min:1',
+            'price' => 'required|numeric|min:1',
         ]);
 
         LaundryServiceItem::updateOrCreate(

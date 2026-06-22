@@ -2,13 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Models\Building;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -29,12 +31,16 @@ class UserFactory extends Factory
             ['description' => 'Front desk role for testing']
         );
 
+        $roleId = $frontDeskRole->id;
+        $isAdmin = $roleId === Role::where('name', Role::ADMIN)->first()?->id;
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'role_id' => $frontDeskRole->id,
+            'role_id' => $roleId,
+            'building_id' => $isAdmin ? null : Building::factory(),
             'is_active' => true,
             'remember_token' => Str::random(10),
         ];

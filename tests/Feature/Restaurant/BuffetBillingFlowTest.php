@@ -54,6 +54,7 @@ class BuffetBillingFlowTest extends TestCase
     {
         $manager = $this->makeUser('restaurant_manager');
         $package = BuffetPackage::create([
+            'building_id' => $manager->building_id,
             'name' => 'Breakfast Buffet',
             'adult_price' => 25000,
             'child_price' => 15000,
@@ -88,6 +89,7 @@ class BuffetBillingFlowTest extends TestCase
     {
         $manager = $this->makeUser('restaurant_manager');
         $package = BuffetPackage::create([
+            'building_id' => $manager->building_id,
             'name' => 'Lunch Buffet',
             'adult_price' => 30000,
             'child_price' => 15000,
@@ -160,6 +162,7 @@ class BuffetBillingFlowTest extends TestCase
         $booking = $this->createCheckedInBooking($manager);
 
         $package = BuffetPackage::create([
+            'building_id' => $manager->building_id,
             'name' => 'Dinner Buffet',
             'adult_price' => 35000,
             'child_price' => 10000,
@@ -208,6 +211,7 @@ class BuffetBillingFlowTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 20, 10, 0, 0)); // Monday
 
         $inactive = BuffetPackage::create([
+            'building_id' => $manager->building_id,
             'name' => 'Inactive Package',
             'adult_price' => 20000,
             'child_price' => 5000,
@@ -228,6 +232,7 @@ class BuffetBillingFlowTest extends TestCase
             ->assertSessionHasErrors('buffet_package_id');
 
         $unavailable = BuffetPackage::create([
+            'building_id' => $manager->building_id,
             'name' => 'Tuesday Only',
             'adult_price' => 22000,
             'child_price' => 7000,
@@ -257,6 +262,7 @@ class BuffetBillingFlowTest extends TestCase
     {
         $manager = $this->makeUser('restaurant_manager');
         $package = BuffetPackage::create([
+            'building_id' => $manager->building_id,
             'name' => 'Brunch Buffet',
             'adult_price' => 25000,
             'child_price' => 10000,
@@ -319,11 +325,7 @@ class BuffetBillingFlowTest extends TestCase
 
     private function createCheckedInBooking(User $actor): Booking
     {
-        $building = Building::create([
-            'name' => 'Main Building',
-            'code' => 'MAIN',
-            'is_active' => true,
-        ]);
+        $building = Building::find($actor->building_id);
 
         $floor = Floor::create([
             'building_id' => $building->id,
@@ -355,7 +357,8 @@ class BuffetBillingFlowTest extends TestCase
         ]);
 
         return Booking::create([
-            'booking_number' => 'BK-TST-' . now()->format('YmdHisv'),
+            'building_id' => $building->id,
+            'booking_number' => 'BK-TST-'.now()->format('YmdHisv'),
             'guest_id' => $guest->id,
             'guest_name' => 'John Guest',
             'guest_email' => 'guest@example.test',
@@ -371,4 +374,3 @@ class BuffetBillingFlowTest extends TestCase
         ]);
     }
 }
-

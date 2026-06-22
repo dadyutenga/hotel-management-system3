@@ -98,7 +98,7 @@ return new class extends Migration
     {
         foreach ($this->tables as $tableName) {
             if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'is_deleted')) {
-                Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                Schema::table($tableName, function (Blueprint $table) {
                     $table->index('is_deleted');
                 });
             }

@@ -24,6 +24,7 @@ class EventPassController extends Controller
     public function create(Organization $organization, Event $event)
     {
         $schedules = $event->schedules()->orderBy('start_datetime')->get();
+
         return view('event-passes.create', compact('organization', 'event', 'schedules'));
     }
 
@@ -48,12 +49,14 @@ class EventPassController extends Controller
     {
         $pass->loadCount('attendances');
         $event->load('schedules');
+
         return view('event-passes.show', compact('organization', 'event', 'pass'));
     }
 
     public function edit(Organization $organization, Event $event, EventPass $pass)
     {
         $schedules = $event->schedules()->orderBy('start_datetime')->get();
+
         return view('event-passes.edit', compact('organization', 'event', 'pass', 'schedules'));
     }
 
@@ -86,12 +89,14 @@ class EventPassController extends Controller
     public function activate(Organization $organization, Event $event, EventPass $pass)
     {
         $pass->update(['status' => 'on_sale']);
+
         return back()->with('success', 'Pass type is now active.');
     }
 
     public function archive(Organization $organization, Event $event, EventPass $pass)
     {
         $pass->update(['status' => 'archived']);
+
         return back()->with('success', 'Pass type deleted.');
     }
 }

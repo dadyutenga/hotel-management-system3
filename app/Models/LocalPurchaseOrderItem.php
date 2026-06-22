@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/LocalPurchaseOrderItem.php
 
 namespace App\Models;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LocalPurchaseOrderItem extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'lpo_id',

@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Mail\OrderReceiptMail;
-use App\Services\SmsService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,7 +20,7 @@ class SendOrderReceiptJob implements ShouldQueue
 
     public function handle(): void
     {
-        if (!empty($this->order['email'])) {
+        if (! empty($this->order['email'])) {
             Mail::to($this->order['email'])->send(new OrderReceiptMail($this->order));
         }
     }

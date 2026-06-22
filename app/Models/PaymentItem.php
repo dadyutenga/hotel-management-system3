@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentItem extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'payment_id', 'order_item_id', 'description',
@@ -17,9 +17,12 @@ class PaymentItem extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
-        'subtotal'   => 'decimal:2',
+        'subtotal' => 'decimal:2',
         'deleted_at' => 'datetime',
     ];
 
-    public function payment() { return $this->belongsTo(FinancePayment::class, 'payment_id'); }
+    public function payment()
+    {
+        return $this->belongsTo(FinancePayment::class, 'payment_id');
+    }
 }

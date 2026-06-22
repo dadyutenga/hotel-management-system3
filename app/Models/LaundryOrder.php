@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class LaundryOrder extends Model implements ReceiptPrintable
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'order_number', 'customer_type',
@@ -27,16 +27,16 @@ class LaundryOrder extends Model implements ReceiptPrintable
     ];
 
     protected $casts = [
-        'subtotal'          => 'decimal:2',
-        'discount'          => 'decimal:2',
-        'total'             => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'total' => 'decimal:2',
         'expected_ready_at' => 'datetime',
-        'ready_at'          => 'datetime',
-        'delivered_at'      => 'datetime',
-        'collected_at'      => 'datetime',
-        'settled_at'        => 'datetime',
-        'confirmed_at'      => 'datetime',
-        'deleted_at'        => 'datetime',
+        'ready_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'collected_at' => 'datetime',
+        'settled_at' => 'datetime',
+        'confirmed_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // Auto-generate order number
@@ -47,7 +47,7 @@ class LaundryOrder extends Model implements ReceiptPrintable
         static::creating(function (LaundryOrder $order) {
             if (empty($order->order_number)) {
                 $count = self::whereDate('created_at', today())->count() + 1;
-                $order->order_number = 'LND-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $order->order_number = 'LND-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -58,7 +58,7 @@ class LaundryOrder extends Model implements ReceiptPrintable
         $subtotal = $this->items->sum('subtotal');
         $this->update([
             'subtotal' => $subtotal,
-            'total'    => $subtotal - $this->discount,
+            'total' => $subtotal - $this->discount,
         ]);
     }
 
@@ -67,7 +67,7 @@ class LaundryOrder extends Model implements ReceiptPrintable
     {
         return $this->expected_ready_at
             && now()->isAfter($this->expected_ready_at)
-            && !in_array($this->status, ['ready', 'delivered', 'collected', 'settled', 'cancelled', 'pending_confirmation']);
+            && ! in_array($this->status, ['ready', 'delivered', 'collected', 'settled', 'cancelled', 'pending_confirmation']);
     }
 
     // ── Relationships ────────────────────────────────────────────────────────
@@ -93,6 +93,7 @@ class LaundryOrder extends Model implements ReceiptPrintable
                 if ($this->booking && $this->booking->guest) {
                     return $this->booking->guest;
                 }
+
                 return null;
             });
     }
@@ -147,15 +148,15 @@ class LaundryOrder extends Model implements ReceiptPrintable
     public function getStatusBadgeColorAttribute(): string
     {
         return match ($this->status) {
-            'received'              => 'yellow',
-            'processing'            => 'blue',
-            'pending_confirmation'  => 'purple',
-            'ready'                 => 'orange',
-            'delivered'             => 'indigo',
-            'collected'             => 'teal',
-            'settled'               => 'green',
-            'cancelled'             => 'gray',
-            default                 => 'gray',
+            'received' => 'yellow',
+            'processing' => 'blue',
+            'pending_confirmation' => 'purple',
+            'ready' => 'orange',
+            'delivered' => 'indigo',
+            'collected' => 'teal',
+            'settled' => 'green',
+            'cancelled' => 'gray',
+            default => 'gray',
         };
     }
 
@@ -174,34 +175,35 @@ class LaundryOrder extends Model implements ReceiptPrintable
 
         $items = $this->items->map(function ($item) {
             $serviceItem = $item->serviceItem;
+
             return [
-                'name'       => $serviceItem?->item_name ?? 'Laundry Item',
-                'details'    => $serviceItem?->service?->name ?? 'Service',
-                'quantity'   => $item->quantity,
+                'name' => $serviceItem?->item_name ?? 'Laundry Item',
+                'details' => $serviceItem?->service?->name ?? 'Service',
+                'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
-                'amount'     => $item->subtotal,
+                'amount' => $item->subtotal,
             ];
         })->toArray();
 
         return [
-            'receipt_no'            => $this->order_number,
-            'issued_at'             => $this->settled_at ?? $this->created_at,
-            'module'                => 'laundry',
-            'customer_name'         => $this->customer_name ?? $this->booking?->guest_name ?? null,
-            'customer_phone'        => $this->customer_phone ?? $this->booking?->guest?->phone ?? null,
-            'items'                 => $items,
-            'subtotal'              => (float) $this->subtotal,
-            'discount'              => (float) $this->discount,
-            'tax'                   => 0.0,
-            'total'                 => (float) $this->total,
-            'amount_paid'           => $this->isPaid() ? (float) $this->total : 0.0,
-            'balance'               => $this->isPaid() ? 0.0 : (float) $this->total,
-            'currency'              => 'TZS',
-            'payment_method'        => $this->payment_method,
-            'payment_status'        => $this->getPaymentStatus(),
+            'receipt_no' => $this->order_number,
+            'issued_at' => $this->settled_at ?? $this->created_at,
+            'module' => 'laundry',
+            'customer_name' => $this->customer_name ?? $this->booking?->guest_name ?? null,
+            'customer_phone' => $this->customer_phone ?? $this->booking?->guest?->phone ?? null,
+            'items' => $items,
+            'subtotal' => (float) $this->subtotal,
+            'discount' => (float) $this->discount,
+            'tax' => 0.0,
+            'total' => (float) $this->total,
+            'amount_paid' => $this->isPaid() ? (float) $this->total : 0.0,
+            'balance' => $this->isPaid() ? 0.0 : (float) $this->total,
+            'currency' => 'TZS',
+            'payment_method' => $this->payment_method,
+            'payment_status' => $this->getPaymentStatus(),
             'transaction_reference' => null,
-            'cashier'               => $this->settler?->name,
-            'notes'                 => $this->special_instructions,
+            'cashier' => $this->settler?->name,
+            'notes' => $this->special_instructions,
         ];
     }
 

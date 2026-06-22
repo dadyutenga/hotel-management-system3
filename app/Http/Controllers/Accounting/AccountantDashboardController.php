@@ -10,7 +10,6 @@ use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\PayrollRun;
 use App\Models\StoreNotification;
-use App\Models\Supplier;
 use App\Models\SupplierPayable;
 use App\Models\SupplierPayment;
 use Illuminate\Support\Collection;

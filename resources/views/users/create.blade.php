@@ -5,7 +5,7 @@
 @section('page-title', __('users.title'))
 
 @section('content')
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl mx-auto" x-data="userForm()">
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100">
         <!-- Header -->
         <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white rounded-t-2xl">
@@ -34,11 +34,11 @@
                         <label for="name" class="block text-sm font-semibold text-secondary mb-2">
                             {{ __('users.fields.full_name') }} <span class="text-red-500">*</span>
                         </label>
-                        <input 
-                            type="text" 
-                            name="name" 
+                        <input
+                            type="text"
+                            name="name"
                             id="name"
-                            value="{{ old('name') }}" 
+                            value="{{ old('name') }}"
                             class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('name') border-red-500 @enderror"
                             placeholder="{{ __('users.placeholders.enter_full_name') }}"
                             required>
@@ -57,11 +57,11 @@
                         <label for="email" class="block text-sm font-semibold text-secondary mb-2">
                             {{ __('users.fields.email_address') }} <span class="text-red-500">*</span>
                         </label>
-                        <input 
-                            type="email" 
-                            name="email" 
+                        <input
+                            type="email"
+                            name="email"
                             id="email"
-                            value="{{ old('email') }}" 
+                            value="{{ old('email') }}"
                             class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('email') border-red-500 @enderror"
                             placeholder="{{ __('users.placeholders.email') }}"
                             required>
@@ -100,58 +100,6 @@
 
                 <div class="border-t border-gray-100"></div>
 
-                <!-- Security Section -->
-                <div>
-                    <h3 class="text-lg font-bold text-secondary mb-4 flex items-center gap-2">
-                        <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-blue-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                        </div>
-                        {{ __('users.sections.security') }}
-                    </h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Password -->
-                        <div>
-                            <label for="password" class="block text-sm font-semibold text-secondary mb-2">
-                                {{ __('users.fields.password') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="password" 
-                                name="password" 
-                                id="password"
-                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('password') border-red-500 @enderror"
-                                placeholder="{{ __('users.placeholders.password') }}"
-                                required>
-                            @error('password')
-                                <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                    {{ $message }}
-                                </p>
-                            @enderror
-                        </div>
-
-                        <!-- Confirm Password -->
-                        <div>
-                            <label for="password_confirmation" class="block text-sm font-semibold text-secondary mb-2">
-                                {{ __('users.fields.confirm_password') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="password" 
-                                name="password_confirmation" 
-                                id="password_confirmation"
-                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                                placeholder="{{ __('users.placeholders.password') }}"
-                                required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-100"></div>
-
                 <!-- Role & Status Section -->
                 <div>
                     <h3 class="text-lg font-bold text-secondary mb-4 flex items-center gap-2">
@@ -168,9 +116,10 @@
                         <label for="role_id" class="block text-sm font-semibold text-secondary mb-2">
                             {{ __('users.fields.user_role') }} <span class="text-red-500">*</span>
                         </label>
-                        <select 
-                            name="role_id" 
+                        <select
+                            name="role_id"
                             id="role_id"
+                            x-model="roleId"
                             class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('role_id') border-red-500 @enderror"
                             required>
                             <option value="">{{ __('users.placeholders.select_role') }}</option>
@@ -190,18 +139,142 @@
                         @enderror
                     </div>
 
+                    <!-- Building -->
+                    <div class="mb-6">
+                        <label for="building_id" class="block text-sm font-semibold text-secondary mb-2">
+                            Building <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="building_id"
+                            id="building_id"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('building_id') border-red-500 @enderror"
+                            required>
+                            <option value="">Select building</option>
+                            @foreach($buildings as $building)
+                            <option value="{{ $building->id }}" {{ old('building_id') == $building->id ? 'selected' : '' }}>
+                                {{ $building->name }} ({{ $building->code }})
+                            </option>
+                            @endforeach
+                        </select>
+                        @error('building_id')
+                            <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
                     <!-- Active Status -->
                     <div class="flex items-center gap-3">
-                        <input 
-                            type="checkbox" 
-                            name="is_active" 
+                        <input
+                            type="checkbox"
+                            name="is_active"
                             id="is_active"
-                            value="1" 
+                            value="1"
                             {{ old('is_active', true) ? 'checked' : '' }}
                             class="w-5 h-5 text-primary border-gray-200 rounded focus:ring-2 focus:ring-primary">
                         <label for="is_active" class="text-sm font-semibold text-secondary cursor-pointer">
                             {{ __('users.fields.active_account') }}
                         </label>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100"></div>
+
+                <!-- Authentication Section -->
+                <div>
+                    <h3 class="text-lg font-bold text-secondary mb-4 flex items-center gap-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        Authentication
+                        <span x-show="roleId" x-cloak class="text-sm font-normal ml-2">
+                            <span x-show="authMethod === 'admin'" class="text-blue-600">(Password Login)</span>
+                            <span x-show="authMethod === 'staff'" class="text-emerald-600">(PIN Login)</span>
+                        </span>
+                    </h3>
+
+                    <!-- No role selected hint -->
+                    <div x-show="!roleId" class="p-4 bg-gray-50 rounded-xl text-sm text-gray-500 text-center">
+                        Select a role above to configure authentication.
+                    </div>
+
+                    <!-- Password Fields (Management Users) -->
+                    <div x-show="authMethod === 'admin'" x-cloak>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="password" class="block text-sm font-semibold text-secondary mb-2">
+                                    Password <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('password') border-red-500 @enderror"
+                                    placeholder="Min 10 chars, mixed case, numbers, symbols">
+                                @error('password')
+                                    <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                        {{ $message }}
+                                    </p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="password_confirmation" class="block text-sm font-semibold text-secondary mb-2">
+                                    Confirm Password <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="password_confirmation"
+                                    id="password_confirmation"
+                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                    placeholder="Repeat password">
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Required for management login. Min 10 characters with uppercase, lowercase, numbers, and symbols.</p>
+                    </div>
+
+                    <!-- PIN Fields (Staff Users) -->
+                    <div x-show="authMethod === 'staff'" x-cloak>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="passkey" class="block text-sm font-semibold text-secondary mb-2">
+                                    4-Digit PIN <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="passkey"
+                                    id="passkey"
+                                    maxlength="4"
+                                    pattern="[0-9]{4}"
+                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all @error('passkey') border-red-500 @enderror"
+                                    placeholder="----">
+                                @error('passkey')
+                                    <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                        {{ $message }}
+                                    </p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="passkey_confirmation" class="block text-sm font-semibold text-secondary mb-2">
+                                    Confirm PIN <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="passkey_confirmation"
+                                    id="passkey_confirmation"
+                                    maxlength="4"
+                                    pattern="[0-9]{4}"
+                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                    placeholder="Confirm PIN">
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Required for staff POS login. Only numbers, 4 digits.</p>
                     </div>
                 </div>
 
@@ -226,11 +299,11 @@
 
             <!-- Actions -->
             <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-                <a href="{{ route('users.index') }}" 
+                <a href="{{ route('users.index') }}"
                    class="px-6 py-2.5 text-sm font-semibold text-secondary bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all">
                     {{ __('users.actions.cancel') }}
                 </a>
-                <button 
+                <button
                     type="submit"
                     class="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-blue-600 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all">
                     {{ __('users.actions.create_user') }}
@@ -239,4 +312,18 @@
         </form>
     </div>
 </div>
+
+<script>
+function userForm() {
+    const roleAuthMethods = @json($roleAuthMethods);
+    const oldRoleId = '{{ old('role_id') }}';
+
+    return {
+        roleId: oldRoleId,
+        get authMethod() {
+            return this.roleId ? (roleAuthMethods[this.roleId] || null) : null;
+        },
+    };
+}
+</script>
 @endsection

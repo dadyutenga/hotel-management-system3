@@ -62,7 +62,7 @@ class BarOrderStockService
             $locked->load('items.menuItem.ingredients', 'items.menuItem.category');
 
             $availability = $this->checkAvailability($locked);
-            if (!$availability['ok']) {
+            if (! $availability['ok']) {
                 abort(422, $availability['errors'][0]['message'] ?? 'Insufficient stock for this order.');
             }
 
@@ -82,7 +82,7 @@ class BarOrderStockService
                         'quantity' => $ingredient->quantity * $orderItem->quantity,
                         'reference_type' => 'order',
                         'reference_id' => $locked->id,
-                            'notes' => "Order {$locked->order_number} stock deduction ({$menuItemName})",
+                        'notes' => "Order {$locked->order_number} stock deduction ({$menuItemName})",
                     ], $actorId);
                 }
             }
@@ -100,7 +100,7 @@ class BarOrderStockService
         return DB::transaction(function () use ($order, $actorId) {
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
 
-            if (!$locked->stock_deducted_at || $locked->stock_reversed_at) {
+            if (! $locked->stock_deducted_at || $locked->stock_reversed_at) {
                 return false;
             }
 
@@ -122,7 +122,7 @@ class BarOrderStockService
                         'quantity' => $ingredient->quantity * $orderItem->quantity,
                         'reference_type' => 'order_reversal',
                         'reference_id' => $locked->id,
-                            'notes' => "Order {$locked->order_number} stock reversal ({$menuItemName})",
+                        'notes' => "Order {$locked->order_number} stock reversal ({$menuItemName})",
                     ], $actorId);
                 }
             }

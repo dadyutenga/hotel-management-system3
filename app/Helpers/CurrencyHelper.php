@@ -41,6 +41,7 @@ class CurrencyHelper
     public static function getCurrencySymbol(?string $currency = null): string
     {
         $currency = $currency ?? self::getDefaultCurrency();
+
         return self::CURRENCIES[$currency]['symbol'] ?? $currency;
     }
 
@@ -50,33 +51,34 @@ class CurrencyHelper
     public static function getDecimals(?string $currency = null): int
     {
         $currency = $currency ?? self::getDefaultCurrency();
+
         return self::CURRENCIES[$currency]['decimals'] ?? 2;
     }
 
     /**
      * Format a monetary amount with the appropriate currency symbol.
-     * 
-     * @param float|int $amount The amount to format
-     * @param string|null $currency The currency code (defaults to system currency)
-     * @param bool $showSymbol Whether to show the currency symbol
+     *
+     * @param  float|int  $amount  The amount to format
+     * @param  string|null  $currency  The currency code (defaults to system currency)
+     * @param  bool  $showSymbol  Whether to show the currency symbol
      * @return string Formatted currency string
      */
     public static function formatCurrency($amount, ?string $currency = null, bool $showSymbol = true): string
     {
         $currency = $currency ?? self::getDefaultCurrency();
         $config = self::CURRENCIES[$currency] ?? self::CURRENCIES['USD'];
-        
+
         $formatted = number_format((float) $amount, $config['decimals']);
-        
-        if (!$showSymbol) {
+
+        if (! $showSymbol) {
             return $formatted;
         }
 
         if ($config['position'] === 'before') {
-            return $config['symbol'] . $formatted;
+            return $config['symbol'].$formatted;
         }
-        
-        return $formatted . ' ' . $config['symbol'];
+
+        return $formatted.' '.$config['symbol'];
     }
 
     /**
@@ -107,10 +109,10 @@ class CurrencyHelper
 
     /**
      * Convert amount between currencies.
-     * 
-     * @param float $amount The amount to convert
-     * @param string $from Source currency code
-     * @param string $to Target currency code
+     *
+     * @param  float  $amount  The amount to convert
+     * @param  string  $from  Source currency code
+     * @param  string  $to  Target currency code
      * @return float Converted amount
      */
     public static function convert(float $amount, string $from, string $to): float

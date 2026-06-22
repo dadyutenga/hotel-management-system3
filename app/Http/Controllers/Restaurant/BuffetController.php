@@ -12,24 +12,43 @@ use App\Models\FinancePayment;
 use App\Models\FinancialTransaction;
 use App\Models\MenuItem;
 use App\Services\AccountingService;
+use App\Services\BuildingContext;
+use App\Services\BuildingModuleGate;
 use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class BuffetController extends Controller
 {
     public function packages(): View
     {
-        $packages = BuffetPackage::with(['menuItems'])->orderBy('name')->paginate(20);
-        $allMenuItems = MenuItem::where('is_active', true)->orderBy('name')->get();
+        $buildingId = BuildingContext::buildingId();
+
+        $packages = BuffetPackage::with(['menuItems'])
+            ->forBuilding($buildingId)
+            ->orderBy('name')
+            ->paginate(20);
+        $allMenuItems = MenuItem::forBuilding($buildingId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         return view('restaurant.buffet.packages', compact('packages', 'allMenuItems'));
     }
 
     public function storePackage(Request $request): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'adult_price' => 'required|numeric|min:0.01',
@@ -41,10 +60,11 @@ class BuffetController extends Controller
             'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'menu_item_ids' => 'nullable|array',
-            'menu_item_ids.*' => 'uuid|exists:menu_items,id',
+            'menu_item_ids.*' => ['uuid', $menuItemRule],
         ]);
 
         $package = BuffetPackage::create([
+            'building_id' => $buildingId,
             'name' => $data['name'],
             'adult_price' => $data['adult_price'],
             'child_price' => $data['child_price'] ?? 0,
@@ -59,7 +79,7 @@ class BuffetController extends Controller
             $package->addMediaFromRequest('image')->toMediaCollection('buffet_image');
         }
 
-        if (!empty($data['menu_item_ids'])) {
+        if (! empty($data['menu_item_ids'])) {
             $package->menuItems()->sync($data['menu_item_ids']);
         }
 
@@ -68,6 +88,14 @@ class BuffetController extends Controller
 
     public function updatePackage(Request $request, BuffetPackage $buffetPackage): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingContext::enforce($buffetPackage->building_id);
+
+        $menuItemRule = Rule::exists('menu_items', 'id');
+        if ($buildingId) {
+            $menuItemRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'adult_price' => 'required|numeric|min:0.01',
@@ -80,7 +108,7 @@ class BuffetController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'remove_image' => 'nullable|boolean',
             'menu_item_ids' => 'nullable|array',
-            'menu_item_ids.*' => 'uuid|exists:menu_items,id',
+            'menu_item_ids.*' => ['uuid', $menuItemRule],
         ]);
 
         $buffetPackage->update([
@@ -109,6 +137,8 @@ class BuffetController extends Controller
 
     public function deactivatePackage(BuffetPackage $buffetPackage): RedirectResponse
     {
+        BuildingContext::enforce($buffetPackage->building_id);
+
         $buffetPackage->update(['is_active' => false]);
 
         return back()->with('success', __('general.restaurant.buffet.messages.package_deactivated'));
@@ -116,10 +146,13 @@ class BuffetController extends Controller
 
     public function index(Request $request): View
     {
+        $buildingId = BuildingContext::buildingId();
+
         $sales = BuffetSale::with(['package', 'booking', 'server', 'settler'])
-            ->when($request->filled('from'), fn($q) => $q->whereDate('created_at', '>=', $request->string('from')))
-            ->when($request->filled('to'), fn($q) => $q->whereDate('created_at', '<=', $request->string('to')))
-            ->when($request->filled('status'), fn($q) => $q->where('status', $request->string('status')))
+            ->forBuilding($buildingId)
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->string('from')))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->string('to')))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->latest()
             ->paginate(20);
 
@@ -128,27 +161,48 @@ class BuffetController extends Controller
 
     public function create(): View
     {
-        $packages = BuffetPackage::where('is_active', true)->orderBy('name')->get();
-        $bookings = Booking::active()->with('guest', 'room')->latest()->limit(100)->get();
+        $buildingId = BuildingContext::buildingId();
+
+        $packages = BuffetPackage::forBuilding($buildingId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $bookings = Booking::active()
+            ->forBuilding($buildingId)
+            ->with('guest', 'room')
+            ->latest()
+            ->limit(100)
+            ->get();
 
         return view('restaurant.buffet.create', compact('packages', 'bookings'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+        BuildingModuleGate::ensureRestaurant($buildingId);
+
+        $packageRule = Rule::exists('buffet_packages', 'id');
+        $bookingRule = Rule::exists('bookings', 'id');
+        if ($buildingId) {
+            $packageRule->where('building_id', $buildingId);
+            $bookingRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
-            'buffet_package_id' => 'required|uuid|exists:buffet_packages,id',
+            'buffet_package_id' => ['required', 'uuid', $packageRule],
             'sale_type' => 'required|in:walkin,booking',
-            'booking_id' => 'required_if:sale_type,booking|nullable|uuid|exists:bookings,id',
+            'booking_id' => ['required_if:sale_type,booking', 'nullable', 'uuid', $bookingRule],
             'adults_count' => 'required|integer|min:0',
             'children_count' => 'nullable|integer|min:0',
             'notes' => 'nullable|string|max:500',
         ]);
 
         $package = BuffetPackage::findOrFail($data['buffet_package_id']);
+        BuildingContext::enforce($package->building_id);
         $children = (int) ($data['children_count'] ?? 0);
 
-        if (!$this->isPackageAvailableNow($package)) {
+        if (! $this->isPackageAvailableNow($package)) {
             return back()->withErrors([
                 'buffet_package_id' => __('general.restaurant.buffet.messages.package_unavailable_now'),
             ])->withInput();
@@ -163,8 +217,9 @@ class BuffetController extends Controller
             ])->withInput();
         }
 
-        $sale = DB::transaction(function () use ($data, $package, $children, $total) {
+        $sale = DB::transaction(function () use ($data, $package, $children, $total, $buildingId) {
             return BuffetSale::create([
+                'building_id' => $buildingId,
                 'buffet_package_id' => $package->id,
                 'booking_id' => $data['sale_type'] === 'booking' ? $data['booking_id'] : null,
                 'sale_type' => $data['sale_type'],
@@ -186,6 +241,8 @@ class BuffetController extends Controller
 
     public function show(BuffetSale $buffetSale): View
     {
+        BuildingContext::enforce($buffetSale->building_id);
+
         $buffetSale->load(['package', 'booking.guest', 'server', 'settler']);
 
         return view('restaurant.buffet.show', compact('buffetSale'));
@@ -193,7 +250,9 @@ class BuffetController extends Controller
 
     public function chargeToBooking(BuffetSale $buffetSale): RedirectResponse
     {
-        if ($buffetSale->sale_type !== 'booking' || !$buffetSale->booking_id) {
+        BuildingContext::enforce($buffetSale->building_id);
+
+        if ($buffetSale->sale_type !== 'booking' || ! $buffetSale->booking_id) {
             return back()->withErrors(['sale_type' => __('general.restaurant.buffet.messages.booking_required')]);
         }
 
@@ -232,6 +291,8 @@ class BuffetController extends Controller
 
     public function settleWalkin(Request $request, BuffetSale $buffetSale): RedirectResponse
     {
+        BuildingContext::enforce($buffetSale->building_id);
+
         $request->validate([
             'payment_method' => 'required|in:cash,card,mobile',
             'payment_reference' => 'nullable|string|max:100',
@@ -308,13 +369,13 @@ class BuffetController extends Controller
 
     private function isPackageAvailableNow(BuffetPackage $package): bool
     {
-        if (!$package->is_active) {
+        if (! $package->is_active) {
             return false;
         }
 
         $today = strtolower(now()->format('l'));
-        $allowedDays = collect($package->available_days ?? [])->map(fn($d) => strtolower((string) $d));
-        if ($allowedDays->isNotEmpty() && !$allowedDays->contains($today)) {
+        $allowedDays = collect($package->available_days ?? [])->map(fn ($d) => strtolower((string) $d));
+        if ($allowedDays->isNotEmpty() && ! $allowedDays->contains($today)) {
             return false;
         }
 
@@ -329,4 +390,3 @@ class BuffetController extends Controller
         return true;
     }
 }
-

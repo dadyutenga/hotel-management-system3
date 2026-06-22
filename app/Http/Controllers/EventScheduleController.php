@@ -14,7 +14,7 @@ class EventScheduleController extends Controller
         $schedules = $event->schedules()
             ->orderBy('start_datetime')
             ->get()
-            ->groupBy(fn($s) => $s->start_datetime->format('Y-m-d'));
+            ->groupBy(fn ($s) => $s->start_datetime->format('Y-m-d'));
 
         return view('event-schedules.index', compact('organization', 'event', 'schedules'));
     }
@@ -23,6 +23,7 @@ class EventScheduleController extends Controller
     {
         $nextSessionNumber = $event->schedules()->max('session_number') + 1;
         $hallName = $event->venues()->with('conferenceHall')->first()?->conferenceHall?->name;
+
         return view('event-schedules.create', compact('organization', 'event', 'nextSessionNumber', 'hallName'));
     }
 
@@ -47,6 +48,7 @@ class EventScheduleController extends Controller
     public function show(Organization $organization, Event $event, EventSchedule $schedule)
     {
         $schedule->load('checkIns.attendance');
+
         return view('event-schedules.show', compact('organization', 'event', 'schedule'));
     }
 

@@ -1,4 +1,11 @@
 <?php
+
+use App\Http\Middleware\BuildingScopeMiddleware;
+use App\Http\Middleware\CheckStaffSession;
+use App\Http\Middleware\PreventCrossAuth;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,15 +20,18 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         // Global middleware — applied to every request
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
-        
+        $middleware->append(SecurityHeaders::class);
+
         // Localization middleware — sets app locale from session
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
+            SetLocale::class,
         ]);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'staff.session' => CheckStaffSession::class,
+            'building.scope' => BuildingScopeMiddleware::class,
+            'prevent.cross.auth' => PreventCrossAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

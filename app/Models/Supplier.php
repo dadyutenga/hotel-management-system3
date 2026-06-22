@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/Supplier.php
 
 namespace App\Models;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supplier extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'name',
@@ -27,7 +28,7 @@ class Supplier extends Model
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'deleted_at' => 'datetime',
     ];
 

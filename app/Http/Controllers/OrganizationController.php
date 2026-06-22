@@ -64,7 +64,7 @@ class OrganizationController extends Controller
     public function update(Request $request, Organization $organization)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:organizations,name,' . $organization->id,
+            'name' => 'required|string|max:255|unique:organizations,name,'.$organization->id,
             'type' => 'required|in:company,ngo,institution,church,government,university,other',
             'registration_number' => 'nullable|string|max:100',
             'tax_id' => 'nullable|string|max:100',
@@ -72,7 +72,7 @@ class OrganizationController extends Controller
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
             'postal_code' => 'nullable|string|max:20',
-            'email' => 'required|email|max:255|unique:organizations,email,' . $organization->id,
+            'email' => 'required|email|max:255|unique:organizations,email,'.$organization->id,
             'phone' => 'nullable|string|max:20',
             'website' => 'nullable|url|max:255',
             'contact_person_name' => 'nullable|string|max:255',
@@ -98,12 +98,14 @@ class OrganizationController extends Controller
     public function archived()
     {
         $records = Organization::onlyDeleted()->latest('deleted_at')->paginate(20);
+
         return view('organizations.archived', compact('records'));
     }
 
     public function restore(Organization $organization)
     {
         $this->restoreModel($organization);
+
         return redirect()->route('organizations.index')->with('success', 'Organization restored successfully.');
     }
 

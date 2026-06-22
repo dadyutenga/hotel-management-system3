@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         $driver = DB::getDriverName();
@@ -18,6 +19,7 @@ return new class extends Migration {
                 $table->timestamp('confirmed_at')->nullable()->after('settled_at');
                 $table->foreign('confirmed_by')->references('id')->on('users');
             });
+
             return;
         }
 
@@ -72,7 +74,7 @@ return new class extends Migration {
                 )
             ");
 
-            DB::statement("
+            DB::statement('
                 INSERT INTO laundry_orders_new (
                     id, order_number, customer_type, booking_id, room_number,
                     customer_name, customer_phone, status, special_instructions,
@@ -89,13 +91,13 @@ return new class extends Migration {
                     received_by, processed_by, delivered_by, settled_by,
                     created_at, updated_at
                 FROM laundry_orders
-            ");
+            ');
 
             DB::statement('DROP TABLE laundry_order_items');
             DB::statement('DROP TABLE laundry_orders');
             DB::statement('ALTER TABLE laundry_orders_new RENAME TO laundry_orders');
 
-            DB::statement("
+            DB::statement('
                 CREATE TABLE laundry_order_items (
                     id varchar not null,
                     laundry_order_id varchar not null,
@@ -110,7 +112,7 @@ return new class extends Migration {
                     foreign key (laundry_service_item_id) references laundry_service_items(id),
                     primary key (id)
                 )
-            ");
+            ');
         });
 
         if ($isSqlite) {
@@ -129,6 +131,7 @@ return new class extends Migration {
             });
 
             DB::statement("ALTER TABLE laundry_orders MODIFY COLUMN status ENUM('received', 'processing', 'ready', 'delivered', 'collected', 'settled', 'cancelled', 'charged') DEFAULT 'received'");
+
             return;
         }
 
@@ -179,7 +182,7 @@ return new class extends Migration {
                 )
             ");
 
-            DB::statement("
+            DB::statement('
                 INSERT INTO laundry_orders_old (
                     id, order_number, customer_type, booking_id, room_number,
                     customer_name, customer_phone, status, special_instructions,
@@ -196,13 +199,13 @@ return new class extends Migration {
                     received_by, processed_by, delivered_by, settled_by,
                     created_at, updated_at
                 FROM laundry_orders
-            ");
+            ');
 
             DB::statement('DROP TABLE laundry_order_items');
             DB::statement('DROP TABLE laundry_orders');
             DB::statement('ALTER TABLE laundry_orders_old RENAME TO laundry_orders');
 
-            DB::statement("
+            DB::statement('
                 CREATE TABLE laundry_order_items (
                     id varchar not null,
                     laundry_order_id varchar not null,
@@ -217,7 +220,7 @@ return new class extends Migration {
                     foreign key (laundry_service_item_id) references laundry_service_items(id),
                     primary key (id)
                 )
-            ");
+            ');
         });
 
         if ($isSqlite) {

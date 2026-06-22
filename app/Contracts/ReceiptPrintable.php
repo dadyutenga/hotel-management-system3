@@ -2,9 +2,11 @@
 
 namespace App\Contracts;
 
+use Carbon\Carbon;
+
 /**
  * ReceiptPrintable — contract for models that can generate receipts.
- * 
+ *
  * Any model that finalizes a payment should implement this interface
  * to provide standardized receipt data.
  */
@@ -12,10 +14,10 @@ interface ReceiptPrintable
 {
     /**
      * Get the receipt data in a standardized format.
-     * 
+     *
      * @return array{
      *     receipt_no: string,
-     *     issued_at: \Carbon\Carbon,
+     *     issued_at: Carbon,
      *     module: string,
      *     customer_name: string|null,
      *     customer_phone: string|null,

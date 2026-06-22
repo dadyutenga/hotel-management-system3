@@ -23,18 +23,18 @@ class PhoneNumber
         }
 
         if (str_starts_with($digits, '0')) {
-            $digits = '255' . substr($digits, 1);
+            $digits = '255'.substr($digits, 1);
         }
 
-        if (!str_starts_with($digits, '255') && strlen($digits) === 9) {
-            $digits = '255' . $digits;
+        if (! str_starts_with($digits, '255') && strlen($digits) === 9) {
+            $digits = '255'.$digits;
         }
 
-        if (!str_starts_with($digits, '255') && str_starts_with($digits, '00')) {
+        if (! str_starts_with($digits, '255') && str_starts_with($digits, '00')) {
             $digits = ltrim(substr($digits, 2), '0');
         }
 
-        return '+' . $digits;
+        return '+'.$digits;
     }
 
     public static function isValid(?string $phone): bool
@@ -48,4 +48,3 @@ class PhoneNumber
         return (bool) preg_match('/^\+[1-9]\d{9,14}$/', $normalized);
     }
 }
-

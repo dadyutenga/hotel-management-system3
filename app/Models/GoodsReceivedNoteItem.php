@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/GoodsReceivedNoteItem.php
 
 namespace App\Models;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GoodsReceivedNoteItem extends Model
 {
-    use HasUuid, HasSoftDelete;
+    use HasSoftDelete, HasUuid;
 
     protected $fillable = [
         'grn_id',
