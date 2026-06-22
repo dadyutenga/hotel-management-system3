@@ -50,7 +50,7 @@ class PosOrderController extends Controller
             ->forBuilding($buildingId)
             ->where('status', 'checked_in')
             ->orderBy('guest_name')
-            ->get(['id', 'booking_number', 'guest_name', 'room_id']);
+            ->get(['id', 'booking_number', 'guest_name', 'guest_id', 'room_id']);
 
         return view('pos.orders.create', compact('categories', 'activeBookings', 'staffUser', 'kitchen'));
     }
@@ -111,8 +111,13 @@ class PosOrderController extends Controller
                 'created_by' => $staffId,
             ]);
 
+            // Batch-load all menu items to avoid N+1 queries
+            $menuItemIds = collect($data['items'])->pluck('menu_item_id')->unique();
+            $menuItems = MenuItem::whereIn('id', $menuItemIds)->get()->keyBy('id');
+
             foreach ($data['items'] as $line) {
-                $menuItem = MenuItem::findOrFail($line['menu_item_id']);
+                $menuItem = $menuItems->get($line['menu_item_id']);
+                abort_if(! $menuItem, 422, "Menu item {$line['menu_item_id']} not found.");
 
                 OrderItem::create([
                     'order_id' => $order->id,

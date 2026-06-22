@@ -66,6 +66,7 @@ class StaffPasskeyLoginController extends Controller
         if ($user->hasAnyRole(['waiter', 'bar_tender', 'pos_bar', 'pos_kitchen'])) {
             $request->session()->put('staff_token', $session->session_token);
             $request->session()->put('staff_user_id', $user->id);
+            $request->session()->regenerate();
 
             // Settlement roles go to cashier screen
             if ($user->isPosBar() || $user->isPosKitchen()) {

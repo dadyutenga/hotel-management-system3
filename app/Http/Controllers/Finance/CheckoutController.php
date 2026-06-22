@@ -168,18 +168,20 @@ class CheckoutController extends Controller
                 'completed_at' => now(),
             ]);
 
-            // Get all unpaid charges before marking them paid
+            // Lock and select target charges to prevent concurrent inserts from being swept up
             $unpaidCharges = BookingCharge::where('booking_id', $checkout->booking_id)
                 ->where('status', 'unpaid')
+                ->lockForUpdate()
                 ->get();
 
-            // Mark all booking charges as paid
-            BookingCharge::where('booking_id', $checkout->booking_id)
-                ->where('status', 'unpaid')
-                ->update([
-                    'status' => 'paid',
-                    'checkout_id' => $checkout->id,
-                ]);
+            // Mark only the locked charges as paid (by ID, not by status)
+            if ($unpaidCharges->isNotEmpty()) {
+                BookingCharge::whereIn('id', $unpaidCharges->pluck('id'))
+                    ->update([
+                        'status' => 'paid',
+                        'checkout_id' => $checkout->id,
+                    ]);
+            }
 
             // FINALIZE RELATED MODULE ORDERS
             // This ensures orders in Restaurant, Bar, Laundry are marked as 'settled'

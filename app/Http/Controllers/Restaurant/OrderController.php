@@ -237,8 +237,13 @@ class OrderController extends Controller
                     'created_by' => (string) Auth::id(),
                 ]);
 
+                // Batch-load all menu items to avoid N+1 queries
+                $menuItemIds = collect($data['items'])->pluck('menu_item_id')->unique();
+                $menuItems = MenuItem::whereIn('id', $menuItemIds)->get()->keyBy('id');
+
                 foreach ($data['items'] as $line) {
-                    $menuItem = MenuItem::findOrFail($line['menu_item_id']);
+                    $menuItem = $menuItems->get($line['menu_item_id']);
+                    abort_if(! $menuItem, 422, "Menu item {$line['menu_item_id']} not found.");
                     OrderItem::create([
                         'order_id' => $order->id,
                         'menu_item_id' => $menuItem->id,

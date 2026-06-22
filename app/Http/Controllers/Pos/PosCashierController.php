@@ -80,6 +80,10 @@ class PosCashierController extends Controller
         }
 
         DB::transaction(function () use ($order, $data, $isChargeToBooking, $staffId) {
+            // Reload under row lock to prevent concurrent settlement
+            $order = Order::lockForUpdate()->findOrFail($order->id);
+            abort_if(in_array($order->status, ['settled', 'charged', 'cancelled']), 422, 'Order is already finalised.');
+
             // Ensure stock is deducted exactly once
             if (! $order->stock_deducted_at) {
                 app(BarOrderStockService::class)->deductForOrder($order, $staffId);
