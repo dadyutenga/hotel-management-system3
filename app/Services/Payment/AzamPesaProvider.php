@@ -47,9 +47,19 @@ class AzamPesaProvider implements PaymentProvider
 
     /**
      * Get or refresh the access token, cached for reuse.
+     *
+     * Uses sandbox token from .env if provided, otherwise generates dynamically.
      */
     protected function getAccessToken(): ?string
     {
+        $sandboxToken = config('payment.providers.azampesa.sandbox_token');
+
+        if (! empty($sandboxToken)) {
+            Log::info('AzamPesa using sandbox token from .env');
+
+            return $sandboxToken;
+        }
+
         $cacheKey = 'azampesa_access_token';
 
         return Cache::remember($cacheKey, now()->addMinutes(50), function () {

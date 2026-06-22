@@ -36,6 +36,7 @@ return [
             'app_name' => env('AZAMPESA_APP_NAME', ''),
             'client_id' => env('AZAMPESA_CLIENT_ID', ''),
             'client_secret' => env('AZAMPESA_CLIENT_SECRET', ''),
+            'sandbox_token' => env('AZAMPESA_SANDBOX_TOKEN', 'e252acd8-ebc4-49e5-bab9-705d0624392a'),
             'merchant_account' => env('AZAMPESA_MERCHANT_ACCOUNT', ''),
             'merchant_phone' => env('AZAMPESA_MERCHANT_PHONE', ''),
             'merchant_name' => env('AZAMPESA_MERCHANT_NAME', null),
