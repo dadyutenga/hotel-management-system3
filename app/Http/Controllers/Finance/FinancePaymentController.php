@@ -9,6 +9,7 @@ use App\Models\FinancialTransaction;
 use App\Models\Order;
 use App\Models\PaymentItem;
 use App\Services\Bartender\BarOrderStockService;
+use App\Services\BuildingContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,22 +24,26 @@ class FinancePaymentController extends Controller
      */
     public function index(Request $request): View
     {
-        $payments = FinancePayment::with(['order', 'createdBy', 'transaction'])
+        $buildingId = BuildingContext::buildingId();
+
+        $baseQuery = FinancePayment::with(['order', 'createdBy', 'transaction'])
+            ->when($buildingId, fn ($q) => $q->whereHas('order', fn ($oq) => $oq->where('orders.building_id', $buildingId)))
             ->when($request->type, fn ($q) => $q->where('payment_type', $request->type))
             ->when($request->method, fn ($q) => $q->where('method', $request->method))
             ->when($request->currency, fn ($q) => $q->where('currency', $request->currency))
             ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
-            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
-            ->latest('created_at')
-            ->paginate(30);
+            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to));
+
+        $payments = (clone $baseQuery)->latest('created_at')->paginate(30);
+
+        $summaryQuery = FinancePayment::where('status', 'completed')
+            ->when($buildingId, fn ($q) => $q->whereHas('order', fn ($oq) => $oq->where('orders.building_id', $buildingId)))
+            ->whereDate('created_at', today());
 
         $summary = [
-            'total_usd' => FinancePayment::where('status', 'completed')
-                ->whereDate('created_at', today())->sum('amount_usd'),
-            'cash_usd' => FinancePayment::where('status', 'completed')->where('method', 'cash')
-                ->whereDate('created_at', today())->sum('amount_usd'),
-            'card_usd' => FinancePayment::where('status', 'completed')->where('method', 'card')
-                ->whereDate('created_at', today())->sum('amount_usd'),
+            'total_usd' => (clone $summaryQuery)->sum('amount_usd'),
+            'cash_usd' => (clone $summaryQuery)->where('method', 'cash')->sum('amount_usd'),
+            'card_usd' => (clone $summaryQuery)->where('method', 'card')->sum('amount_usd'),
         ];
 
         return view('finance.payments.index', compact('payments', 'summary'));
@@ -50,8 +55,15 @@ class FinancePaymentController extends Controller
      */
     public function storeWalkin(Request $request): RedirectResponse
     {
+        $buildingId = BuildingContext::buildingId();
+
+        $orderRule = \Illuminate\Validation\Rule::exists('orders', 'id');
+        if ($buildingId) {
+            $orderRule->where('building_id', $buildingId);
+        }
+
         $data = $request->validate([
-            'order_id' => 'required|uuid|exists:orders,id',
+            'order_id' => ['required', 'uuid', $orderRule],
             'currency' => 'required|in:USD,TZS',
             'amount' => 'required|numeric|min:0.01',
             'method' => 'required|in:cash,card,mobile_money,bank_transfer',
@@ -70,6 +82,7 @@ class FinancePaymentController extends Controller
         DB::transaction(function () use ($data, $amountUsd, $exchangeRate) {
 
             $order = Order::with('items.menuItem')->findOrFail($data['order_id']);
+            BuildingContext::enforce($order->building_id);
             abort_if($order->booking_id, 422, 'Booking-linked orders must be settled through the guest folio checkout flow.');
             abort_if(in_array($order->status, ['cancelled', 'settled', 'charged'], true), 422, 'This order cannot be settled through walk-in payment.');
 

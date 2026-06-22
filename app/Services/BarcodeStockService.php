@@ -69,6 +69,12 @@ class BarcodeStockService
         }
 
         DB::transaction(function () use ($receiving, $userId) {
+            // Reload under row lock to prevent concurrent confirmations
+            $receiving = StockReceiving::lockForUpdate()->findOrFail($receiving->id);
+            if ($receiving->status === 'completed') {
+                throw new \RuntimeException('This receiving has already been confirmed.');
+            }
+
             $receiving->items->each(function (StockReceivingItem $item) use ($userId) {
                 $inventory = BeverageInventory::firstOrCreate(
                     ['beverage_id' => $item->beverage_id],
