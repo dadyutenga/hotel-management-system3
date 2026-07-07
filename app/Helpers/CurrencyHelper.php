@@ -27,10 +27,13 @@ class CurrencyHelper
 
     /**
      * Get the system's default currency code.
+     *
+     * Cached forever — only cleared when SystemSetting::setValue() is called
+     * for 'default_currency' or when CurrencyHelper::clearCache() is invoked.
      */
     public static function getDefaultCurrency(): string
     {
-        return Cache::remember('system_currency', 60, function () {
+        return Cache::rememberForever('system_currency', function () {
             return SystemSetting::getValue('default_currency', 'USD');
         });
     }
@@ -99,10 +102,13 @@ class CurrencyHelper
 
     /**
      * Get exchange rate from system settings (TZS per 1 USD).
+     *
+     * Cached forever — only cleared when SystemSetting::setValue() is called
+     * for 'tzs_exchange_rate' or when CurrencyHelper::clearCache() is invoked.
      */
     public static function getExchangeRate(): float
     {
-        return (float) Cache::remember('tzs_exchange_rate', 60, function () {
+        return (float) Cache::rememberForever('tzs_exchange_rate', function () {
             return SystemSetting::getValue('tzs_exchange_rate', 2500);
         });
     }

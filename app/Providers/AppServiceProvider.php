@@ -60,10 +60,11 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo \App\Helpers\CurrencyHelper::getCurrencySymbol($expression); ?>";
         });
 
-        // Share currency data with all views
+        // Share currency data with all views (single call to avoid redundant lookups)
         view()->composer('*', function ($view) {
-            $view->with('systemCurrency', CurrencyHelper::getDefaultCurrency());
-            $view->with('currencySymbol', CurrencyHelper::getCurrencySymbol());
+            $currency = CurrencyHelper::getDefaultCurrency();
+            $view->with('systemCurrency', $currency);
+            $view->with('currencySymbol', CurrencyHelper::getCurrencySymbol($currency));
             $view->with('exchangeRate', CurrencyHelper::getExchangeRate());
         });
 

@@ -11,6 +11,10 @@ class BuildingScopeMiddleware
     {
         $user = auth()->user();
 
+        if ($user) {
+            $user->loadMissing('role'); // eager-load role to avoid N+1 on isAdmin()
+        }
+
         if ($user && ! $user->isAdmin() && ! $user->building_id) {
             abort(403, 'Your account is not assigned to a building. Please contact an administrator.');
         }

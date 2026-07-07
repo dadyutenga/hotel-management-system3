@@ -16,6 +16,7 @@ class RoleMiddleware
         }
 
         $user = auth()->user();
+        $user->loadMissing('role'); // eager-load role to avoid N+1
 
         // Null-safe check: reject if user has no role assigned
         if (! $user->role) {
